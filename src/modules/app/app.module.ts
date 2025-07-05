@@ -7,7 +7,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { createKeyv } from '@keyv/redis';
 import RedisStore from 'connect-redis';
 import { createClient } from 'redis';
-import { UsersModule } from './users/users.module';
+import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
