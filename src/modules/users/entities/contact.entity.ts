@@ -1,22 +1,17 @@
 import {
+  BaseEntity,
   Column,
-  CreateDateColumn,
-  DeleteDateColumn,
   Entity,
   Index,
   JoinColumn,
   OneToOne,
   PrimaryGeneratedColumn,
-  UpdateDateColumn,
 } from 'typeorm';
 import { User } from './user.entity';
 
 @Entity()
-@Index(['userId'])
-export class Contact {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
+// @Index(['userId'])
+export class Contact extends BaseEntity {
   @Column()
   phoneNumber: string;
 
@@ -32,13 +27,4 @@ export class Contact {
   @OneToOne(() => User, (user) => user.contact)
   @JoinColumn()
   user: User;
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
-
-  @DeleteDateColumn()
-  deletedAt: Date;
 }

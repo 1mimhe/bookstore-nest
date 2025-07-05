@@ -1,15 +1,12 @@
 import { Exclude } from 'class-transformer';
 import {
+  BaseEntity,
   Column,
-  CreateDateColumn,
-  DeleteDateColumn,
   Entity,
   Index,
   OneToMany,
   OneToOne,
-  PrimaryGeneratedColumn,
   Unique,
-  UpdateDateColumn,
 } from 'typeorm';
 import { Contact } from './contact.entity';
 import { Role } from './role.entity';
@@ -21,12 +18,8 @@ export enum Genders {
 }
 
 @Entity()
-@Unique(['username'])
-@Index(['username'])
-export class User {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
+@Index(['username'], { unique: true })
+export class User extends BaseEntity {
   @Column({ nullable: false })
   username: string;
 
@@ -58,13 +51,4 @@ export class User {
 
   @OneToMany(() => Role, (role) => role.user)
   roles: Role[];
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
-
-  @DeleteDateColumn()
-  deletedAt: Date;
 }

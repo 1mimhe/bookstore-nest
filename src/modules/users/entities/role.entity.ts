@@ -1,13 +1,9 @@
 import {
+  BaseEntity,
   Column,
-  CreateDateColumn,
-  DeleteDateColumn,
   Entity,
-  Index,
   JoinColumn,
-  ManyToOne,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn,
+  ManyToOne
 } from 'typeorm';
 import { User } from './user.entity';
 
@@ -22,11 +18,8 @@ export enum Roles {
 
 
 @Entity()
-@Index(['userId'])
-export class Role {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
+// @Index(['userId'])
+export class Role extends BaseEntity{
   @Column({
     type: 'enum',
     enum: Roles,
@@ -36,13 +29,4 @@ export class Role {
   @ManyToOne(() => User, (user) => user.roles)
   @JoinColumn()
   user: User;
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
-
-  @DeleteDateColumn()
-  deletedAt: Date;
 }
