@@ -18,7 +18,7 @@ export enum Roles {
 
 
 @Entity()
-// @Index(['userId'])
+// @Index(['userId', 'role'])
 export class Role extends BaseEntity {
   @Column({
     type: 'enum',

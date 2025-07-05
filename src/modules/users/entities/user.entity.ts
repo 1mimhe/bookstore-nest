@@ -26,28 +26,31 @@ export class User extends BaseEntity {
   @Exclude()
   hashedPassword: string;
 
+  @Column({ nullable: false })
   firstName: string;
 
-  lastName: string;
+  @Column({ nullable: true })
+  lastName?: string;
 
   @Column({
     type: 'enum',
     enum: Genders,
+    nullable: true
   })
-  gender: string;
+  gender?: string;
 
-  @Column()
-  profilePhoto: string;
+  @Column({ nullable: true })
+  profilePhoto?: string;
 
-  @Column()
-  dateOfBirth: string;
+  @Column({ nullable: true })
+  dateOfBirth?: string;
 
-  @Column()
-  status: string;
+  @Column({ nullable: true })
+  status?: string;
 
-  @OneToOne(() => Contact, (contact) => contact.user)
+  @OneToOne(() => Contact, (contact) => contact.user, { cascade: true })
   contact: Contact;
 
-  @OneToMany(() => Role, (role) => role.user)
+  @OneToMany(() => Role, (role) => role.user, { cascade: true })
   roles: Role[];
 }
