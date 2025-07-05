@@ -4,6 +4,7 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  Index,
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
@@ -21,6 +22,7 @@ export enum Genders {
 
 @Entity()
 @Unique(['username'])
+@Index(['username'])
 export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;

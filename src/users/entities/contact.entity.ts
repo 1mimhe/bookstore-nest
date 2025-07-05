@@ -2,6 +2,8 @@ import {
   Column,
   CreateDateColumn,
   DeleteDateColumn,
+  Entity,
+  Index,
   JoinColumn,
   OneToOne,
   PrimaryGeneratedColumn,
@@ -9,6 +11,8 @@ import {
 } from 'typeorm';
 import { User } from './user.entity';
 
+@Entity()
+@Index(['userId'])
 export class Contact {
   @PrimaryGeneratedColumn('uuid')
   id: string;

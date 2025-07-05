@@ -3,6 +3,7 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -19,7 +20,9 @@ export enum Roles {
   Publisher = 'publisher',
 }
 
+
 @Entity()
+@Index(['userId'])
 export class Role {
   @PrimaryGeneratedColumn('uuid')
   id: string;
