@@ -2,35 +2,30 @@ import {
   Column,
   CreateDateColumn,
   DeleteDateColumn,
-  Entity,
   JoinColumn,
-  ManyToOne,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { User } from './user.entity';
 
-export enum Roles {
-  Customer = 'customer',
-  Admin = 'admin',
-  ContentManager = 'content-manager',
-  InventoryManager = 'inventory-manager',
-  OrderManager = 'order-manager',
-  Publisher = 'publisher',
-}
-
-@Entity()
-export class Role {
+export class Contact {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({
-    type: 'enum',
-    enum: Roles,
-  })
-  role: string;
+  @Column()
+  phoneNumber: string;
 
-  @ManyToOne(() => User, (user) => user.roles)
+  @Column({ default: false })
+  isVerifiedPhoneNumber: boolean;
+
+  @Column()
+  email: string;
+
+  @Column({ default: false })
+  isVerifiedEmail: boolean;
+
+  @OneToOne(() => User, (user) => user.contact)
   @JoinColumn()
   user: User;
 

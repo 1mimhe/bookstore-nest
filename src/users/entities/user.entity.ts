@@ -1,10 +1,22 @@
-import { Exclude } from "class-transformer";
-import { Column, CreateDateColumn, DeleteDateColumn, Entity, PrimaryGeneratedColumn, Unique, UpdateDateColumn } from "typeorm";
+import { Exclude } from 'class-transformer';
+import {
+  Column,
+  CreateDateColumn,
+  DeleteDateColumn,
+  Entity,
+  OneToMany,
+  OneToOne,
+  PrimaryGeneratedColumn,
+  Unique,
+  UpdateDateColumn,
+} from 'typeorm';
+import { Contact } from './contact.entity';
+import { Role } from './role.entity';
 
 export enum Genders {
   Male = 'male',
   Female = 'female',
-  Others = 'others'
+  Others = 'others',
 }
 
 @Entity()
@@ -26,7 +38,7 @@ export class User {
 
   @Column({
     type: 'enum',
-    enum: Genders
+    enum: Genders,
   })
   gender: string;
 
@@ -34,10 +46,16 @@ export class User {
   profilePhoto: string;
 
   @Column()
-  dateOfBirth: string
+  dateOfBirth: string;
 
   @Column()
   status: string;
+
+  @OneToOne(() => Contact, (contact) => contact.user)
+  contact: Contact;
+
+  @OneToMany(() => Role, (role) => role.user)
+  roles: Role[];
 
   @CreateDateColumn()
   createdAt: Date;
