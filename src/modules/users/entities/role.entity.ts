@@ -1,11 +1,11 @@
 import {
-  BaseEntity,
   Column,
   Entity,
   JoinColumn,
   ManyToOne
 } from 'typeorm';
 import { User } from './user.entity';
+import { BaseEntity } from 'src/common/entities/base.entity';
 
 export enum Roles {
   Customer = 'customer',
@@ -19,7 +19,7 @@ export enum Roles {
 
 @Entity()
 // @Index(['userId'])
-export class Role extends BaseEntity{
+export class Role extends BaseEntity {
   @Column({
     type: 'enum',
     enum: Roles,

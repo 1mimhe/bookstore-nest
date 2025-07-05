@@ -1,5 +1,4 @@
 import {
-  BaseEntity,
   Column,
   Entity,
   Index,
@@ -8,6 +7,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { User } from './user.entity';
+import { BaseEntity } from 'src/common/entities/base.entity';
 
 @Entity()
 // @Index(['userId'])

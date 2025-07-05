@@ -1,15 +1,14 @@
 import { Exclude } from 'class-transformer';
 import {
-  BaseEntity,
   Column,
   Entity,
   Index,
   OneToMany,
   OneToOne,
-  Unique,
 } from 'typeorm';
 import { Contact } from './contact.entity';
 import { Role } from './role.entity';
+import { BaseEntity } from 'src/common/entities/base.entity';
 
 export enum Genders {
   Male = 'male',
