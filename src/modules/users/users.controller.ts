@@ -2,7 +2,11 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
   Post,
+  Req,
   Res,
   Session,
 } from '@nestjs/common';
@@ -12,6 +16,8 @@ import { UsersService } from './users.service';
 import {
   ApiBadRequestResponse,
   ApiConflictResponse,
+  ApiCreatedResponse,
+  ApiOkResponse,
   ApiOperation,
 } from '@nestjs/swagger';
 import {
@@ -20,9 +26,12 @@ import {
 } from 'src/common/dtos/error.dtos';
 import { SigninDto } from './dtos/signin.dto';
 import { AuthMessages } from 'src/common/enums/auth.messages';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { CookieNames } from 'src/common/enums/cookie.names';
 import { ConfigService } from '@nestjs/config';
+import { SessionData } from 'express-session';
+import { Serialize } from 'src/common/interceptors/serialize.interceptor';
+import { UserDto } from './dtos/user.dto';
 
 @Controller('auth')
 export class UsersController {
@@ -33,7 +42,7 @@ export class UsersController {
   ) {}
 
   @ApiOperation({
-    summary: 'Create a new user account',
+    summary: 'Sign up a new user account',
     description:
       'Register a new user with unique username, email, and phone number',
   })
@@ -43,13 +52,17 @@ export class UsersController {
   @ApiBadRequestResponse({
     type: ValidationErrorResponseDto,
   })
+  @ApiCreatedResponse({
+    type: UserDto
+  })
+  @Serialize(UserDto)
   @Post('signup')
   signup(@Body() body: CreateUserDto) {
     return this.authService.signup(body);
   }
 
   @ApiOperation({
-    summary: 'Login a user',
+    summary: 'Sign in a user',
     description:
       'Login a user and returns an access token with 20m expiration time',
   })
@@ -57,10 +70,11 @@ export class UsersController {
     type: BadRequestException,
     description: AuthMessages.InvalidCredentials,
   })
+  @HttpCode(HttpStatus.OK)
   @Post('signin')
   async signin(
     @Body() body: SigninDto,
-    @Session() session: any,
+    @Session() session: SessionData,
     @Res({ passthrough: true }) res: Response,
   ) {
     if (session.refreshToken) {
@@ -84,9 +98,15 @@ export class UsersController {
     };
   }
 
+  @ApiOperation({
+    summary: 'Sign out a user',
+    description:
+      'Sign out a user and clear its session and auth cookies',
+  })
+  @HttpCode(HttpStatus.OK)
   @Post('signout')
   signout(
-    @Session() session: any,
+    @Session() session: SessionData,
     @Res({ passthrough: true }) res: Response
   ) {    
     session.destroy();
@@ -94,5 +114,19 @@ export class UsersController {
     res.clearCookie(CookieNames.SessionId);
 
     return true;
+  }
+
+  @ApiOperation({
+    summary: 'Sign out a user',
+    description:
+      'Sign out a user and clear its session and auth cookies',
+  })
+  @ApiOkResponse({
+    type: UserDto
+  })
+  @Serialize(UserDto)
+  @Get('whoami')
+  whoAmI(@Req() req: Request) {
+    return req.user;
   }
 }
