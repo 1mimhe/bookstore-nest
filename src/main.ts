@@ -9,6 +9,16 @@ async function bootstrap() {
     .setTitle('Bookstore App')
     .setDescription('Bookstore App API using NestJS and TypeOrm')
     .setVersion('1.0')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'authorization',
+        description: 'Enter JWT access token',
+        in: 'header',
+      }
+    )
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, documentFactory);

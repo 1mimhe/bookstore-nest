@@ -9,12 +9,14 @@ import {
   Req,
   Res,
   Session,
+  UseGuards,
 } from '@nestjs/common';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { AuthService } from './auth.service';
 import { UsersService } from './users.service';
 import {
   ApiBadRequestResponse,
+  ApiBearerAuth,
   ApiConflictResponse,
   ApiCreatedResponse,
   ApiOkResponse,
@@ -32,6 +34,7 @@ import { ConfigService } from '@nestjs/config';
 import { SessionData } from 'express-session';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 import { UserDto } from './dtos/user.dto';
+import { AuthGuard } from 'src/common/guards/auth.guard';
 
 @Controller('auth')
 export class UsersController {
@@ -117,13 +120,13 @@ export class UsersController {
   }
 
   @ApiOperation({
-    summary: 'Sign out a user',
-    description:
-      'Sign out a user and clear its session and auth cookies',
+    summary: 'Retrieves the current authorized user'
   })
   @ApiOkResponse({
     type: UserDto
   })
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard)
   @Serialize(UserDto)
   @Get('whoami')
   whoAmI(@Req() req: Request) {
