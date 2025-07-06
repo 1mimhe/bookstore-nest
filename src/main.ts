@@ -7,7 +7,7 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('Bookstore App')
-    .setDescription('Bookstore App API')
+    .setDescription('Bookstore App API using NestJS and TypeOrm')
     .setVersion('1.0')
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
