@@ -66,4 +66,18 @@ export class UsersService {
 
     return conflicts;
   }
+
+  findByIdentifier(identifier: string) {
+    const whereConditions: FindOptionsWhere<User>[] = [
+      { username: identifier },
+      { contact: { email: identifier } },
+      { contact: { phoneNumber: identifier } },
+    ];
+
+    return this.userRepo.findOne({
+      where: whereConditions,
+      select: ['id', 'username', 'hashedPassword'],
+      relations: ['contact'],
+    });
+  }
 }
