@@ -27,9 +27,7 @@ export class AuthService {
       throw new ConflictException(conflicts);
     }
 
-    const hashedPassword = await this.hashPassword(password);
-    console.log(hashedPassword);
-    
+    const hashedPassword = await this.hashPassword(password);    
     const user = this.userRepo.create({
       ...userData,
       hashedPassword,

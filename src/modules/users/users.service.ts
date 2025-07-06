@@ -8,6 +8,13 @@ import { ConflictDto } from 'src/common/dtos/error.dtos';
 export class UsersService {
   constructor(@InjectRepository(User) private userRepo: Repository<User>) {}
 
+  findOne(id: string) {
+    return this.userRepo.findOne({
+      where: { id },
+      relations: ['contact', 'roles']
+    });
+  }
+
   async checkUniqueConstraints(
     username?: string,
     phoneNumber?: string,

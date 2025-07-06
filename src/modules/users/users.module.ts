@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersService } from './users.service';
 import { AuthService } from './auth.service';
@@ -6,6 +6,7 @@ import { UsersController } from './users.controller';
 import { User } from './entities/user.entity';
 import { Contact } from './entities/contact.entity';
 import { Role } from './entities/role.entity';
+import { CurrentUserMiddleware } from 'src/common/middlewares/current-user.middleware';
 
 @Module({
   imports: [
@@ -17,4 +18,8 @@ import { Role } from './entities/role.entity';
   ],
   controllers: [UsersController]
 })
-export class UsersModule {}
+export class UsersModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(CurrentUserMiddleware).forRoutes('*');
+  }
+}
