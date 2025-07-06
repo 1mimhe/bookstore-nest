@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -96,15 +96,27 @@ export class AuthService {
     });
   }
 
-  private generateRefreshToken(payload: Object, expiresIn = 604_800) {
+  private generateRefreshToken(payload: jwt.JwtPayload, expiresIn = 604_800) {
     expiresIn = expiresIn > 604_800 ? 604_800 : expiresIn;
     const refreshSecretKey = this.config.getOrThrow<string>('JWT_REFRESH_SECRET_KEY');
     
     return jwt.sign(payload, refreshSecretKey, { expiresIn });
   }
 
-  private generateAccessToken(payload: Object) {
+  private generateAccessToken(payload: jwt.JwtPayload) {
     const accessSecretKey = this.config.getOrThrow<string>('JWT_ACCESS_SECRET_KEY');
     return jwt.sign(payload, accessSecretKey, { expiresIn: '20min' });
+  }
+
+  verifyToken(token: string, type: 'access' | 'refresh') {
+    try {
+      let secretKey: string;
+      if (type = 'access') secretKey =this.config.getOrThrow<string>('JWT_ACCESS_SECRET_KEY');
+      else secretKey = this.config.getOrThrow<string>('JWT_REFRESH_SECRET_KEY');
+
+      return jwt.verify(token, secretKey) as jwt.JwtPayload;
+    } catch (error) {
+      throw new UnauthorizedException(AuthMessages.InvalidToken);
+    }
   }
 }
