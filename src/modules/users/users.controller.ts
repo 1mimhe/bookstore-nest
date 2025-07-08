@@ -44,7 +44,6 @@ import { Cookies } from 'src/common/decorators/cookies.decorator';
 export class UsersController {
   constructor(
     private authService: AuthService,
-    private usersService: UsersService,
     private config: ConfigService,
   ) {}
 
@@ -150,20 +149,8 @@ export class UsersController {
     @Session() session: SessionData,
     @Res({ passthrough: true }) res: Response
   ) {
-    if (!(session.userId && oldRefreshToken)) {
-      throw new ForbiddenException(AuthMessages.AccessDenied);
-    }
+    const { accessToken, refreshToken, expirationTime } = this.authService.refreshTokens(oldRefreshToken, session);
 
-    const sessionRefreshToken = session.refreshToken;
-    if (!(sessionRefreshToken) || (oldRefreshToken !== sessionRefreshToken)) {
-      throw new UnauthorizedException(AuthMessages.InvalidRefreshToken);
-    }
-
-    const expirationTime = session.cookie.expires
-      ? new Date(session.cookie.expires).getTime() - Date.now()
-      : 0;
-    const { accessToken, refreshToken } = this.authService.refreshTokens(oldRefreshToken, expirationTime);
-    
     session.refreshToken = refreshToken;
     res.cookie(CookieNames.RefreshToken, refreshToken, {
       httpOnly: true,

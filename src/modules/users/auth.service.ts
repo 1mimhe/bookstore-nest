@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -16,6 +17,7 @@ import { AuthMessages } from 'src/common/enums/auth.messages';
 import { ConfigService } from '@nestjs/config';
 import * as jwt from 'jsonwebtoken';
 import { JwtPayload } from 'src/common/types/jwt';
+import { SessionData } from 'express-session';
 
 @Injectable()
 export class AuthService {
@@ -146,7 +148,20 @@ export class AuthService {
     }
   }
 
-  refreshTokens(oldRefreshToken: string, expirationTime: number) {
+  refreshTokens(oldRefreshToken: string, session: SessionData) {
+    if (!(session.userId && oldRefreshToken)) {
+      throw new ForbiddenException(AuthMessages.AccessDenied);
+    }
+
+    const sessionRefreshToken = session.refreshToken;
+    if (!(sessionRefreshToken) || (oldRefreshToken !== sessionRefreshToken)) {
+      throw new UnauthorizedException(AuthMessages.InvalidRefreshToken);
+    }
+
+    const expirationTime = session.cookie.expires
+      ? new Date(session.cookie.expires).getTime() - Date.now()
+      : 0;
+   
     const { sub, username } = this.verifyToken(oldRefreshToken, 'refresh');
     const payload = { sub, username };
     const newRefreshToken = this.generateRefreshToken(payload, Math.trunc(expirationTime / 1000));
@@ -155,6 +170,7 @@ export class AuthService {
     return {
       accessToken: newAccessToken,
       refreshToken: newRefreshToken,
+      expirationTime
     };
   }
 }
