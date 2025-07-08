@@ -2,6 +2,7 @@ import {
   IsAlphanumeric,
   IsEmail,
   IsEnum,
+  IsNotEmpty,
   IsOptional,
   IsPhoneNumber,
   IsString,
@@ -10,12 +11,15 @@ import {
 import { Genders } from '../entities/user.entity';
 
 export class CreateUserDto {
+  @IsNotEmpty()
   @IsAlphanumeric()
   username: string;
 
+  @IsNotEmpty()
   @IsStrongPassword()
   password: string;
 
+  @IsNotEmpty()
   @IsString()
   firstName: string;
 
