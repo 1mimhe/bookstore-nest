@@ -1,4 +1,9 @@
-import { BadRequestException, ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -10,24 +15,35 @@ import { SigninDto } from './dtos/signin.dto';
 import { AuthMessages } from 'src/common/enums/auth.messages';
 import { ConfigService } from '@nestjs/config';
 import * as jwt from 'jsonwebtoken';
+import { JwtPayload } from 'src/common/types/jwt';
 
 @Injectable()
 export class AuthService {
+  private accessSecretKey: string;
+  private refreshSecretKey: string;
+
   constructor(
     private usersService: UsersService,
     @InjectRepository(User) private userRepo: Repository<User>,
-    private config: ConfigService
-  ) {}
+    config: ConfigService,
+  ) {
+    this.accessSecretKey = config.getOrThrow<string>('JWT_ACCESS_SECRET_KEY');
+    this.refreshSecretKey = config.getOrThrow<string>('JWT_REFRESH_SECRET_KEY');
+  }
 
   async signup(userDto: CreateUserDto, roles: Roles[] = [Roles.Customer]) {
     const { password, email, phoneNumber, ...userData } = userDto;
 
-    const conflicts = await this.usersService.checkUniqueConstraints(userData.username, phoneNumber, email);
+    const conflicts = await this.usersService.checkUniqueConstraints(
+      userData.username,
+      phoneNumber,
+      email,
+    );
     if (conflicts.length > 0) {
       throw new ConflictException(conflicts);
     }
 
-    const hashedPassword = await this.hashPassword(password);    
+    const hashedPassword = await this.hashPassword(password);
     const user = this.userRepo.create({
       ...userData,
       hashedPassword,
@@ -47,15 +63,18 @@ export class AuthService {
     if (!user) {
       throw new BadRequestException(AuthMessages.InvalidCredentials);
     }
-    
-    const isCorrectPassword = await this.verifyPassword(password, user.hashedPassword);
+
+    const isCorrectPassword = await this.verifyPassword(
+      password,
+      user.hashedPassword,
+    );
     if (!isCorrectPassword) {
       throw new BadRequestException(AuthMessages.InvalidCredentials);
     }
 
     const payload = {
       sub: user.id,
-      username: user.username
+      username: user.username,
     };
     const refreshToken = this.generateRefreshToken(payload);
     const accessToken = this.generateAccessToken(payload);
@@ -63,7 +82,7 @@ export class AuthService {
     return {
       refreshToken,
       accessToken,
-      userId: user.id
+      userId: user.id,
     };
   }
 
@@ -87,36 +106,55 @@ export class AuthService {
       if (!salt || !hash) {
         reject(new Error('Stored hash is in invalid format.'));
       }
-      
+
       pbkdf2(password, salt, 1000, 64, 'sha512', (err, derivedKey) => {
-        if (err) return reject(err);        
+        if (err) return reject(err);
         const isCorrectPassword = derivedKey.toString('hex') === hash;
         resolve(isCorrectPassword);
       });
     });
   }
 
-  private generateRefreshToken(payload: jwt.JwtPayload, expiresIn = 604_800) {
-    expiresIn = expiresIn > 604_800 ? 604_800 : expiresIn;
-    const refreshSecretKey = this.config.getOrThrow<string>('JWT_REFRESH_SECRET_KEY');
-    
+  private generateRefreshToken(payload: JwtPayload, expiresIn = 1_296_000 /* 15days */) {
+    expiresIn = Math.min(1_296_000, expiresIn);
+    const refreshSecretKey = this.refreshSecretKey
     return jwt.sign(payload, refreshSecretKey, { expiresIn });
   }
 
-  private generateAccessToken(payload: jwt.JwtPayload) {
-    const accessSecretKey = this.config.getOrThrow<string>('JWT_ACCESS_SECRET_KEY');
-    return jwt.sign(payload, accessSecretKey, { expiresIn: '20min' });
+  private generateAccessToken(payload: JwtPayload, expiresIn = 1200 /* 20min */) {
+    expiresIn = Math.min(1200, expiresIn);
+    const accessSecretKey = this.accessSecretKey
+    return jwt.sign(payload, accessSecretKey, { expiresIn });
   }
 
   verifyToken(token: string, type: 'access' | 'refresh') {
-    try {
-      let secretKey: string;
-      if (type = 'access') secretKey =this.config.getOrThrow<string>('JWT_ACCESS_SECRET_KEY');
-      else secretKey = this.config.getOrThrow<string>('JWT_REFRESH_SECRET_KEY');
-
-      return jwt.verify(token, secretKey) as jwt.JwtPayload;
-    } catch (error) {
-      throw new UnauthorizedException(AuthMessages.InvalidToken);
+    if (!token || typeof token !== 'string') {
+      throw new UnauthorizedException(`Invalid ${type} token format.`);
     }
+
+    try {
+      const secretKey = type === 'access' ? this.accessSecretKey : this.refreshSecretKey;
+      return jwt.verify(token, secretKey) as JwtPayload;
+    } catch (error) {
+      if (error instanceof jwt.TokenExpiredError) {
+        throw new UnauthorizedException(`${type} token has expired`);
+      }
+      if (error instanceof jwt.JsonWebTokenError) {
+        throw new UnauthorizedException(`Invalid ${type} token.`);
+      }
+      throw new UnauthorizedException(`${type} token verification failed.`);
+    }
+  }
+
+  refreshTokens(oldRefreshToken: string, expirationTime: number) {
+    const { sub, username } = this.verifyToken(oldRefreshToken, 'refresh');
+    const payload = { sub, username };
+    const newRefreshToken = this.generateRefreshToken(payload, Math.trunc(expirationTime / 1000));
+    const newAccessToken = this.generateAccessToken(payload);
+
+    return {
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+    };
   }
 }

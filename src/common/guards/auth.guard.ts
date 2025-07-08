@@ -23,11 +23,11 @@ export class AuthGuard implements CanActivate {
 
     const payload = this.authService.verifyToken(accessToken, 'access');
     if (!payload?.username) {
-      throw new UnauthorizedException(AuthMessages.InvalidToken);
+      throw new UnauthorizedException(AuthMessages.InvalidAccessToken);
     }
 
     if (request.session.userId !== payload.sub) {
-      throw new UnauthorizedException(AuthMessages.InvalidToken);
+      throw new UnauthorizedException(AuthMessages.InvalidAccessToken);
     }
 
     return true;
