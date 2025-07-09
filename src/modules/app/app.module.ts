@@ -10,6 +10,7 @@ import { createClient } from 'redis';
 import { UsersModule } from '../users/users.module';
 import * as cookieParser from 'cookie-parser';
 import { CookieNames } from 'src/common/enums/cookie.names';
+import { AuthorsModule } from '../authors/authors.module';
 
 @Module({
   imports: [
@@ -41,7 +42,8 @@ import { CookieNames } from 'src/common/enums/cookie.names';
         };
       },
     }),
-    UsersModule
+    UsersModule,
+    AuthorsModule,
   ],
   providers: [
     {
