@@ -9,8 +9,10 @@ import {
   IsStrongPassword,
 } from 'class-validator';
 import { Genders } from '../entities/user.entity';
+import { Transform } from 'class-transformer';
 
 export class CreateUserDto {
+  @Transform(({ value }) => value?.toLowercase())
   @IsNotEmpty()
   @IsAlphanumeric()
   username: string;
