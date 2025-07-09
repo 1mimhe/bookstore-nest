@@ -7,6 +7,9 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { createKeyv } from '@keyv/redis';
 import RedisStore from 'connect-redis';
 import { createClient } from 'redis';
+import { UsersModule } from '../users/users.module';
+import * as cookieParser from 'cookie-parser';
+import { CookieNames } from 'src/common/enums/cookie.names';
 
 @Module({
   imports: [
@@ -38,6 +41,7 @@ import { createClient } from 'redis';
         };
       },
     }),
+    UsersModule
   ],
   providers: [
     {
@@ -61,6 +65,7 @@ export class AppModule {
     consumer
       .apply(
         session({
+          name: CookieNames.SessionId,
           secret: this.config.getOrThrow<string>('SESSION_SECRET'),
           resave: false,
           saveUninitialized: false,
@@ -75,7 +80,11 @@ export class AppModule {
             maxAge: this.config.get<number>('COOKIE_MAX_AGE', 15 * 24 * 3600 * 1000) // 15 days
           }
         }),
-      )
-      .forRoutes('*');
+      ).forRoutes('*');
+    
+    consumer
+      .apply(
+        cookieParser(this.config.get<string>('COOKIE_SECRET'))
+      ).forRoutes('*');
   }
 }
