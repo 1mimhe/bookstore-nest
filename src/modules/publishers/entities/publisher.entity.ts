@@ -1,15 +1,23 @@
 import { BaseEntity } from 'src/common/entities/base.entity';
-import { Column, Entity, Index } from 'typeorm';
+import { User } from 'src/modules/users/entities/user.entity';
+import { Column, Entity, Index, JoinColumn, OneToOne } from 'typeorm';
 
 @Entity()
 @Index(['slug'], { unique: true })
 export class Publisher extends BaseEntity {
   @Column()
-  name: string;
+  publisherName: string;
   
   @Column()
   slug: string;
 
-  @Column({ nullable: true })
-  description: string;
+  @Column({
+    type: 'text',
+    nullable: true
+  })
+  description?: string;
+
+  @OneToOne(() => User, (user) => user.publisher)
+  @JoinColumn()
+  user: User;
 }

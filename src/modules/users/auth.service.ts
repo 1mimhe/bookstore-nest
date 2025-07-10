@@ -37,37 +37,22 @@ export class AuthService {
     this.refreshSecretKey = config.getOrThrow<string>('JWT_REFRESH_SECRET_KEY');
   }
 
-  // async signup(userDto: CreateUserDto, roles: Roles[] = [Roles.Customer]) {
-  //   const { password, email, phoneNumber, ...userData } = userDto;
+  async signup(
+    userDto: CreateUserDto,
+    roles?: Roles[]
+  ): Promise<User>;
 
-  //   const conflicts = await this.usersService.checkUniqueConstraints(
-  //     userData.username,
-  //     phoneNumber,
-  //     email,
-  //   );
-  //   if (conflicts.length > 0) {
-  //     throw new ConflictException(conflicts);
-  //   }
+  async signup<T extends AdditionalEntity>(
+    userDto: CreateUserDto,
+    roles: Roles[],
+    additionalEntityCallback: (user: User, manager: EntityManager) => Promise<T>
+  ): Promise<T>;
 
-  //   const hashedPassword = await this.hashPassword(password);
-  //   const user = this.userRepo.create({
-  //     ...userData,
-  //     hashedPassword,
-  //     contact: {
-  //       phoneNumber,
-  //       email,
-  //     },
-  //     roles: roles.map((role) => ({ role })),
-  //   });
-
-  //   return this.userRepo.save(user);
-  // }
-
-    async signup(
+  async signup<T extends AdditionalEntity>(
     userDto: CreateUserDto, 
     roles: Roles[] = [Roles.Customer],
-    additionalEntityCallback?: (user: User, manager: EntityManager) => Promise<AdditionalEntity>
-  ) {
+    additionalEntityCallback?: (user: User, manager: EntityManager) => Promise<T>
+  ): Promise<User | T> {
     const { password, email, phoneNumber, ...userData } = userDto;
     
     return this.dataSource.transaction(async (manager) => {
@@ -94,12 +79,12 @@ export class AuthService {
       });
       const savedUser = await manager.save(user);
       
-      let additionalEntity: AdditionalEntity | undefined = undefined;
+      let additionalEntity: T | undefined = undefined;
       if (additionalEntityCallback) {
         additionalEntity = await additionalEntityCallback(savedUser, manager);
       }
       
-      return savedUser ?? additionalEntity;
+      return additionalEntity ?? savedUser;
     });
   }
 
