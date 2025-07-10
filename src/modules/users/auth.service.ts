@@ -5,7 +5,7 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Roles } from './entities/role.entity';
@@ -18,6 +18,9 @@ import { ConfigService } from '@nestjs/config';
 import * as jwt from 'jsonwebtoken';
 import { JwtPayload } from 'src/common/types/jwt';
 import { SessionData } from 'express-session';
+import { Publisher } from '../publishers/entities/publisher.entity';
+
+type AdditionalEntity = Publisher;
 
 @Injectable()
 export class AuthService {
@@ -27,36 +30,77 @@ export class AuthService {
   constructor(
     private usersService: UsersService,
     @InjectRepository(User) private userRepo: Repository<User>,
+    private dataSource: DataSource,
     config: ConfigService,
   ) {
     this.accessSecretKey = config.getOrThrow<string>('JWT_ACCESS_SECRET_KEY');
     this.refreshSecretKey = config.getOrThrow<string>('JWT_REFRESH_SECRET_KEY');
   }
 
-  async signup(userDto: CreateUserDto, roles: Roles[] = [Roles.Customer]) {
+  // async signup(userDto: CreateUserDto, roles: Roles[] = [Roles.Customer]) {
+  //   const { password, email, phoneNumber, ...userData } = userDto;
+
+  //   const conflicts = await this.usersService.checkUniqueConstraints(
+  //     userData.username,
+  //     phoneNumber,
+  //     email,
+  //   );
+  //   if (conflicts.length > 0) {
+  //     throw new ConflictException(conflicts);
+  //   }
+
+  //   const hashedPassword = await this.hashPassword(password);
+  //   const user = this.userRepo.create({
+  //     ...userData,
+  //     hashedPassword,
+  //     contact: {
+  //       phoneNumber,
+  //       email,
+  //     },
+  //     roles: roles.map((role) => ({ role })),
+  //   });
+
+  //   return this.userRepo.save(user);
+  // }
+
+    async signup(
+    userDto: CreateUserDto, 
+    roles: Roles[] = [Roles.Customer],
+    additionalEntityCallback?: (user: User, manager: EntityManager) => Promise<AdditionalEntity>
+  ) {
     const { password, email, phoneNumber, ...userData } = userDto;
-
-    const conflicts = await this.usersService.checkUniqueConstraints(
-      userData.username,
-      phoneNumber,
-      email,
-    );
-    if (conflicts.length > 0) {
-      throw new ConflictException(conflicts);
-    }
-
-    const hashedPassword = await this.hashPassword(password);
-    const user = this.userRepo.create({
-      ...userData,
-      hashedPassword,
-      contact: {
+    
+    return this.dataSource.transaction(async (manager) => {
+      const conflicts = await this.usersService.checkUniqueConstraints(
+        userData.username,
         phoneNumber,
-        email,
-      },
-      roles: roles.map((role) => ({ role })),
-    });
+        email
+      );
+      
+      if (conflicts.length > 0) {
+        throw new ConflictException(conflicts);
+      }
 
-    return this.userRepo.save(user);
+      const hashedPassword = await this.hashPassword(password);
+      
+      const user = manager.create(User, {
+        ...userData,
+        hashedPassword,
+        contact: {
+          phoneNumber,
+          email,
+        },
+        roles: roles.map((role) => ({ role })),
+      });
+      const savedUser = await manager.save(user);
+      
+      let additionalEntity: AdditionalEntity | undefined = undefined;
+      if (additionalEntityCallback) {
+        additionalEntity = await additionalEntityCallback(savedUser, manager);
+      }
+      
+      return savedUser ?? additionalEntity;
+    });
   }
 
   async signin({ identifier, password }: SigninDto) {

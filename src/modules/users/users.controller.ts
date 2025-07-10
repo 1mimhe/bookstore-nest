@@ -45,7 +45,7 @@ export class UsersController {
   ) {}
 
   @ApiOperation({
-    summary: 'Sign up a new user account',
+    summary: 'Sign up a new user account (customer)',
     description:
       'Register a new user with unique username, email, and phone number',
   })

@@ -12,7 +12,7 @@ import { Genders } from '../entities/user.entity';
 import { Transform } from 'class-transformer';
 
 export class CreateUserDto {
-  @Transform(({ value }) => value?.toLowercase())
+  @Transform(({ value }) => value?.toLowerCase())
   @IsNotEmpty()
   @IsAlphanumeric()
   username: string;
