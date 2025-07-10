@@ -1,10 +1,10 @@
 import { BaseEntity } from 'src/common/entities/base.entity';
-import { Column, Entity, Unique } from 'typeorm';
+import { Column, Entity, Index, Unique } from 'typeorm';
 
 @Entity()
-@Unique(['slug'])
+@Index(['slug'], { unique: true })
 export class Author extends BaseEntity {
-  @Column({ nullable: false })
+  @Column()
   firstName: string;
 
   @Column({ nullable: true })
@@ -13,7 +13,7 @@ export class Author extends BaseEntity {
   @Column({ nullable: true })
   nickname?: string;
 
-  @Column({ nullable: false })
+  @Column()
   slug: string;
 
   @Column({

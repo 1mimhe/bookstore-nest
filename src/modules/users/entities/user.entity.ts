@@ -19,14 +19,14 @@ export enum Genders {
 @Entity()
 @Index(['username'], { unique: true })
 export class User extends BaseEntity {
-  @Column({ nullable: false })
+  @Column()
   username: string;
 
-  @Column({ nullable: false })
+  @Column()
   @Exclude()
   hashedPassword: string;
 
-  @Column({ nullable: false })
+  @Column()
   firstName: string;
 
   @Column({ nullable: true })

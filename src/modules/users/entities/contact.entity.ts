@@ -4,16 +4,14 @@ import {
   Index,
   JoinColumn,
   OneToOne,
-  PrimaryGeneratedColumn,
-  Unique,
 } from 'typeorm';
 import { User } from './user.entity';
 import { BaseEntity } from 'src/common/entities/base.entity';
 
 @Entity()
 // @Index(['userId'])
-@Unique(['phoneNumber'])
-@Unique(['email'])
+@Index(['phoneNumber'], { unique: true })
+@Index(['email'], { unique: true })
 export class Contact extends BaseEntity {
   @Column({ nullable: true })
   phoneNumber: string;
