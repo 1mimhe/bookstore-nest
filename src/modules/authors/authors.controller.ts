@@ -1,4 +1,4 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post } from '@nestjs/common';
 import { CreateAuthorDto } from './dtos/create-author.dto';
 import { Author } from './entities/author.entity';
 import { AuthorsService } from './authors.service';
@@ -16,7 +16,31 @@ export class AuthorsController {
   })
   @HttpCode(HttpStatus.CREATED)
   @Post()
-  async createProfile(@Body() body: CreateAuthorDto): Promise<Author> {
-    return await this.authorsService.create(body);
+  async createAuthor(@Body() body: CreateAuthorDto): Promise<Author> {
+    return this.authorsService.create(body);
+  }
+
+  @ApiOperation({ 
+    summary: 'Retrieves a author by its id',
+  })
+  @Get(':id')
+  async getAuthorById(@Param('id') id: string): Promise<Author> {
+    return this.authorsService.getById(id);
+  }
+
+  @ApiOperation({ 
+    summary: 'Retrieves a author by its slug',
+  })
+  @Get('/by-slug/:slug')
+  async getAuthorBySlug(@Param('slug') slug: string): Promise<Author> {
+    return this.authorsService.getBySlug(slug);
+  }
+
+  @ApiOperation({ 
+    summary: 'Retrieves all authors',
+  })
+  @Get()
+  async getAllAuthors(): Promise<Author[]> {
+    return this.authorsService.getAll();
   }
 }

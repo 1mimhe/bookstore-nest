@@ -1,9 +1,10 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Author } from './entities/author.entity';
 import { Repository } from 'typeorm';
 import { CreateAuthorDto } from './dtos/create-author.dto';
 import { CommonMessages } from 'src/common/enums/common.messages';
+import { NotFoundMessages } from 'src/common/enums/not-found.messages';
 
 @Injectable()
 export class AuthorsService {
@@ -11,7 +12,7 @@ export class AuthorsService {
     @InjectRepository(Author) private authorRepo: Repository<Author>
   ) {}
 
-  async create(authorDto: CreateAuthorDto) {
+  async create(authorDto: CreateAuthorDto): Promise<Author> {
     const author = this.authorRepo.create(authorDto);
     return this.authorRepo.save(author).catch((error) => {
       if (error.code === '23505') {
@@ -19,5 +20,33 @@ export class AuthorsService {
       }
       throw error;
     });
+  }
+
+  async getById(id: string): Promise<Author> {
+    const author = await this.authorRepo.findOne({
+      where: { id }
+    });
+    
+    if (!author) {
+      throw new NotFoundException(NotFoundMessages.Author);
+    }
+    
+    return author;
+  }
+
+  async getBySlug(slug: string): Promise<Author> {
+    const author = await this.authorRepo.findOne({
+      where: { slug }
+    });
+    
+    if (!author) {
+      throw new NotFoundException(NotFoundMessages.Author);
+    }
+    
+    return author;
+  }
+
+  async getAll(): Promise<Author[]> {
+    return this.authorRepo.find();
   }
 }

@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer';
-import { IsDate, IsNotEmpty, IsString } from 'class-validator';
+import { IsDate, IsDateString, IsNotEmpty, IsString } from 'class-validator';
 import { makeUnique } from 'src/common/utilities/make-unique';
 
 export class CreateAuthorDto {
@@ -23,10 +23,9 @@ export class CreateAuthorDto {
   @IsString()
   biography?: string;
 
-  @IsDate()
-  @IsString()
+  @IsDateString()
   dateOfBirth?: Date;
 
-  @IsDate()
+  @IsDateString()
   dateOfDeath?: Date;
 }
