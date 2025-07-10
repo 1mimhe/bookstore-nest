@@ -51,7 +51,7 @@ export class AuthorsService {
     return this.authorRepo.find();
   }
 
-  async update(id: string, authorDto: UpdateAuthorDto) {
+  async update(id: string, authorDto: UpdateAuthorDto): Promise<Author> {
     const author = await this.getById(id);
     Object.assign(author, authorDto);
     return this.authorRepo.save(author).catch((error) => {
@@ -60,5 +60,10 @@ export class AuthorsService {
       }
       throw error;
     });
+  }
+
+  async delete(id: string): Promise<Author> {
+    const profile = await this.getById(id);
+    return this.authorRepo.softRemove(profile);
   }
 }

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post } from '@nestjs/common';
 import { CreateAuthorDto } from './dtos/create-author.dto';
 import { Author } from './entities/author.entity';
 import { AuthorsService } from './authors.service';
@@ -54,5 +54,13 @@ export class AuthorsController {
     @Body() body: UpdateAuthorDto
   ): Promise<Author> {
     return this.authorsService.update(id, body);
+  }
+
+  @ApiOperation({ 
+    summary: 'Delete a author',
+  })
+  @Delete(':id')
+  async deleteAuthor(@Param('id') id: string): Promise<Author> {
+    return this.authorsService.delete(id);
   }
 }
