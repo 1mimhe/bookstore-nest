@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import { CreateAuthorDto } from './dtos/create-author.dto';
 import { CommonMessages } from 'src/common/enums/common.messages';
 import { NotFoundMessages } from 'src/common/enums/not-found.messages';
+import { UpdateAuthorDto } from './dtos/update-author.dto';
 
 @Injectable()
 export class AuthorsService {
@@ -48,5 +49,16 @@ export class AuthorsService {
 
   async getAll(): Promise<Author[]> {
     return this.authorRepo.find();
+  }
+
+  async update(id: string, authorDto: UpdateAuthorDto) {
+    const author = await this.getById(id);
+    Object.assign(author, authorDto);
+    return this.authorRepo.save(author).catch((error) => {
+      if (error.code === '23505') {
+        throw new BadRequestException(CommonMessages.SlugAlreadyExists);
+      }
+      throw error;
+    });
   }
 }

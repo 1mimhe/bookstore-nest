@@ -1,8 +1,9 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Patch, Post } from '@nestjs/common';
 import { CreateAuthorDto } from './dtos/create-author.dto';
 import { Author } from './entities/author.entity';
 import { AuthorsService } from './authors.service';
 import { ApiOperation } from '@nestjs/swagger';
+import { UpdateAuthorDto } from './dtos/update-author.dto';
 
 @Controller('authors')
 export class AuthorsController {
@@ -42,5 +43,16 @@ export class AuthorsController {
   @Get()
   async getAllAuthors(): Promise<Author[]> {
     return this.authorsService.getAll();
+  }
+
+  @ApiOperation({ 
+    summary: 'Update a author',
+  })
+  @Patch(':id')
+  async updateAuthor(
+    @Param('id') id: string,
+    @Body() body: UpdateAuthorDto
+  ): Promise<Author> {
+    return this.authorsService.update(id, body);
   }
 }
