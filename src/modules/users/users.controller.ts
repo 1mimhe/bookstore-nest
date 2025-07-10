@@ -2,7 +2,6 @@ import {
   BadRequestException,
   Body,
   Controller,
-  ForbiddenException,
   Get,
   HttpCode,
   HttpStatus,
@@ -10,12 +9,10 @@ import {
   Req,
   Res,
   Session,
-  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { AuthService } from './auth.service';
-import { UsersService } from './users.service';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
