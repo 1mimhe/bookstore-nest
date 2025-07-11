@@ -1,7 +1,10 @@
-############## Development Stage ##############
-FROM node:22-alpine AS dev
+############## Base Stage ##############
+FROM node:22-alpine AS base
 WORKDIR /usr/app
+COPY package*.json ./
 
+############## Development Stage ##############
+FROM base AS dev
 LABEL Maintainer="Mohammad Hosseini <mimhe1381@gmail.com>"
 
 COPY package*.json ./
@@ -17,17 +20,15 @@ EXPOSE 3000
 CMD ["npm", "run", "start:dev"]
 
 ############## Build Stage ##############
-FROM node:22-alpine AS build
-WORKDIR /usr/app
-
-COPY package*.json ./
+FROM base AS build
 
 RUN npm ci
 
 COPY ./ ./
 
 RUN npm run build && \
-    npm prune --production
+    npm prune --production && \
+    npm cache clean --force
 
 ############## Production Dependencies Stage ##############
 FROM node:22-alpine AS prod-deps
