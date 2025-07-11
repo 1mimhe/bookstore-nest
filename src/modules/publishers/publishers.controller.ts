@@ -1,9 +1,19 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { PublishersService } from './publishers.service';
-import { ApiBadRequestResponse, ApiConflictResponse, ApiCreatedResponse, ApiOperation } from '@nestjs/swagger';
+import {
+  ApiBadRequestResponse,
+  ApiConflictResponse,
+  ApiCreatedResponse,
+  ApiOperation,
+} from '@nestjs/swagger';
 import { CreatePublisherDto } from './dtos/create-publisher.dto';
 import { UserDto } from '../users/dtos/user.dto';
-import { ConflictResponseDto, ValidationErrorResponseDto } from 'src/common/dtos/error.dtos';
+import {
+  ConflictResponseDto,
+  ValidationErrorResponseDto,
+} from 'src/common/dtos/error.dtos';
+import { Serialize } from 'src/common/interceptors/serialize.interceptor';
+import { PublisherDto } from './dtos/publisher.dto';
 
 @Controller('publishers')
 export class PublishersController {
@@ -23,6 +33,7 @@ export class PublishersController {
   @ApiCreatedResponse({
     type: UserDto,
   })
+  @Serialize(PublisherDto)
   @Post('signup')
   signup(@Body() body: CreatePublisherDto) {
     return this.publishersService.signupPublisher(body);
