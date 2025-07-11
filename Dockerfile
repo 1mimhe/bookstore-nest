@@ -45,11 +45,15 @@ RUN npm ci --omit=dev --ignore-scripts --no-audit --no-fund && \
 ############## Runtime Stage ##############
 FROM node:22-alpine AS runtime
 
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nestjs -u 1001
+
 WORKDIR /usr/app
 
-COPY --from=build /usr/app/dist ./dist
-COPY --from=prod-deps /usr/app/node_modules ./node_modules
-COPY --from=build /usr/app/package.json ./
+COPY --from=build --chown=nestjs:nodejs /usr/app/dist ./dist
+COPY --from=prod-deps --chown=nestjs:nodejs /usr/app/node_modules ./node_modules
+COPY --from=build --chown=nestjs:nodejs /usr/app/package.json ./
 
 USER nestjs
 
