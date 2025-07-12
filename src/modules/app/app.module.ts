@@ -12,6 +12,7 @@ import * as cookieParser from 'cookie-parser';
 import { CookieNames } from 'src/common/enums/cookie.names';
 import { AuthorsModule } from '../authors/authors.module';
 import { PublishersModule } from '../publishers/publishers.module';
+import { BooksModule } from '../books/books.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { PublishersModule } from '../publishers/publishers.module';
     UsersModule,
     AuthorsModule,
     PublishersModule,
+    BooksModule
   ],
   providers: [
     {

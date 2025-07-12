@@ -1,4 +1,5 @@
-import { BaseEntity, Column, Entity, Unique } from "typeorm";
+import { BaseEntity } from "src/common/entities/base.entity";
+import { Column, Entity, Unique } from "typeorm";
 
 @Entity()
 @Unique(['name'])
