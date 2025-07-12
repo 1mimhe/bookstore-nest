@@ -11,7 +11,7 @@ export class LanguagesService {
     @InjectRepository(Language) private languageRepo: Repository<Language>
   ) {}
 
-  async create(languageDto: CreateLanguageDto) {
+  async create(languageDto: CreateLanguageDto): Promise<Language | never> {
     const language = this.languageRepo.create(languageDto);
     return this.languageRepo.save(language).catch((error) => {
       if (error.code === 'ER_DUP_ENTRY') {
@@ -19,5 +19,9 @@ export class LanguagesService {
       }
       throw error;
     });
+  }
+
+  async getAll(): Promise<Language[]> {
+    return this.languageRepo.find();
   }
 }
