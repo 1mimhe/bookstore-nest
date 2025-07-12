@@ -1,9 +1,11 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, HttpCode, HttpStatus, NotFoundException, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
 import { CreateAuthorDto } from './dtos/create-author.dto';
 import { Author } from './entities/author.entity';
 import { AuthorsService } from './authors.service';
-import { ApiOperation } from '@nestjs/swagger';
+import { ApiBadRequestResponse, ApiNotFoundResponse, ApiOperation } from '@nestjs/swagger';
 import { UpdateAuthorDto } from './dtos/update-author.dto';
+import { NotFoundMessages } from 'src/common/enums/not-found.messages';
+import { CommonMessages } from 'src/common/enums/common.messages';
 
 @Controller('authors')
 export class AuthorsController {
@@ -15,6 +17,10 @@ export class AuthorsController {
     summary: 'Create a new author',
     description: 'Creates a new author (or translator) with the provided information'
   })
+  @ApiBadRequestResponse({
+    type: BadRequestException,
+    description: CommonMessages.SlugAlreadyExists
+  })
   @HttpCode(HttpStatus.CREATED)
   @Post()
   async createAuthor(@Body() body: CreateAuthorDto): Promise<Author> {
@@ -24,6 +30,10 @@ export class AuthorsController {
   @ApiOperation({ 
     summary: 'Retrieves a author by its id',
   })
+  @ApiNotFoundResponse({
+    type: NotFoundException,
+    description: NotFoundMessages.Author
+  })
   @Get(':id')
   async getAuthorById(@Param('id', ParseUUIDPipe) id: string): Promise<Author> {
     return this.authorsService.getById(id);
@@ -31,6 +41,10 @@ export class AuthorsController {
 
   @ApiOperation({ 
     summary: 'Retrieves a author by its slug',
+  })
+  @ApiNotFoundResponse({
+    type: NotFoundException,
+    description: NotFoundMessages.Author
   })
   @Get('/by-slug/:slug')
   async getAuthorBySlug(@Param('slug') slug: string): Promise<Author> {
@@ -48,6 +62,14 @@ export class AuthorsController {
   @ApiOperation({ 
     summary: 'Update a author',
   })
+  @ApiBadRequestResponse({
+    type: BadRequestException,
+    description: CommonMessages.SlugAlreadyExists
+  })
+  @ApiNotFoundResponse({
+    type: NotFoundException,
+    description: NotFoundMessages.Author
+  })
   @Patch(':id')
   async updateAuthor(
     @Param('id', ParseUUIDPipe) id: string,
@@ -58,6 +80,10 @@ export class AuthorsController {
 
   @ApiOperation({ 
     summary: 'Delete a author',
+  })
+  @ApiNotFoundResponse({
+    type: NotFoundException,
+    description: NotFoundMessages.Author
   })
   @Delete(':id')
   async deleteAuthor(@Param('id', ParseUUIDPipe) id: string): Promise<Author> {
