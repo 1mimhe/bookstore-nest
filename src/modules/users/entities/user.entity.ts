@@ -9,6 +9,7 @@ import {
 import { Contact } from './contact.entity';
 import { Role } from './role.entity';
 import { BaseEntity } from 'src/common/entities/base.entity';
+import { Publisher } from 'src/modules/publishers/entities/publisher.entity';
 
 export enum Genders {
   Male = 'male',
@@ -19,14 +20,14 @@ export enum Genders {
 @Entity()
 @Index(['username'], { unique: true })
 export class User extends BaseEntity {
-  @Column({ nullable: false })
+  @Column()
   username: string;
 
-  @Column({ nullable: false })
+  @Column()
   @Exclude()
   hashedPassword: string;
 
-  @Column({ nullable: false })
+  @Column()
   firstName: string;
 
   @Column({ nullable: true })
@@ -53,4 +54,7 @@ export class User extends BaseEntity {
 
   @OneToMany(() => Role, (role) => role.user, { cascade: true })
   roles: Role[];
+
+  @OneToOne(() => Publisher, (publisher) => publisher.user)
+  publisher?: Publisher;
 }

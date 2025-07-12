@@ -9,6 +9,7 @@ import {
   Req,
   Res,
   Session,
+  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { CreateUserDto } from './dtos/create-user.dto';
@@ -20,6 +21,7 @@ import {
   ApiCreatedResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import {
   ConflictResponseDto,
@@ -36,6 +38,7 @@ import { UserDto } from './dtos/user.dto';
 import { AuthGuard } from 'src/common/guards/auth.guard';
 import { AccessTokenDto } from './dtos/access-token.dto';
 import { Cookies } from 'src/common/decorators/cookies.decorator';
+import { ConflictMessages } from 'src/common/enums/conflict.messages';
 
 @Controller('auth')
 export class UsersController {
@@ -45,12 +48,13 @@ export class UsersController {
   ) {}
 
   @ApiOperation({
-    summary: 'Sign up a new user account',
+    summary: 'Sign up a new user account (customer)',
     description:
       'Register a new user with unique username, email, and phone number',
   })
   @ApiConflictResponse({
     type: ConflictResponseDto,
+    description: ConflictMessages.AlreadyExists
   })
   @ApiBadRequestResponse({
     type: ValidationErrorResponseDto,
@@ -68,6 +72,9 @@ export class UsersController {
     summary: 'Sign in a user',
     description:
       'Login a user and returns an access token with 20m expiration time',
+  })
+  @ApiBadRequestResponse({
+    type: ValidationErrorResponseDto,
   })
   @ApiBadRequestResponse({
     type: BadRequestException,
@@ -122,6 +129,10 @@ export class UsersController {
 
   @ApiOperation({
     summary: 'Retrieves the current authorized user',
+  })
+  @ApiUnauthorizedResponse({
+    type: UnauthorizedException,
+    description: AuthMessages.MissingAccessToken
   })
   @ApiOkResponse({
     type: UserDto,
