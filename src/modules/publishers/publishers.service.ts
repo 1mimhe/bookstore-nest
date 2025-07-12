@@ -7,6 +7,7 @@ import { Roles } from '../users/entities/role.entity';
 import { User } from '../users/entities/user.entity';
 import { CreatePublisherDto } from './dtos/create-publisher.dto';
 import { NotFoundMessages } from 'src/common/enums/not-found.messages';
+import { UpdatePublisherDto } from './dtos/update-publisher.dto';
 
 @Injectable()
 export class PublishersService {
@@ -15,8 +16,8 @@ export class PublishersService {
     private authService: AuthService
   ) {}
 
-  async signupPublisher(publisherDto: CreatePublisherDto): Promise<Publisher> {
-    const { publisherName, slug, description, ...userDto } = publisherDto;
+  async signup(publisherDto: CreatePublisherDto): Promise<Publisher | never> {
+    const { publisherName, slug, description, logoUrl, ...userDto } = publisherDto;
     
     return this.authService.signup(
       userDto,
@@ -27,14 +28,15 @@ export class PublishersService {
           user: user,
           publisherName,
           slug,
-          description
+          description,
+          logoUrl
         });
         return manager.save(publisher);
       }
     );
   }
 
-  async getById(id: string, relations?: string[]): Promise<Publisher | null> {    
+  async getById(id: string, relations?: string[]): Promise<Publisher | never> {    
     return this.publisherRepo.findOneOrFail({
       where: { id },
       relations
@@ -44,5 +46,11 @@ export class PublishersService {
       }
       throw error;
     });
+  }
+
+  async update(id: string, publisherDto: UpdatePublisherDto): Promise<Publisher | never> {
+    const publisher = await this.getById(id);
+    Object.assign(publisher, publisherDto);
+    return this.publisherRepo.save(publisher);
   }
 }

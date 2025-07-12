@@ -6,6 +6,7 @@ import {
   Param,
   ParseBoolPipe,
   ParseUUIDPipe,
+  Patch,
   Post,
   Query,
 } from '@nestjs/common';
@@ -26,6 +27,7 @@ import {
 } from 'src/common/dtos/error.dtos';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 import { PublisherDto } from './dtos/publisher.dto';
+import { UpdatePublisherDto } from './dtos/update-publisher.dto';
 
 @Controller('publishers')
 export class PublishersController {
@@ -48,7 +50,7 @@ export class PublishersController {
   @Serialize(PublisherDto)
   @Post('signup')
   async signup(@Body() body: CreatePublisherDto) {
-    return this.publishersService.signupPublisher(body);
+    return this.publishersService.signup(body);
   }
 
   @ApiOperation({
@@ -70,5 +72,19 @@ export class PublishersController {
   ) {
     const relations = complete ? ['books'] : [];
     return this.publishersService.getById(id, relations);
+  }
+
+  @ApiOperation({
+    summary: 'Update a publisher by its id  (publisher related details only)',
+  })
+  @ApiNotFoundResponse({
+    type: NotFoundException
+  })
+  @Patch(':id')
+  async updatePublisher(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: UpdatePublisherDto
+  ) {
+    return this.publishersService.update(id, body);
   }
 }
