@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsUrl } from 'class-validator';
 import { makeUnique } from 'src/common/utilities/make-unique';
 import { CreateUserDto } from 'src/modules/users/dtos/create-user.dto';
 
@@ -15,6 +15,10 @@ export class CreatePublisherDto extends CreateUserDto {
   @IsOptional()
   @IsString()
   slug?: string;
+
+  @IsOptional()
+  @IsUrl()
+  logoUrl?: string;
 
   @IsOptional()
   @IsString()

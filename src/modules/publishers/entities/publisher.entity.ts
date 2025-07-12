@@ -8,15 +8,18 @@ import { Column, Entity, Index, JoinColumn, OneToOne, Unique } from 'typeorm';
 export class Publisher extends BaseEntity {
   @Column()
   publisherName: string;
-  
+
   @Column()
   slug: string;
 
   @Column({
     type: 'text',
-    nullable: true
+    nullable: true,
   })
   description?: string;
+
+  @Column({ nullable: true })
+  logoUrl?: string;
 
   @OneToOne(() => User, (user) => user.publisher)
   @JoinColumn()
