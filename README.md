@@ -14,15 +14,13 @@
 This project is a comprehensive book management system designed to streamline bookstore operations with a focus on scalability, security, and performance.
 
 Built using TypeScript, NestJS, and TypeORM, the system supports entities for books, users, orders, publishers, and more, with normalized relationships to ensure data integrity and efficient querying.
-The system implements a Role-Based Access Control (RBAC) system with distinct roles:
+The system implements a Role-Based Access Control (RBAC) system with distinct roles defined to manage permissions effectively:
 - Customer
 - Admin
 - Content Manager
 - Inventory Manager
 - Order Manage
 - Publisher
-
-defined to manage permissions effectively.
 
 Key functionalities include book catalog management, user authentication with JWT-based access and refresh tokens, order processing, and inventory tracking.
 
