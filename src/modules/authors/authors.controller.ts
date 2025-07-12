@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
 import { CreateAuthorDto } from './dtos/create-author.dto';
 import { Author } from './entities/author.entity';
 import { AuthorsService } from './authors.service';
@@ -25,7 +25,7 @@ export class AuthorsController {
     summary: 'Retrieves a author by its id',
   })
   @Get(':id')
-  async getAuthorById(@Param('id') id: string): Promise<Author> {
+  async getAuthorById(@Param('id', ParseUUIDPipe) id: string): Promise<Author> {
     return this.authorsService.getById(id);
   }
 
@@ -50,9 +50,9 @@ export class AuthorsController {
   })
   @Patch(':id')
   async updateAuthor(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() body: UpdateAuthorDto
-  ): Promise<Author> {
+  ): Promise<Author> {    
     return this.authorsService.update(id, body);
   }
 
@@ -60,7 +60,7 @@ export class AuthorsController {
     summary: 'Delete a author',
   })
   @Delete(':id')
-  async deleteAuthor(@Param('id') id: string): Promise<Author> {
+  async deleteAuthor(@Param('id', ParseUUIDPipe) id: string): Promise<Author> {
     return this.authorsService.delete(id);
   }
 }
