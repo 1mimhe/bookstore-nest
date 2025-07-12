@@ -1,10 +1,22 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  NotFoundException,
+  Param,
+  ParseBoolPipe,
+  ParseUUIDPipe,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { PublishersService } from './publishers.service';
 import {
   ApiBadRequestResponse,
   ApiConflictResponse,
   ApiCreatedResponse,
+  ApiNotFoundResponse,
   ApiOperation,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { CreatePublisherDto } from './dtos/create-publisher.dto';
 import { UserDto } from '../users/dtos/user.dto';
@@ -35,7 +47,28 @@ export class PublishersController {
   })
   @Serialize(PublisherDto)
   @Post('signup')
-  signup(@Body() body: CreatePublisherDto) {
+  async signup(@Body() body: CreatePublisherDto) {
     return this.publishersService.signupPublisher(body);
+  }
+
+  @ApiOperation({
+    summary: 'Retrieves a publisher by its id',
+  })
+  @ApiNotFoundResponse({
+    type: NotFoundException
+  })
+  @ApiQuery({
+    name: 'complete',
+    required: false,
+    type: Boolean,
+    description: 'Include related books in the response',
+  })
+  @Get(':id')
+  async getPublisherById(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query('complete', new ParseBoolPipe({ optional: true })) complete?: boolean,
+  ) {
+    const relations = complete ? ['books'] : [];
+    return this.publishersService.getById(id, relations);
   }
 }

@@ -1,11 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Publisher } from './entities/publisher.entity';
-import { EntityManager, Repository } from 'typeorm';
+import { EntityManager, EntityNotFoundError, Repository } from 'typeorm';
 import { AuthService } from '../users/auth.service';
 import { Roles } from '../users/entities/role.entity';
 import { User } from '../users/entities/user.entity';
 import { CreatePublisherDto } from './dtos/create-publisher.dto';
+import { NotFoundMessages } from 'src/common/enums/not-found.messages';
 
 @Injectable()
 export class PublishersService {
@@ -31,5 +32,17 @@ export class PublishersService {
         return manager.save(publisher);
       }
     );
+  }
+
+  async getById(id: string, relations?: string[]): Promise<Publisher | null> {    
+    return this.publisherRepo.findOneOrFail({
+      where: { id },
+      relations
+    }).catch((error: Error) => {
+      if (EntityNotFoundError) {
+        new NotFoundException(NotFoundMessages.Publisher);
+      }
+      throw error;
+    });
   }
 }
