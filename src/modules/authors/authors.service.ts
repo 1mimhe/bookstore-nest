@@ -1,9 +1,9 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Author } from './entities/author.entity';
 import { EntityNotFoundError, Repository } from 'typeorm';
 import { CreateAuthorDto } from './dtos/create-author.dto';
-import { CommonMessages } from 'src/common/enums/common.messages';
+import { ConflictMessages } from 'src/common/enums/conflict.messages';
 import { NotFoundMessages } from 'src/common/enums/not-found.messages';
 import { UpdateAuthorDto } from './dtos/update-author.dto';
 
@@ -16,8 +16,8 @@ export class AuthorsService {
   async create(authorDto: CreateAuthorDto): Promise<Author | never> {
     const author = this.authorRepo.create(authorDto);
     return this.authorRepo.save(author).catch((error) => {
-      if (error.code === '23505') {
-        throw new BadRequestException(CommonMessages.SlugAlreadyExists);
+      if (error.code === 'ER_DUP_ENTRY') {
+        throw new ConflictException(ConflictMessages.Slug);
       }
       throw error;
     });
@@ -53,8 +53,8 @@ export class AuthorsService {
     const author = await this.getById(id);
     Object.assign(author, authorDto);
     return this.authorRepo.save(author).catch((error) => {
-      if (error.code === '23505') {
-        throw new BadRequestException(CommonMessages.SlugAlreadyExists);
+      if (error.code === 'ER_DUP_ENTRY') {
+        throw new ConflictException(ConflictMessages.Slug);
       }
       throw error;
     });

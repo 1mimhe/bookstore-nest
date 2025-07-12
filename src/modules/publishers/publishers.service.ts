@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Publisher } from './entities/publisher.entity';
 import { EntityManager, EntityNotFoundError, Repository } from 'typeorm';
@@ -8,6 +8,7 @@ import { User } from '../users/entities/user.entity';
 import { CreatePublisherDto } from './dtos/create-publisher.dto';
 import { NotFoundMessages } from 'src/common/enums/not-found.messages';
 import { UpdatePublisherDto } from './dtos/update-publisher.dto';
+import { ConflictMessages } from 'src/common/enums/conflict.messages';
 
 @Injectable()
 export class PublishersService {
@@ -31,7 +32,12 @@ export class PublishersService {
           description,
           logoUrl
         });
-        return manager.save(publisher);
+        return manager.save(publisher).catch((error) => {
+          if (error.code === 'ER_DUP_ENTRY') {
+            throw new ConflictException(ConflictMessages.PublisherName);
+          }
+          throw error;
+        });;
       }
     );
   }
@@ -51,6 +57,11 @@ export class PublishersService {
   async update(id: string, publisherDto: UpdatePublisherDto): Promise<Publisher | never> {
     const publisher = await this.getById(id);
     Object.assign(publisher, publisherDto);
-    return this.publisherRepo.save(publisher);
+    return this.publisherRepo.save(publisher).catch((error) => {
+      if (error.code === 'ER_DUP_ENTRY') {
+        throw new ConflictException(ConflictMessages.PublisherName);
+      }
+      throw error;
+    });;;
   }
 }

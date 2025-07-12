@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer';
-import { IsDate, IsDateString, IsNotEmpty, IsString } from 'class-validator';
+import { IsDateString, IsNotEmpty, IsString } from 'class-validator';
 import { makeUnique } from 'src/common/utilities/make-unique';
 
 export class CreateAuthorDto {
@@ -13,9 +13,12 @@ export class CreateAuthorDto {
   @IsString()
   nickname?: string;
 
-  @Transform(({ obj }) => {
-    if (obj.slug) return makeUnique(obj.slug);
-    return makeUnique(`${obj.firstName}-${obj.lastName ? obj.lastName : ''}`);
+  @Transform(({ obj, value }) => {
+    if (value && value.trim()) return makeUnique(value);
+    if (obj.firstName) {
+      return makeUnique(`${obj.firstName}-${obj.lastName ? obj.lastName : ''}`);
+    }
+    return undefined;
   })
   @IsString()
   slug?: string;

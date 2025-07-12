@@ -8,9 +8,12 @@ export class CreatePublisherDto extends CreateUserDto {
   @IsString()
   publisherName: string;
 
-  @Transform(({ obj }) => {
-    if (obj.slug) return makeUnique(obj.slug);
-    return makeUnique(`${obj.firstName}-${obj.lastName ? obj.lastName : ''}`);
+  @Transform(({ obj, value }) => {
+    if (value) return makeUnique(value);
+    if (obj.publisherName && obj.publisherName.trim()) {
+      return makeUnique(obj.publisherName);
+    }
+    return undefined;
   })
   @IsOptional()
   @IsString()

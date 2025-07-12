@@ -1,5 +1,6 @@
 import {
   Body,
+  ConflictException,
   Controller,
   Get,
   NotFoundException,
@@ -28,6 +29,8 @@ import {
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 import { PublisherDto } from './dtos/publisher.dto';
 import { UpdatePublisherDto } from './dtos/update-publisher.dto';
+import { ConflictMessages } from 'src/common/enums/conflict.messages';
+import { NotFoundMessages } from 'src/common/enums/not-found.messages';
 
 @Controller('publishers')
 export class PublishersController {
@@ -37,6 +40,13 @@ export class PublishersController {
     summary: 'Sign up a new publisher',
     description:
       'Register a new publisher with unique username, email, and phone number',
+  })
+  @ApiBadRequestResponse({
+    type: ValidationErrorResponseDto,
+  })
+  @ApiConflictResponse({
+    type: ConflictException,
+    description: ConflictMessages.PublisherName
   })
   @ApiConflictResponse({
     type: ConflictResponseDto,
@@ -57,7 +67,8 @@ export class PublishersController {
     summary: 'Retrieves a publisher by its id',
   })
   @ApiNotFoundResponse({
-    type: NotFoundException
+    type: NotFoundException,
+    description: NotFoundMessages.Publisher
   })
   @ApiQuery({
     name: 'complete',
@@ -77,8 +88,16 @@ export class PublishersController {
   @ApiOperation({
     summary: 'Update a publisher by its id  (publisher related details only)',
   })
+  @ApiBadRequestResponse({
+    type: ValidationErrorResponseDto,
+  })
+  @ApiConflictResponse({
+    type: ConflictException,
+    description: ConflictMessages.PublisherName
+  })
   @ApiNotFoundResponse({
-    type: NotFoundException
+    type: NotFoundException,
+    description: NotFoundMessages.Publisher
   })
   @Patch(':id')
   async updatePublisher(

@@ -1,11 +1,11 @@
-import { BadRequestException, Body, Controller, Delete, Get, HttpCode, HttpStatus, NotFoundException, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
+import { Body, ConflictException, Controller, Delete, Get, HttpCode, HttpStatus, NotFoundException, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
 import { CreateAuthorDto } from './dtos/create-author.dto';
 import { Author } from './entities/author.entity';
 import { AuthorsService } from './authors.service';
-import { ApiBadRequestResponse, ApiNotFoundResponse, ApiOperation } from '@nestjs/swagger';
+import { ApiBadRequestResponse, ApiConflictResponse, ApiNotFoundResponse, ApiOperation } from '@nestjs/swagger';
 import { UpdateAuthorDto } from './dtos/update-author.dto';
 import { NotFoundMessages } from 'src/common/enums/not-found.messages';
-import { CommonMessages } from 'src/common/enums/common.messages';
+import { ConflictMessages } from 'src/common/enums/conflict.messages';
 
 @Controller('authors')
 export class AuthorsController {
@@ -17,9 +17,9 @@ export class AuthorsController {
     summary: 'Create a new author',
     description: 'Creates a new author (or translator) with the provided information'
   })
-  @ApiBadRequestResponse({
-    type: BadRequestException,
-    description: CommonMessages.SlugAlreadyExists
+  @ApiConflictResponse({
+    type: ConflictException,
+    description: ConflictMessages.Slug
   })
   @HttpCode(HttpStatus.CREATED)
   @Post()
@@ -62,9 +62,9 @@ export class AuthorsController {
   @ApiOperation({ 
     summary: 'Update a author',
   })
-  @ApiBadRequestResponse({
-    type: BadRequestException,
-    description: CommonMessages.SlugAlreadyExists
+  @ApiConflictResponse({
+    type: ConflictException,
+    description: ConflictMessages.Slug
   })
   @ApiNotFoundResponse({
     type: NotFoundException,
