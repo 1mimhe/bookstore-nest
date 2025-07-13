@@ -6,6 +6,7 @@ import { CreateAuthorDto } from './dtos/create-author.dto';
 import { ConflictMessages } from 'src/common/enums/conflict.messages';
 import { NotFoundMessages } from 'src/common/enums/not-found.messages';
 import { UpdateAuthorDto } from './dtos/update-author.dto';
+import { DBErrors } from 'src/common/enums/db.errors';
 
 @Injectable()
 export class AuthorsService {
@@ -16,7 +17,7 @@ export class AuthorsService {
   async create(authorDto: CreateAuthorDto): Promise<Author | never> {
     const author = this.authorRepo.create(authorDto);
     return this.authorRepo.save(author).catch((error) => {
-      if (error.code === 'ER_DUP_ENTRY') {
+      if (error.code === DBErrors.Conflict) {
         throw new ConflictException(ConflictMessages.Slug);
       }
       throw error;
@@ -53,7 +54,7 @@ export class AuthorsService {
     const author = await this.getById(id);
     Object.assign(author, authorDto);
     return this.authorRepo.save(author).catch((error) => {
-      if (error.code === 'ER_DUP_ENTRY') {
+      if (error.code === DBErrors.Conflict) {
         throw new ConflictException(ConflictMessages.Slug);
       }
       throw error;

@@ -11,8 +11,8 @@ export class Title extends BaseEntity {
   slug: string;
 
   @Column({ nullable: true })
-  summary: string;
+  summary?: string;
 
   @Column({ nullable: true })
-  originallyPublishedAt: Date;
+  originallyPublishedAt?: Date;
 }
