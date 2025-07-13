@@ -1,11 +1,12 @@
-import { Body, ConflictException, Controller, Get, Post } from '@nestjs/common';
+import { Body, ConflictException, Controller, Get, NotFoundException, Post } from '@nestjs/common';
 import { LanguagesService } from './languages.service';
 import { CreateLanguageDto } from './dtos/create-language.dto';
-import { ApiBadRequestResponse, ApiConflictResponse, ApiOperation } from '@nestjs/swagger';
+import { ApiBadRequestResponse, ApiConflictResponse, ApiNotFoundResponse, ApiOperation } from '@nestjs/swagger';
 import { ConflictMessages } from 'src/common/enums/conflict.messages';
 import { TitlesService } from './titles.service';
 import { CreateTitleDto } from './dtos/create-title.dto';
 import { ValidationErrorResponseDto } from 'src/common/dtos/error.dtos';
+import { NotFoundMessages } from 'src/common/enums/not-found.messages';
 
 @Controller('books')
 export class BooksController {
@@ -43,9 +44,13 @@ export class BooksController {
   @ApiBadRequestResponse({
     type: ValidationErrorResponseDto,
   })
+  @ApiNotFoundResponse({
+    type: NotFoundException,
+    description: NotFoundMessages.SomeAuthors
+  })
   @ApiConflictResponse({
     type: ConflictException,
-    description: ConflictMessages.Title
+    description: ConflictMessages.Slug
   })
   @Post('titles')
   async createTitle(@Body() body: CreateTitleDto) {

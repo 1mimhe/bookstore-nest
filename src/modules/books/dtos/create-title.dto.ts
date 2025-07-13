@@ -1,5 +1,5 @@
 import { Transform } from "class-transformer";
-import { IsAlphanumeric, IsDateString, IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { ArrayMinSize, IsAlphanumeric, IsArray, IsDateString, IsNotEmpty, IsOptional, IsString, IsUUID, MinLength } from "class-validator";
 import { makeUnique } from "src/common/utilities/make-unique";
 
 export class CreateTitleDto {
@@ -17,6 +17,11 @@ export class CreateTitleDto {
   @IsOptional()
   @IsAlphanumeric()
   slug?: string;
+
+  @IsArray()
+  @ArrayMinSize(1)
+  @IsUUID('4', { each: true })
+  authorIds: string[];
 
   @IsOptional()
   @IsAlphanumeric()

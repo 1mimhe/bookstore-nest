@@ -1,6 +1,6 @@
 import { BaseEntity } from 'src/common/entities/base.entity';
 import { Title } from 'src/modules/books/entities/title.entity';
-import { Column, Entity, Index, ManyToMany, Unique } from 'typeorm';
+import { Column, Entity, Index, JoinTable, ManyToMany, Unique } from 'typeorm';
 
 @Entity()
 @Index(['slug'], { unique: true })
@@ -30,5 +30,6 @@ export class Author extends BaseEntity {
   dateOfDeath?: Date;
 
   @ManyToMany(() => Title, (title) => title.authors)
+  @JoinTable()
   titles: Title[];
 }

@@ -3,5 +3,4 @@ export enum ConflictMessages {
   Slug = 'Slug already exists.',
   PublisherName = 'PublisherName already exists.',
   Language = 'Language already exists.',
-  Title = 'Title already exists.'
 }
