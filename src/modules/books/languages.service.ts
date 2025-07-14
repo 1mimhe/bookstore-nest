@@ -4,6 +4,7 @@ import { Language } from './entities/language.entity';
 import { Repository } from 'typeorm';
 import { CreateLanguageDto } from './dtos/create-language.dto';
 import { ConflictMessages } from 'src/common/enums/conflict.messages';
+import { DBErrors } from 'src/common/enums/db.errors';
 
 @Injectable()
 export class LanguagesService {
@@ -14,7 +15,7 @@ export class LanguagesService {
   async create(languageDto: CreateLanguageDto): Promise<Language | never> {
     const language = this.languageRepo.create(languageDto);
     return this.languageRepo.save(language).catch((error) => {
-      if (error.code === 'ER_DUP_ENTRY') {
+      if (error.code === DBErrors.Conflict) {
         throw new ConflictException(ConflictMessages.Language);
       }
       throw error;

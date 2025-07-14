@@ -9,6 +9,7 @@ import { CreatePublisherDto } from './dtos/create-publisher.dto';
 import { NotFoundMessages } from 'src/common/enums/not-found.messages';
 import { UpdatePublisherDto } from './dtos/update-publisher.dto';
 import { ConflictMessages } from 'src/common/enums/conflict.messages';
+import { DBErrors } from 'src/common/enums/db.errors';
 
 @Injectable()
 export class PublishersService {
@@ -33,7 +34,7 @@ export class PublishersService {
           logoUrl
         });
         return manager.save(publisher).catch((error) => {
-          if (error.code === 'ER_DUP_ENTRY') {
+          if (error.code === DBErrors.Conflict) {
             throw new ConflictException(ConflictMessages.PublisherName);
           }
           throw error;
@@ -58,7 +59,7 @@ export class PublishersService {
     const publisher = await this.getById(id);
     Object.assign(publisher, publisherDto);
     return this.publisherRepo.save(publisher).catch((error) => {
-      if (error.code === 'ER_DUP_ENTRY') {
+      if (error.code === DBErrors.Conflict) {
         throw new ConflictException(ConflictMessages.PublisherName);
       }
       throw error;
