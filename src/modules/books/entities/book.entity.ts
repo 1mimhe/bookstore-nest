@@ -1,6 +1,7 @@
 import { BaseEntity } from "src/common/entities/base.entity";
 import { Publisher } from "src/modules/publishers/entities/publisher.entity";
-import { Column, Entity, JoinColumn, ManyToOne } from "typeorm";
+import { Column, Entity, Index, JoinColumn, ManyToOne, Unique } from "typeorm";
+import { Title } from "./title.entity";
 
 export enum Quartos {
   Vaziri = 'vaziri',
@@ -20,6 +21,10 @@ export enum Covers {
 }
 
 @Entity()
+@Unique('TITLE_PUBLISHER_UNIQUE', ['title', 'publisher'])
+@Unique('ISBN_UNIQUE', ['ISBN'])
+@Index(['title'])
+@Index(['publisher'])
 export class Book extends BaseEntity {
   @Column()
   name: string;
@@ -88,6 +93,10 @@ export class Book extends BaseEntity {
     default: 0
   })
   sold?: number;
+
+  @ManyToOne(() => Title, (title) => title.books)
+  @JoinColumn()
+  title: Title;
 
   @ManyToOne(() => Publisher, (publisher) => publisher.books)
   @JoinColumn()

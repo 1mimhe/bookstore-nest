@@ -7,9 +7,10 @@ import { TitlesService } from './titles.service';
 import { Title } from './entities/title.entity';
 import { Author } from '../authors/entities/author.entity';
 import { BooksService } from './books.service';
+import { Book } from './entities/book.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Language, Title, Author])],
+  imports: [TypeOrmModule.forFeature([Language, Title, Author, Book])],
   controllers: [BooksController],
   providers: [LanguagesService, TitlesService, BooksService]
 })

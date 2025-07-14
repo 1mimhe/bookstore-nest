@@ -7,12 +7,15 @@ import { TitlesService } from './titles.service';
 import { CreateTitleDto } from './dtos/create-title.dto';
 import { ValidationErrorResponseDto } from 'src/common/dtos/error.dtos';
 import { NotFoundMessages } from 'src/common/enums/not-found.messages';
+import { CreateBookDto } from './dtos/create-book.dto';
+import { BooksService } from './books.service';
 
 @Controller('books')
 export class BooksController {
   constructor(
     private languagesService: LanguagesService,
-    private titlesService: TitlesService
+    private titlesService: TitlesService,
+    private booksService: BooksService
   ) {}
 
   @ApiOperation({
@@ -83,4 +86,31 @@ export class BooksController {
   ) {
     return this.titlesService.update(id, body);
   }
+
+  @ApiOperation({
+    summary: 'Create a book',
+  })
+  @ApiBadRequestResponse({
+    type: ValidationErrorResponseDto,
+  })
+  @ApiNotFoundResponse({
+    type: NotFoundException,
+    description: NotFoundMessages.Publisher
+  })
+  @ApiNotFoundResponse({
+    type: NotFoundException,
+    description: NotFoundMessages.Title
+  })
+  @ApiConflictResponse({
+    type: ConflictException,
+    description: ConflictMessages.ISBN
+  })
+  @ApiConflictResponse({
+    type: ConflictException,
+    description: ConflictMessages.TitlePublisher
+  })
+  @Post()
+  async createBook(@Body() body: CreateBookDto) {
+    return this.booksService.create(body);
+  } 
 }
