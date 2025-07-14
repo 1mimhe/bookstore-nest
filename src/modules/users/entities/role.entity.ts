@@ -23,7 +23,7 @@ export class Role extends BaseEntity {
     type: 'enum',
     enum: Roles,
   })
-  role: string;
+  role: Roles;
 
   @ManyToOne(() => User, (user) => user.roles)
   @JoinColumn()
