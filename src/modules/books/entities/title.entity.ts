@@ -3,7 +3,7 @@ import { Author } from 'src/modules/authors/entities/author.entity';
 import { Column, Entity, Index, ManyToMany } from 'typeorm';
 
 @Entity()
-@Index('slug', { unique: true })
+@Index(['slug'], { unique: true })
 export class Title extends BaseEntity {
   @Column()
   name: string;

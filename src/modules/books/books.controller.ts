@@ -1,4 +1,4 @@
-import { Body, ConflictException, Controller, Get, NotFoundException, Post } from '@nestjs/common';
+import { Body, ConflictException, Controller, Get, NotFoundException, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
 import { LanguagesService } from './languages.service';
 import { CreateLanguageDto } from './dtos/create-language.dto';
 import { ApiBadRequestResponse, ApiConflictResponse, ApiNotFoundResponse, ApiOperation } from '@nestjs/swagger';
@@ -55,5 +55,32 @@ export class BooksController {
   @Post('titles')
   async createTitle(@Body() body: CreateTitleDto) {
     return this.titlesService.create(body);
+  }
+
+  @ApiOperation({
+    summary: 'Update a title',
+    description: 'It override authors if included.'
+  })
+  @ApiBadRequestResponse({
+    type: ValidationErrorResponseDto,
+  })
+  @ApiNotFoundResponse({
+    type: NotFoundException,
+    description: NotFoundMessages.SomeAuthors
+  })
+  @ApiNotFoundResponse({
+    type: NotFoundException,
+    description: NotFoundMessages.Title
+  })
+  @ApiConflictResponse({
+    type: ConflictException,
+    description: ConflictMessages.Slug
+  })
+  @Patch('titles/:id')
+  async updateTitle(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: CreateTitleDto
+  ) {
+    return this.titlesService.update(id, body);
   }
 }

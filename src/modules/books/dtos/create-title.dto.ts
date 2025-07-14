@@ -15,7 +15,7 @@ export class CreateTitleDto {
     return undefined;
   })
   @IsOptional()
-  @IsAlphanumeric()
+  @IsString()
   slug?: string;
 
   @IsArray()
