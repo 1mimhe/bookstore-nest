@@ -1,4 +1,5 @@
 import { BaseEntity } from 'src/common/entities/base.entity';
+import { Book } from 'src/modules/books/entities/book.entity';
 import { Title } from 'src/modules/books/entities/title.entity';
 import { Column, Entity, Index, JoinTable, ManyToMany, Unique } from 'typeorm';
 
@@ -32,4 +33,8 @@ export class Author extends BaseEntity {
   @ManyToMany(() => Title, (title) => title.authors)
   @JoinTable()
   titles: Title[];
+
+  @ManyToMany(() => Book, (book) => book.translators)
+  @JoinTable()
+  books: Book[];
 }

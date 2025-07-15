@@ -1,7 +1,17 @@
-import { BaseEntity } from "src/common/entities/base.entity";
-import { Publisher } from "src/modules/publishers/entities/publisher.entity";
-import { Column, Entity, Index, JoinColumn, ManyToOne, Unique } from "typeorm";
-import { Title } from "./title.entity";
+import { BaseEntity } from 'src/common/entities/base.entity';
+import { Publisher } from 'src/modules/publishers/entities/publisher.entity';
+import {
+  Column,
+  Entity,
+  Index,
+  JoinColumn,
+  ManyToMany,
+  ManyToOne,
+  Unique,
+} from 'typeorm';
+import { Title } from './title.entity';
+import { Author } from 'src/modules/authors/entities/author.entity';
+import { Language } from './language.entity';
 
 export enum Quartos {
   Vaziri = 'vaziri',
@@ -10,14 +20,14 @@ export enum Quartos {
   Rahli = 'rahli',
   Kheshti = 'kheshti',
   Paltoyi = 'paltoyi',
-  Sultani = 'sultani'
+  Sultani = 'sultani',
 }
 
 export enum Covers {
   Shoomiz = 'shoomiz',
   Kaqazi = 'kaqazi',
   Sakht = 'sakht',
-  Charmi = 'charmi'
+  Charmi = 'charmi',
 }
 
 @Entity()
@@ -38,20 +48,20 @@ export class Book extends BaseEntity {
   @Column({
     nullable: true,
     type: 'enum',
-    enum: Quartos
+    enum: Quartos,
   })
   quarto?: Quartos;
 
   @Column({
     nullable: true,
     type: 'enum',
-    enum: Covers
+    enum: Covers,
   })
   cover?: Covers;
 
   @Column({
     nullable: true,
-    type: 'int'
+    type: 'int',
   })
   pagesNumber?: number;
 
@@ -60,20 +70,20 @@ export class Book extends BaseEntity {
 
   @Column({
     nullable: true,
-    type: 'int'
+    type: 'int',
   })
   publishSeries?: number;
 
   @Column({
     nullable: true,
-    type: 'int' // in gr
+    type: 'int', // in gr
   })
   weight?: number;
 
   @Column({
     nullable: true,
     type: 'int',
-    default: 0
+    default: 0,
   })
   stock?: number;
 
@@ -83,14 +93,14 @@ export class Book extends BaseEntity {
   @Column({
     nullable: true,
     type: 'float', // 0-1
-    default: 0
+    default: 0,
   })
   discountPercent?: number;
 
   @Column({
     nullable: true,
     type: 'int',
-    default: 0
+    default: 0,
   })
   sold?: number;
 
@@ -101,4 +111,11 @@ export class Book extends BaseEntity {
   @ManyToOne(() => Publisher, (publisher) => publisher.books)
   @JoinColumn()
   publisher: Publisher;
+
+  @ManyToMany(() => Author, (author) => author.books)
+  translators: Author[];
+
+  @ManyToOne(() => Language, (language) => language.books)
+  @JoinColumn()
+  language: Language;
 }

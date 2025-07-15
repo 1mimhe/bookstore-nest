@@ -1,13 +1,15 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Book } from './entities/book.entity';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { CreateBookDto } from './dtos/create-book.dto';
 import { Title } from './entities/title.entity';
 import { NotFoundMessages } from 'src/common/enums/not-found.messages';
 import { Publisher } from '../publishers/entities/publisher.entity';
 import { DBErrors } from 'src/common/enums/db.errors';
 import { ConflictMessages } from 'src/common/enums/conflict.messages';
+import { Author } from '../authors/entities/author.entity';
+import { Language } from './entities/language.entity';
 
 @Injectable()
 export class BooksService {
@@ -16,7 +18,7 @@ export class BooksService {
     private dataSource: DataSource
   ) {}
 
-  async create({ titleId, publisherId, ...bookDto }: CreateBookDto): Promise<Book | never> {
+  async create({ titleId, publisherId, languageId, translatorIds, ...bookDto }: CreateBookDto): Promise<Book | never> {
     return this.dataSource.transaction(async (manager) => {
       const title = await manager.findOne(Title, {
         where: { id: titleId }
@@ -32,12 +34,30 @@ export class BooksService {
         throw new NotFoundException(NotFoundMessages.Publisher);
       }
 
+      let translators: Author[] | undefined = undefined; 
+      if (translatorIds) {
+        translators = await manager.findBy(Author, {
+          id: In(translatorIds),
+        });
+
+        if (translators.length !== translatorIds.length) {
+          throw new NotFoundException(NotFoundMessages.SomeAuthors);
+        }
+      }
+
+      const language = await manager.findOne(Language, {
+        where: { id: languageId }
+      });
+      if (!language) {
+        throw new NotFoundException(NotFoundMessages.Language);
+      }
+
       const book = manager.create(Book, {
         ...bookDto,
-        titleId,
-        publisherId,
         title,
-        publisher
+        publisher,
+        translators,
+        language
       });
 
       return manager.save(Book, book).catch(error => {

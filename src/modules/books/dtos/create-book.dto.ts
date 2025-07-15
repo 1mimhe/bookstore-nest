@@ -8,6 +8,8 @@ import {
   IsUUID,
   Min,
   Max,
+  IsArray,
+  IsNotEmpty,
 } from 'class-validator';
 import { Quartos, Covers } from '../entities/book.entity';
 
@@ -20,6 +22,14 @@ export class CreateBookDto {
   
   @IsUUID()
   publisherId: string;
+
+  @IsUUID()
+  languageId: string;
+
+  @IsNotEmpty()
+  @IsArray()
+  @IsUUID('4', { each: true })
+  translatorIds?: string[];
 
   @IsOptional()
   @IsString()
