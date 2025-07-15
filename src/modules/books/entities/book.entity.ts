@@ -7,11 +7,13 @@ import {
   JoinColumn,
   ManyToMany,
   ManyToOne,
+  OneToMany,
   Unique,
 } from 'typeorm';
 import { Title } from './title.entity';
 import { Author } from 'src/modules/authors/entities/author.entity';
 import { Language } from './language.entity';
+import { BookImage } from './book-image.entity';
 
 export enum Quartos {
   Vaziri = 'vaziri',
@@ -118,4 +120,7 @@ export class Book extends BaseEntity {
   @ManyToOne(() => Language, (language) => language.books)
   @JoinColumn()
   language: Language;
+
+  @OneToMany(() => BookImage, (image) =>  image.book, { cascade: true })
+  images: BookImage[];
 }

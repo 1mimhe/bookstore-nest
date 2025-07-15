@@ -10,26 +10,42 @@ import {
   Max,
   IsArray,
   IsNotEmpty,
+  IsUrl,
+  ArrayNotEmpty,
+  ValidateNested,
 } from 'class-validator';
 import { Quartos, Covers } from '../entities/book.entity';
+import { BookImageDto } from './book-image.dto';
+import { Type } from 'class-transformer';
 
 export class CreateBookDto {
+  @IsNotEmpty()
   @IsString()
   name: string;
 
+  @IsNotEmpty()
   @IsUUID()
   titleId: string;
   
+  @IsNotEmpty()
   @IsUUID()
   publisherId: string;
 
+  @IsNotEmpty()
   @IsUUID()
   languageId: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsArray()
   @IsUUID('4', { each: true })
   translatorIds?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @ArrayNotEmpty()
+  @ValidateNested({ each: true })
+  @Type(() => BookImageDto)
+  images?: BookImageDto[];
 
   @IsOptional()
   @IsString()

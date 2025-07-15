@@ -8,9 +8,18 @@ import { Title } from './entities/title.entity';
 import { Author } from '../authors/entities/author.entity';
 import { BooksService } from './books.service';
 import { Book } from './entities/book.entity';
+import { BookImage } from './entities/book-image.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Language, Title, Author, Book])],
+  imports: [
+    TypeOrmModule.forFeature([
+      Language,
+      Title,
+      Author,
+      Book,
+      BookImage
+    ])
+  ],
   controllers: [BooksController],
   providers: [LanguagesService, TitlesService, BooksService]
 })

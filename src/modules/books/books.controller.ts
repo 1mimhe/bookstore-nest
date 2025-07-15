@@ -10,6 +10,7 @@ import { NotFoundMessages } from 'src/common/enums/not-found.messages';
 import { CreateBookDto } from './dtos/create-book.dto';
 import { BooksService } from './books.service';
 import { UpdateBookDto } from './dtos/update-book.dto';
+import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 
 @Controller('books')
 export class BooksController {
@@ -121,7 +122,7 @@ export class BooksController {
 
   @ApiOperation({
     summary: 'Update a book',
-    description: 'It override translators if included.'
+    description: 'It override translators and merge book images if included.'
   })
   @ApiBadRequestResponse({
     type: ValidationErrorResponseDto,

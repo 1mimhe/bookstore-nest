@@ -11,6 +11,7 @@ import { ConflictMessages } from 'src/common/enums/conflict.messages';
 import { Author } from '../authors/entities/author.entity';
 import { Language } from './entities/language.entity';
 import { UpdateBookDto } from './dtos/update-book.dto';
+import { BookImage } from './entities/book-image.entity';
 
 @Injectable()
 export class BooksService {
@@ -19,7 +20,14 @@ export class BooksService {
     private dataSource: DataSource
   ) {}
 
-  async create({ titleId, publisherId, languageId, translatorIds, ...bookDto }: CreateBookDto): Promise<Book | never> {
+  async create(
+    {
+      titleId,
+      publisherId,
+      languageId,
+      translatorIds,
+      ...bookDto
+    }: CreateBookDto): Promise<Book | never> {
     return this.dataSource.transaction(async (manager) => {
       const [title, publisher, language, translators] = await Promise.all([
         manager.findOne(Title, { where: { id: titleId } }),
@@ -59,12 +67,19 @@ export class BooksService {
 
   async update(
     id: string,
-    { titleId, publisherId, languageId, translatorIds, ...bookDto }: UpdateBookDto
+    {
+      titleId,
+      publisherId,
+      languageId,
+      translatorIds,
+      images,
+      ...bookDto
+    }: UpdateBookDto
   ): Promise<Book | never> {
     return this.dataSource.transaction(async (manager) => {
       const existingBook = await manager.findOne(Book, {
         where: { id },
-        relations: ['title', 'publisher', 'language', 'translators'],
+        relations: ['title', 'publisher', 'language', 'translators', 'images'],
       });
 
       if (!existingBook) {
@@ -86,11 +101,22 @@ export class BooksService {
         throw new NotFoundException(NotFoundMessages.SomeTranslators);
       }
 
+      let newImages: BookImage[] | undefined = undefined;
+      if (images) {
+        newImages = images.map(image => 
+          manager.create(BookImage, { 
+            ...image,
+            book: existingBook 
+          })
+        );
+      }
+
       const updatedBook = manager.merge(Book, existingBook, bookDto) as Book;
       updatedBook.title = title;
       updatedBook.publisher = publisher;
       updatedBook.language = language;
       updatedBook.translators = translators;
+      updatedBook.images = [...(existingBook.images || []), ...(newImages || [])];
 
       return manager.save(Book, updatedBook).catch(error => {
         if (error.code === DBErrors.Conflict) {
