@@ -32,8 +32,8 @@ export class Author extends BaseEntity {
 
   @ManyToMany(() => Title, (title) => title.authors)
   @JoinTable({
-    name: 'book_authors',
-    joinColumn: { name: 'bookId', referencedColumnName: 'id' },
+    name: 'title_authors',
+    joinColumn: { name: 'titleId', referencedColumnName: 'id' },
     inverseJoinColumn: { name: 'authorId', referencedColumnName: 'id' },
   })
   titles: Title[];
