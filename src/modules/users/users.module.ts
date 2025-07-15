@@ -3,13 +3,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
 import { User } from './entities/user.entity';
-import { Contact } from './entities/contact.entity';
-import { Role } from './entities/role.entity';
 import { CurrentUserMiddleware } from 'src/common/middlewares/current-user.middleware';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, Contact, Role])
+    TypeOrmModule.forFeature([User]),
+    AuthModule
   ],
   providers: [UsersService],
   controllers: [UsersController],

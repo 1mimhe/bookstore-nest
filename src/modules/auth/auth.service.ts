@@ -1,41 +1,29 @@
 import {
   BadRequestException,
   ConflictException,
-  ForbiddenException,
   Injectable,
-  UnauthorizedException,
 } from '@nestjs/common';
-import { DataSource, EntityManager, Repository } from 'typeorm';
+import { DataSource, EntityManager, FindOptionsWhere, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateUserDto } from './dto/sign-up.dto';
 import { pbkdf2, randomBytes } from 'crypto';
 import { SigninDto } from './dto/sign-in.dto';
 import { AuthMessages } from 'src/common/enums/auth.messages';
-import { ConfigService } from '@nestjs/config';
-import * as jwt from 'jsonwebtoken';
-import { JwtPayload } from 'src/common/types/jwt';
-import { SessionData } from 'express-session';
 import { Publisher } from '../publishers/entities/publisher.entity';
-import { UsersService } from '../users/users.service';
 import { User } from '../users/entities/user.entity';
 import { Roles } from '../users/entities/role.entity';
+import { TokenService } from './token.service';
+import { ConflictDto } from 'src/common/dtos/error.dtos';
 
 type AdditionalEntity = Publisher;
 
 @Injectable()
 export class AuthService {
-  private accessSecretKey: string;
-  private refreshSecretKey: string;
-
   constructor(
-    private usersService: UsersService,
+    private tokenService: TokenService,
     @InjectRepository(User) private userRepo: Repository<User>,
     private dataSource: DataSource,
-    config: ConfigService,
-  ) {
-    this.accessSecretKey = config.getOrThrow<string>('JWT_ACCESS_SECRET_KEY');
-    this.refreshSecretKey = config.getOrThrow<string>('JWT_REFRESH_SECRET_KEY');
-  }
+  ) {}
 
   async signup(
     userDto: CreateUserDto,
@@ -56,7 +44,7 @@ export class AuthService {
     const { password, email, phoneNumber, ...userData } = userDto;
     
     return this.dataSource.transaction(async (manager) => {
-      const conflicts = await this.usersService.checkUniqueConstraints(
+      const conflicts = await this.checkUniqueConstraints(
         userData.username,
         phoneNumber,
         email
@@ -89,7 +77,15 @@ export class AuthService {
   }
 
   async signin({ identifier, password }: SigninDto) {
-    const user = await this.usersService.findByIdentifier(identifier);
+    const user = await this.userRepo.findOne({
+      where: [
+        { username: identifier },
+        { contact: { email: identifier } },
+        { contact: { phoneNumber: identifier } },
+      ],
+      select: ['id', 'username', 'hashedPassword'],
+      relations: ['contact'],
+    });
 
     if (!user) {
       throw new BadRequestException(AuthMessages.InvalidCredentials);
@@ -107,14 +103,73 @@ export class AuthService {
       sub: user.id,
       username: user.username,
     };
-    const refreshToken = this.generateRefreshToken(payload);
-    const accessToken = this.generateAccessToken(payload);
+    const refreshToken = this.tokenService['generateRefreshToken'](payload);
+    const accessToken = this.tokenService['generateAccessToken'](payload);
 
     return {
       refreshToken,
       accessToken,
       userId: user.id,
     };
+  }
+
+  async checkUniqueConstraints(
+    username?: string,
+    phoneNumber?: string,
+    email?: string,
+  ) {
+    const conflicts: ConflictDto[] = [];
+    const whereConditions: FindOptionsWhere<User>[] = [];
+
+    if (username) {
+      whereConditions.push({ username });
+    }
+
+    if (email) {
+      whereConditions.push({ contact: { email } });
+    }
+
+    if (phoneNumber) {
+      whereConditions.push({ contact: { phoneNumber } });
+    }
+
+    const existingUsers = await this.userRepo.find({
+      where: whereConditions,
+      select: ['id', 'username'],
+      relations: ['contact'],
+    });
+
+    if (existingUsers.length === 0) {
+      return conflicts;
+    }
+
+    for (const user of existingUsers) {
+      if (username && user.username === username) {
+        conflicts.push({
+          field: 'username',
+          value: username,
+          message: `Username '${username}' is already taken`,
+        });
+      }
+
+      if (email && user.contact?.email === email) {
+        conflicts.push({
+          field: 'email',
+          value: email,
+          message: `Email '${email}' is already registered`,
+        });
+      }
+
+      if (phoneNumber && user.contact?.phoneNumber === phoneNumber) {
+        conflicts.push({
+          field: 'phoneNumber',
+          value: phoneNumber,
+          message: `Phone number '${phoneNumber}' is already registered`,
+        });
+      }
+    }
+
+    return conflicts;
   }
 
   private hashPassword(password: string): Promise<string | never> {
@@ -144,62 +199,5 @@ export class AuthService {
         resolve(isCorrectPassword);
       });
     });
-  }
-
-  private generateRefreshToken(payload: JwtPayload, expiresIn = 1_296_000 /* 15days */) {
-    expiresIn = Math.min(1_296_000, expiresIn);
-    const refreshSecretKey = this.refreshSecretKey
-    return jwt.sign(payload, refreshSecretKey, { expiresIn });
-  }
-
-  private generateAccessToken(payload: JwtPayload, expiresIn = 1200 /* 20min */) {
-    expiresIn = Math.min(1200, expiresIn);
-    const accessSecretKey = this.accessSecretKey
-    return jwt.sign(payload, accessSecretKey, { expiresIn });
-  }
-
-  verifyToken(token: string, type: 'access' | 'refresh') {
-    if (!token || typeof token !== 'string') {
-      throw new UnauthorizedException(`Invalid ${type} token format.`);
-    }
-
-    try {
-      const secretKey = type === 'access' ? this.accessSecretKey : this.refreshSecretKey;
-      return jwt.verify(token, secretKey) as JwtPayload;
-    } catch (error) {
-      if (error instanceof jwt.TokenExpiredError) {
-        throw new UnauthorizedException(`${type} token has expired`);
-      }
-      if (error instanceof jwt.JsonWebTokenError) {
-        throw new UnauthorizedException(`Invalid ${type} token.`);
-      }
-      throw new UnauthorizedException(`${type} token verification failed.`);
-    }
-  }
-
-  refreshTokens(oldRefreshToken: string, session: SessionData) {
-    if (!(session.userId && oldRefreshToken)) {
-      throw new ForbiddenException(AuthMessages.AccessDenied);
-    }
-
-    const sessionRefreshToken = session.refreshToken;
-    if (!(sessionRefreshToken) || (oldRefreshToken !== sessionRefreshToken)) {
-      throw new UnauthorizedException(AuthMessages.InvalidRefreshToken);
-    }
-
-    const expirationTime = session.cookie.expires
-      ? new Date(session.cookie.expires).getTime() - Date.now()
-      : 0;
-   
-    const { sub, username } = this.verifyToken(oldRefreshToken, 'refresh');
-    const payload = { sub, username };
-    const newRefreshToken = this.generateRefreshToken(payload, Math.trunc(expirationTime / 1000));
-    const newAccessToken = this.generateAccessToken(payload);
-
-    return {
-      accessToken: newAccessToken,
-      refreshToken: newRefreshToken,
-      expirationTime
-    };
   }
 }

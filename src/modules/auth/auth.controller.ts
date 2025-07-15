@@ -24,7 +24,7 @@ import {
 } from 'src/common/dtos/error.dtos';
 import { SigninDto } from './dto/sign-in.dto';
 import { AuthMessages } from 'src/common/enums/auth.messages';
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { CookieNames } from 'src/common/enums/cookie.names';
 import { ConfigService } from '@nestjs/config';
 import { SessionData } from 'express-session';
@@ -33,12 +33,13 @@ import { AccessTokenDto } from '../auth/dto/access-token.dto';
 import { Cookies } from 'src/common/decorators/cookies.decorator';
 import { ConflictMessages } from 'src/common/enums/conflict.messages';
 import { UserDto } from '../users/dtos/user.dto';
-import { AuthGuard } from './guards/auth.guard';
+import { TokenService } from './token.service';
 
 @Controller('auth')
 export class AuthController {
   constructor(
     private authService: AuthService,
+    private tokenService: TokenService,
     private config: ConfigService,
   ) {}
 
@@ -134,7 +135,7 @@ export class AuthController {
     @Session() session: SessionData,
     @Res({ passthrough: true }) res: Response
   ) {
-    const { accessToken, refreshToken, expirationTime } = this.authService.refreshTokens(oldRefreshToken, session);
+    const { accessToken, refreshToken, expirationTime } = this.tokenService.refreshTokens(oldRefreshToken, session);
 
     session.refreshToken = refreshToken;
     res.cookie(CookieNames.RefreshToken, refreshToken, {

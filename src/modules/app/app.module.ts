@@ -13,6 +13,7 @@ import { CookieNames } from 'src/common/enums/cookie.names';
 import { AuthorsModule } from '../authors/authors.module';
 import { PublishersModule } from '../publishers/publishers.module';
 import { BooksModule } from '../books/books.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { BooksModule } from '../books/books.module';
       },
     }),
     UsersModule,
+    AuthModule,
     AuthorsModule,
     PublishersModule,
     BooksModule

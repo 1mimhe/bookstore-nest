@@ -5,13 +5,13 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Request } from 'express';
-import { AuthService } from '../auth.service';
 import { AuthMessages } from 'src/common/enums/auth.messages';
 import { HeaderNames } from 'src/common/enums/header.names';
+import { TokenService } from '../../modules/auth/token.service';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private authService: AuthService) {}
+  constructor(private tokenService: TokenService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
@@ -21,7 +21,7 @@ export class AuthGuard implements CanActivate {
       throw new UnauthorizedException(AuthMessages.MissingAccessToken);
     }
 
-    const payload = this.authService.verifyToken(accessToken, 'access');
+    const payload = this.tokenService.verifyToken(accessToken, 'access');
     if (!payload?.username) {
       throw new UnauthorizedException(AuthMessages.InvalidAccessToken);
     }
