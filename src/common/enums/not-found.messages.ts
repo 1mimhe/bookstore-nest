@@ -4,5 +4,6 @@ export enum NotFoundMessages {
   SomeTranslators = 'Some translators not found.',
   Publisher = 'Publisher not found.',
   Title = 'Title not found.',
+  Book = 'Book not found.',
   Language = 'Language not found.'
 }

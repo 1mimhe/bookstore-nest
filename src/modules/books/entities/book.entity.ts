@@ -31,7 +31,7 @@ export enum Covers {
 }
 
 @Entity()
-@Unique('TITLE_PUBLISHER_UNIQUE', ['title', 'publisher'])
+// @Unique('TITLE_PUBLISHER_UNIQUE', ['title', 'publisher'])
 @Unique('ISBN_UNIQUE', ['ISBN'])
 @Index(['title'])
 @Index(['publisher'])

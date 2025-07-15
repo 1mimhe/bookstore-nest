@@ -9,6 +9,7 @@ import { ValidationErrorResponseDto } from 'src/common/dtos/error.dtos';
 import { NotFoundMessages } from 'src/common/enums/not-found.messages';
 import { CreateBookDto } from './dtos/create-book.dto';
 import { BooksService } from './books.service';
+import { UpdateBookDto } from './dtos/update-book.dto';
 
 @Controller('books')
 export class BooksController {
@@ -95,6 +96,14 @@ export class BooksController {
   })
   @ApiNotFoundResponse({
     type: NotFoundException,
+    description: NotFoundMessages.Language
+  })
+  @ApiNotFoundResponse({
+    type: NotFoundException,
+    description: NotFoundMessages.SomeAuthors
+  })
+  @ApiNotFoundResponse({
+    type: NotFoundException,
     description: NotFoundMessages.Publisher
   })
   @ApiNotFoundResponse({
@@ -105,12 +114,43 @@ export class BooksController {
     type: ConflictException,
     description: ConflictMessages.ISBN
   })
-  @ApiConflictResponse({
-    type: ConflictException,
-    description: ConflictMessages.TitlePublisher
-  })
   @Post()
   async createBook(@Body() body: CreateBookDto) {
     return this.booksService.create(body);
+  }
+
+  @ApiOperation({
+    summary: 'Update a book',
+    description: 'It override translators if included.'
+  })
+  @ApiBadRequestResponse({
+    type: ValidationErrorResponseDto,
+  })
+  @ApiNotFoundResponse({
+    type: NotFoundException,
+    description: NotFoundMessages.Language
+  })
+  @ApiNotFoundResponse({
+    type: NotFoundException,
+    description: NotFoundMessages.SomeAuthors
+  })
+  @ApiNotFoundResponse({
+    type: NotFoundException,
+    description: NotFoundMessages.Publisher
+  })
+  @ApiNotFoundResponse({
+    type: NotFoundException,
+    description: NotFoundMessages.Title
+  })
+  @ApiConflictResponse({
+    type: ConflictException,
+    description: ConflictMessages.ISBN
+  })
+  @Patch(':id')
+  async updateBook(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: UpdateBookDto
+  ) {
+    return this.booksService.update(id, body);
   } 
 }
