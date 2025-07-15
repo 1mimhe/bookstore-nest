@@ -4,8 +4,8 @@ import { Author } from './entities/author.entity';
 import { AuthorsService } from './authors.service';
 import { ApiBadRequestResponse, ApiConflictResponse, ApiNotFoundResponse, ApiOperation } from '@nestjs/swagger';
 import { UpdateAuthorDto } from './dtos/update-author.dto';
-import { NotFoundMessages } from 'src/common/enums/not-found.messages';
-import { ConflictMessages } from 'src/common/enums/conflict.messages';
+import { NotFoundMessages } from 'src/common/enums/error.messages';
+import { ConflictMessages } from 'src/common/enums/error.messages';
 
 @Controller('authors')
 export class AuthorsController {

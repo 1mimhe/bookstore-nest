@@ -2,11 +2,11 @@ import { Body, ConflictException, Controller, Delete, Get, NotFoundException, Pa
 import { LanguagesService } from './languages.service';
 import { CreateLanguageDto } from './dtos/create-language.dto';
 import { ApiBadRequestResponse, ApiConflictResponse, ApiNotFoundResponse, ApiOperation } from '@nestjs/swagger';
-import { ConflictMessages } from 'src/common/enums/conflict.messages';
+import { ConflictMessages } from 'src/common/enums/error.messages';
 import { TitlesService } from './titles.service';
 import { CreateTitleDto } from './dtos/create-title.dto';
 import { ValidationErrorResponseDto } from 'src/common/dtos/error.dtos';
-import { NotFoundMessages } from 'src/common/enums/not-found.messages';
+import { NotFoundMessages } from 'src/common/enums/error.messages';
 import { CreateBookDto } from './dtos/create-book.dto';
 import { BooksService } from './books.service';
 import { UpdateBookDto } from './dtos/update-book.dto';

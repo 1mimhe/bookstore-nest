@@ -29,8 +29,8 @@ import {
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 import { PublisherDto } from './dtos/publisher.dto';
 import { UpdatePublisherDto } from './dtos/update-publisher.dto';
-import { ConflictMessages } from 'src/common/enums/conflict.messages';
-import { NotFoundMessages } from 'src/common/enums/not-found.messages';
+import { ConflictMessages } from 'src/common/enums/error.messages';
+import { NotFoundMessages } from 'src/common/enums/error.messages';
 
 @Controller('publishers')
 export class PublishersController {

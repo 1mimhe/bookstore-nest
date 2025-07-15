@@ -5,7 +5,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Request } from 'express';
-import { AuthMessages } from 'src/common/enums/auth.messages';
+import { AuthMessages } from 'src/common/enums/error.messages';
 import { HeaderNames } from 'src/common/enums/header.names';
 import { TokenService } from '../../modules/auth/token.service';
 

@@ -11,7 +11,7 @@ import {
   ApiOperation,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { AuthMessages } from 'src/common/enums/auth.messages';
+import { AuthMessages } from 'src/common/enums/error.messages';
 import { UserDto } from './dtos/user.dto';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';

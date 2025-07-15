@@ -3,7 +3,7 @@ import { JwtPayload } from "jsonwebtoken";
 import { ForbiddenException, Injectable, UnauthorizedException } from "@nestjs/common";
 import * as jwt from 'jsonwebtoken';
 import { SessionData } from "express-session";
-import { AuthMessages } from "src/common/enums/auth.messages";
+import { AuthMessages } from "src/common/enums/error.messages";
 
 @Injectable()
 export class TokenService {
