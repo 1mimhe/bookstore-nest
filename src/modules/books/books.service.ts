@@ -20,36 +20,19 @@ export class BooksService {
 
   async create({ titleId, publisherId, languageId, translatorIds, ...bookDto }: CreateBookDto): Promise<Book | never> {
     return this.dataSource.transaction(async (manager) => {
-      const title = await manager.findOne(Title, {
-        where: { id: titleId }
-      });
-      if (!title) {
-        throw new NotFoundException(NotFoundMessages.Title);
-      }
+      const [title, publisher, language, translators] = await Promise.all([
+        manager.findOne(Title, { where: { id: titleId } }),
+        manager.findOne(Publisher, { where: { id: publisherId } }),
+        manager.findOne(Language, { where: { id: languageId } }),
+        translatorIds ? manager.findBy(Author, { id: In(translatorIds) }) : Promise.resolve(undefined)
+      ]);
 
-      const publisher = await manager.findOne(Publisher, {
-        where: { id: publisherId }
-      });
-      if (!publisher) {
-        throw new NotFoundException(NotFoundMessages.Publisher);
-      }
+      if (!title) throw new NotFoundException(NotFoundMessages.Title);
+      if (!publisher) throw new NotFoundException(NotFoundMessages.Publisher);
+      if (!language) throw new NotFoundException(NotFoundMessages.Language);
 
-      let translators: Author[] | undefined = undefined; 
-      if (translatorIds) {
-        translators = await manager.findBy(Author, {
-          id: In(translatorIds),
-        });
-
-        if (translators.length !== translatorIds.length) {
-          throw new NotFoundException(NotFoundMessages.SomeAuthors);
-        }
-      }
-
-      const language = await manager.findOne(Language, {
-        where: { id: languageId }
-      });
-      if (!language) {
-        throw new NotFoundException(NotFoundMessages.Language);
+      if (translatorIds && translators && translators.length !== translatorIds.length) {
+        throw new NotFoundException(NotFoundMessages.SomeAuthors);
       }
 
       const book = manager.create(Book, {
