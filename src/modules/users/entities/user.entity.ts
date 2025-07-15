@@ -17,7 +17,7 @@ export enum Genders {
   Others = 'others',
 }
 
-@Entity()
+@Entity('users')
 @Index(['username'], { unique: true })
 export class User extends BaseEntity {
   @Column()

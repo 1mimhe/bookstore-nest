@@ -17,7 +17,7 @@ export enum Roles {
   Publisher = 'publisher',
 }
 
-@Entity()
+@Entity('roles')
 @Index(['user', 'role'])
 export class Role extends BaseEntity {
   @Column({

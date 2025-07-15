@@ -32,7 +32,7 @@ export enum Covers {
   Charmi = 'charmi',
 }
 
-@Entity()
+@Entity('books')
 // @Unique('TITLE_PUBLISHER_UNIQUE', ['title', 'publisher'])
 @Unique('ISBN_UNIQUE', ['ISBN'])
 @Index(['title'])

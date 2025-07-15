@@ -16,7 +16,7 @@ export enum BookImageTypes {
   Cover = 'cover',
 }
 
-@Entity()
+@Entity('book_images')
 @Index(['book'])
 export class BookImage extends BaseEntity {
   @Column({
