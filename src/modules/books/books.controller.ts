@@ -1,4 +1,4 @@
-import { Body, ConflictException, Controller, Get, NotFoundException, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
+import { Body, ConflictException, Controller, Delete, Get, NotFoundException, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
 import { LanguagesService } from './languages.service';
 import { CreateLanguageDto } from './dtos/create-language.dto';
 import { ApiBadRequestResponse, ApiConflictResponse, ApiNotFoundResponse, ApiOperation } from '@nestjs/swagger';
@@ -153,5 +153,17 @@ export class BooksController {
     @Body() body: UpdateBookDto
   ) {
     return this.booksService.update(id, body);
-  } 
+  }
+
+  @ApiOperation({
+    summary: 'Delete a book image by id',
+  })
+  @ApiNotFoundResponse({
+    type: NotFoundException,
+    description: NotFoundMessages.BookImage
+  })
+  @Delete('images/:id')
+  async deleteBookImage(@Param('id', ParseUUIDPipe) id: string) {
+    return this.booksService.deleteImage(id);
+  }
 }

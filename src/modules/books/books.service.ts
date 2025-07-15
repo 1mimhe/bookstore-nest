@@ -1,7 +1,7 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Book } from './entities/book.entity';
-import { DataSource, In, Repository } from 'typeorm';
+import { DataSource, EntityNotFoundError, In, Repository } from 'typeorm';
 import { CreateBookDto } from './dtos/create-book.dto';
 import { Title } from './entities/title.entity';
 import { NotFoundMessages } from 'src/common/enums/not-found.messages';
@@ -16,8 +16,8 @@ import { BookImage } from './entities/book-image.entity';
 @Injectable()
 export class BooksService {
   constructor(
-    @InjectRepository(Book) private bookRepo: Repository<Book>,
-    private dataSource: DataSource
+    private dataSource: DataSource,
+    @InjectRepository(BookImage) private bookImageRepo: Repository<BookImage>,
   ) {}
 
   async create(
@@ -129,5 +129,16 @@ export class BooksService {
         throw error;
       });
     });
+  }
+
+  async deleteImage(id: string): Promise<BookImage | never> {
+    const bookImage = await this.bookImageRepo.findOneOrFail({ where : { id } })
+      .catch((error) => {
+        if (error instanceof EntityNotFoundError) {
+          throw new NotFoundException(NotFoundMessages.BookImage);
+        }
+        throw error;
+      });
+    return this.bookImageRepo.softRemove(bookImage);
   }
 }
