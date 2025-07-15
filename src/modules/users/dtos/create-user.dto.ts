@@ -31,7 +31,7 @@ export class CreateUserDto {
 
   @IsOptional()
   @IsEnum(Genders)
-  gender?: string;
+  gender?: Genders;
 
   @IsOptional()
   @IsPhoneNumber('IR')

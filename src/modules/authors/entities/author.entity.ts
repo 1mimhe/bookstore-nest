@@ -1,4 +1,5 @@
 import { BaseEntity } from 'src/common/entities/base.entity';
+import { Book } from 'src/modules/books/entities/book.entity';
 import { Title } from 'src/modules/books/entities/title.entity';
 import { Column, Entity, Index, JoinTable, ManyToMany, Unique } from 'typeorm';
 
@@ -30,6 +31,18 @@ export class Author extends BaseEntity {
   dateOfDeath?: Date;
 
   @ManyToMany(() => Title, (title) => title.authors)
-  @JoinTable()
+  @JoinTable({
+    name: 'title_authors',
+    joinColumn: { name: 'titleId', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'authorId', referencedColumnName: 'id' },
+  })
   titles: Title[];
+
+  @ManyToMany(() => Book, (book) => book.translators)
+  @JoinTable({
+    name: 'book_translators',
+    joinColumn: { name: 'bookId', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'translatorId', referencedColumnName: 'id' },
+  })
+  books: Book[];
 }

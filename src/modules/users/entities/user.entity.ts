@@ -38,7 +38,7 @@ export class User extends BaseEntity {
     enum: Genders,
     nullable: true
   })
-  gender?: string;
+  gender?: Genders;
 
   @Column({ nullable: true })
   profilePhoto?: string;
