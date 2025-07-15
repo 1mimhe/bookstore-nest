@@ -13,9 +13,9 @@ import {
 } from '@nestjs/swagger';
 import { AuthMessages } from 'src/common/enums/error.messages';
 import { UserDto } from './dtos/user.dto';
-import { AuthGuard } from '../../common/guards/auth.guard';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 import { Request } from 'express';
+import { AuthGuard } from '../auth/guards/auth.guard';
 
 @Controller('users')
 export class UsersController {

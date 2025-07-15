@@ -32,7 +32,7 @@ export class Author extends BaseEntity {
 
   @ManyToMany(() => Title, (title) => title.authors)
   @JoinTable({
-    name: 'title_authors',
+    name: 'title_author',
     joinColumn: { name: 'titleId', referencedColumnName: 'id' },
     inverseJoinColumn: { name: 'authorId', referencedColumnName: 'id' },
   })
@@ -40,7 +40,7 @@ export class Author extends BaseEntity {
 
   @ManyToMany(() => Book, (book) => book.translators)
   @JoinTable({
-    name: 'book_translators',
+    name: 'book_translator',
     joinColumn: { name: 'bookId', referencedColumnName: 'id' },
     inverseJoinColumn: { name: 'translatorId', referencedColumnName: 'id' },
   })
