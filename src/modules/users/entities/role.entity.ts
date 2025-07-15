@@ -1,6 +1,7 @@
 import {
   Column,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne
 } from 'typeorm';
@@ -17,7 +18,7 @@ export enum Roles {
 }
 
 @Entity()
-// @Index(['userId', 'role'])
+@Index(['user', 'role'])
 export class Role extends BaseEntity {
   @Column({
     type: 'enum',
