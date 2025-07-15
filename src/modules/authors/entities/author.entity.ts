@@ -31,10 +31,18 @@ export class Author extends BaseEntity {
   dateOfDeath?: Date;
 
   @ManyToMany(() => Title, (title) => title.authors)
-  @JoinTable()
+  @JoinTable({
+    name: 'book_authors',
+    joinColumn: { name: 'bookId', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'authorId', referencedColumnName: 'id' },
+  })
   titles: Title[];
 
   @ManyToMany(() => Book, (book) => book.translators)
-  @JoinTable()
+  @JoinTable({
+    name: 'book_translators',
+    joinColumn: { name: 'bookId', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'translatorId', referencedColumnName: 'id' },
+  })
   books: Book[];
 }
