@@ -19,7 +19,10 @@ export class Publisher extends BaseEntity {
   })
   description?: string;
 
-  @Column({ nullable: true })
+  @Column({
+    nullable: true,
+    type: 'text'
+  })
   logoUrl?: string;
 
   @OneToOne(() => User, (user) => user.publisher)
