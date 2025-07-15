@@ -9,9 +9,9 @@ import { Publisher } from '../publishers/entities/publisher.entity';
 import { DBErrors } from 'src/common/enums/db.errors';
 import { ConflictMessages } from 'src/common/enums/error.messages';
 import { Author } from '../authors/entities/author.entity';
-import { Language } from './entities/language.entity';
 import { UpdateBookDto } from './dtos/update-book.dto';
 import { BookImage } from './entities/book-image.entity';
+import { Language } from '../languages/entities/language.entity';
 
 @Injectable()
 export class BooksService {

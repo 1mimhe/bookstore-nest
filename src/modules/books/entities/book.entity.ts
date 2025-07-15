@@ -12,8 +12,8 @@ import {
 } from 'typeorm';
 import { Title } from './title.entity';
 import { Author } from 'src/modules/authors/entities/author.entity';
-import { Language } from './language.entity';
 import { BookImage } from './book-image.entity';
+import { Language } from 'src/modules/languages/entities/language.entity';
 
 export enum Quartos {
   Vaziri = 'vaziri',
