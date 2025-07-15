@@ -5,9 +5,9 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Request } from 'express';
-import { AuthMessages } from '../enums/auth.messages';
-import { HeaderNames } from '../enums/header.names';
-import { AuthService } from 'src/modules/users/auth.service';
+import { AuthService } from '../auth.service';
+import { AuthMessages } from 'src/common/enums/auth.messages';
+import { HeaderNames } from 'src/common/enums/header.names';
 
 @Injectable()
 export class AuthGuard implements CanActivate {

@@ -6,19 +6,19 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { DataSource, EntityManager, Repository } from 'typeorm';
-import { User } from './entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Roles } from './entities/role.entity';
-import { CreateUserDto } from './dtos/create-user.dto';
+import { CreateUserDto } from './dto/sign-up.dto';
 import { pbkdf2, randomBytes } from 'crypto';
-import { UsersService } from './users.service';
-import { SigninDto } from './dtos/signin.dto';
+import { SigninDto } from './dto/sign-in.dto';
 import { AuthMessages } from 'src/common/enums/auth.messages';
 import { ConfigService } from '@nestjs/config';
 import * as jwt from 'jsonwebtoken';
 import { JwtPayload } from 'src/common/types/jwt';
 import { SessionData } from 'express-session';
 import { Publisher } from '../publishers/entities/publisher.entity';
+import { UsersService } from '../users/users.service';
+import { User } from '../users/entities/user.entity';
+import { Roles } from '../users/entities/role.entity';
 
 type AdditionalEntity = Publisher;
 
