@@ -8,7 +8,7 @@ import {
   IsString,
   IsStrongPassword,
 } from 'class-validator';
-import { Genders } from '../entities/user.entity';
+import { Genders } from '../../users/entities/user.entity';
 import { Transform } from 'class-transformer';
 
 export class CreateUserDto {

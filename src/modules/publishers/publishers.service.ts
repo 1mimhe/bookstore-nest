@@ -1,15 +1,15 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Publisher } from './entities/publisher.entity';
 import { EntityManager, EntityNotFoundError, Repository } from 'typeorm';
-import { AuthService } from '../users/auth.service';
 import { Roles } from '../users/entities/role.entity';
 import { User } from '../users/entities/user.entity';
 import { CreatePublisherDto } from './dtos/create-publisher.dto';
-import { NotFoundMessages } from 'src/common/enums/not-found.messages';
+import { NotFoundMessages } from 'src/common/enums/error.messages';
 import { UpdatePublisherDto } from './dtos/update-publisher.dto';
-import { ConflictMessages } from 'src/common/enums/conflict.messages';
+import { ConflictMessages } from 'src/common/enums/error.messages';
 import { DBErrors } from 'src/common/enums/db.errors';
+import { AuthService } from '../auth/auth.service';
 
 @Injectable()
 export class PublishersService {

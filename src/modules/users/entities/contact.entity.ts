@@ -8,7 +8,7 @@ import {
 import { User } from './user.entity';
 import { BaseEntity } from 'src/common/entities/base.entity';
 
-@Entity()
+@Entity('contacts')
 @Index(['user'])
 @Index(['phoneNumber'], { unique: true })
 @Index(['email'], { unique: true })

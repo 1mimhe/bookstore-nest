@@ -1,10 +1,10 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Language } from './entities/language.entity';
 import { Repository } from 'typeorm';
-import { CreateLanguageDto } from './dtos/create-language.dto';
-import { ConflictMessages } from 'src/common/enums/conflict.messages';
+import { CreateLanguageDto } from '../books/dtos/create-language.dto';
+import { ConflictMessages } from 'src/common/enums/error.messages';
 import { DBErrors } from 'src/common/enums/db.errors';
+import { Language } from './entities/language.entity';
 
 @Injectable()
 export class LanguagesService {

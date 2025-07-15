@@ -12,8 +12,8 @@ import {
 } from 'typeorm';
 import { Title } from './title.entity';
 import { Author } from 'src/modules/authors/entities/author.entity';
-import { Language } from './language.entity';
 import { BookImage } from './book-image.entity';
+import { Language } from 'src/modules/languages/entities/language.entity';
 
 export enum Quartos {
   Vaziri = 'vaziri',
@@ -32,7 +32,7 @@ export enum Covers {
   Charmi = 'charmi',
 }
 
-@Entity()
+@Entity('books')
 // @Unique('TITLE_PUBLISHER_UNIQUE', ['title', 'publisher'])
 @Unique('ISBN_UNIQUE', ['ISBN'])
 @Index(['title'])

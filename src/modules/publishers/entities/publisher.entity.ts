@@ -3,7 +3,7 @@ import { Book } from 'src/modules/books/entities/book.entity';
 import { User } from 'src/modules/users/entities/user.entity';
 import { Column, Entity, Index, JoinColumn, OneToMany, OneToOne, Unique } from 'typeorm';
 
-@Entity()
+@Entity('publishers')
 @Index(['slug'], { unique: true })
 @Unique(['publisherName'])
 export class Publisher extends BaseEntity {

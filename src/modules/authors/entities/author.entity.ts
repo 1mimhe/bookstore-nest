@@ -3,7 +3,7 @@ import { Book } from 'src/modules/books/entities/book.entity';
 import { Title } from 'src/modules/books/entities/title.entity';
 import { Column, Entity, Index, JoinTable, ManyToMany, Unique } from 'typeorm';
 
-@Entity()
+@Entity('authors')
 @Index(['slug'], { unique: true })
 export class Author extends BaseEntity {
   @Column()
@@ -32,7 +32,7 @@ export class Author extends BaseEntity {
 
   @ManyToMany(() => Title, (title) => title.authors)
   @JoinTable({
-    name: 'title_authors',
+    name: 'title_author',
     joinColumn: { name: 'titleId', referencedColumnName: 'id' },
     inverseJoinColumn: { name: 'authorId', referencedColumnName: 'id' },
   })
@@ -40,7 +40,7 @@ export class Author extends BaseEntity {
 
   @ManyToMany(() => Book, (book) => book.translators)
   @JoinTable({
-    name: 'book_translators',
+    name: 'book_translator',
     joinColumn: { name: 'bookId', referencedColumnName: 'id' },
     inverseJoinColumn: { name: 'translatorId', referencedColumnName: 'id' },
   })

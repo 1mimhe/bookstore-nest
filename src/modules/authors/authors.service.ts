@@ -3,8 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Author } from './entities/author.entity';
 import { EntityNotFoundError, Repository } from 'typeorm';
 import { CreateAuthorDto } from './dtos/create-author.dto';
-import { ConflictMessages } from 'src/common/enums/conflict.messages';
-import { NotFoundMessages } from 'src/common/enums/not-found.messages';
+import { ConflictMessages } from 'src/common/enums/error.messages';
+import { NotFoundMessages } from 'src/common/enums/error.messages';
 import { UpdateAuthorDto } from './dtos/update-author.dto';
 import { DBErrors } from 'src/common/enums/db.errors';
 

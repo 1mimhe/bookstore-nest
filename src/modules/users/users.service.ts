@@ -11,7 +11,7 @@ export class UsersService {
   findOne(id: string) {
     return this.userRepo.findOne({
       where: { id },
-      relations: ['contact', 'roles']
+      relations: ['contact', 'roles'],
     });
   }
 
@@ -72,19 +72,5 @@ export class UsersService {
     }
 
     return conflicts;
-  }
-
-  findByIdentifier(identifier: string) {
-    const whereConditions: FindOptionsWhere<User>[] = [
-      { username: identifier },
-      { contact: { email: identifier } },
-      { contact: { phoneNumber: identifier } },
-    ];
-
-    return this.userRepo.findOne({
-      where: whereConditions,
-      select: ['id', 'username', 'hashedPassword'],
-      relations: ['contact'],
-    });
   }
 }

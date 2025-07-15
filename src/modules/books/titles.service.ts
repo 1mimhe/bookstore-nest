@@ -8,9 +8,9 @@ import { Title } from './entities/title.entity';
 import { DataSource, In, Repository } from 'typeorm';
 import { CreateTitleDto } from './dtos/create-title.dto';
 import { DBErrors } from 'src/common/enums/db.errors';
-import { ConflictMessages } from 'src/common/enums/conflict.messages';
+import { ConflictMessages } from 'src/common/enums/error.messages';
 import { Author } from '../authors/entities/author.entity';
-import { NotFoundMessages } from 'src/common/enums/not-found.messages';
+import { NotFoundMessages } from 'src/common/enums/error.messages';
 import { UpdateTitleDto } from './dtos/update-title.dto';
 
 @Injectable()
