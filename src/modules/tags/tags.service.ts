@@ -1,17 +1,21 @@
-import { ConflictException, Injectable } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { EntityNotFoundError, Repository } from 'typeorm';
 import { Tag, TagType } from './entities/tag.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ConflictMessages } from 'src/common/enums/error.messages';
+import { ConflictMessages, NotFoundMessages } from 'src/common/enums/error.messages';
 import { DBErrors } from 'src/common/enums/db.errors';
 import { CreateTagDto } from './dtos/create-tag.dto';
+import { TitlesService } from '../books/titles.service';
 
 @Injectable()
 export class TagsService {
-  constructor(@InjectRepository(Tag) private tagRepo: Repository<Tag>) {}
+  constructor(
+    @InjectRepository(Tag) private tagRepo: Repository<Tag>,
+    private titlesService: TitlesService
+  ) {}
 
-  async create(createTagDto: CreateTagDto): Promise<Tag> {
-    const tag = this.tagRepo.create(createTagDto);
+  async create(tagDto: CreateTagDto): Promise<Tag | never> {
+    const tag = this.tagRepo.create(tagDto);
     return await this.tagRepo.save(tag).catch((error) => {
       if (error.code === DBErrors.Conflict) {
         throw new ConflictException(ConflictMessages.Tag);
@@ -22,5 +26,34 @@ export class TagsService {
 
   async getAll(type?: TagType): Promise<Tag[]> {
     return this.tagRepo.find({ where: { type } });
+  }
+
+  async getById(id: string): Promise<Tag | never> {
+    return this.tagRepo.findOneOrFail({
+      where: { id }
+    }).catch((error: Error) => {
+      if (error instanceof EntityNotFoundError) {
+        throw new NotFoundException(NotFoundMessages.Tag);
+      }
+      throw error;
+    });
+  }
+
+  async getByName(name: string, page = 1, limit = 10): Promise<Tag | never> {
+    const tag = await this.tagRepo.findOneOrFail({
+      where: { name },
+    }).catch((error: Error) => {
+      if (error instanceof EntityNotFoundError) {
+        throw new NotFoundException(NotFoundMessages.Tag);
+      }
+      throw error;
+    });
+
+    const titles = await this.titlesService.getByTag(name, page, limit);
+
+    return {
+      ...tag,
+      titles
+    };
   }
 }

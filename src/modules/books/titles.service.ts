@@ -100,4 +100,18 @@ export class TitlesService {
       });
     });
   }
+
+  async getByTag(tagName: string, page = 1, limit = 10) {
+    const skip = (page - 1) * limit;
+    return this.titleRepo.find({
+      where: {
+        tags: {
+          name: tagName
+        }
+      },
+      relations: ['tags'],
+      skip,
+      take: limit
+    });
+  }
 }
