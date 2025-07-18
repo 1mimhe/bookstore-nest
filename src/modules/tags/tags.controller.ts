@@ -1,8 +1,9 @@
-import { Body, Controller, DefaultValuePipe, Get, Param, ParseEnumPipe, ParseIntPipe, Post, Query } from '@nestjs/common';
+import { Body, Controller, DefaultValuePipe, Get, Param, ParseEnumPipe, ParseIntPipe, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
 import { TagsService } from './tags.service';
 import { CreateTagDto } from './dtos/create-tag.dto';
 import { ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { TagType } from './entities/tag.entity';
+import { UpdateTagDto } from './dtos/update-tag.dto';
 
 @Controller('tags')
 export class TagsController {
@@ -67,4 +68,16 @@ export class TagsController {
   ) {
     return this.tagsService.getByName(name, page, limit);
   }
+
+  @ApiOperation({
+    summary: 'Update a tag by id',
+  })
+  @Patch(':id')
+  async updateTag(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: UpdateTagDto
+  ) {
+    return this.tagsService.update(id, body);
+  }
+
 }

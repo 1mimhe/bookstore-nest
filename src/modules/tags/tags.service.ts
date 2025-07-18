@@ -6,6 +6,7 @@ import { ConflictMessages, NotFoundMessages } from 'src/common/enums/error.messa
 import { DBErrors } from 'src/common/enums/db.errors';
 import { CreateTagDto } from './dtos/create-tag.dto';
 import { TitlesService } from '../books/titles.service';
+import { UpdateTagDto } from './dtos/update-tag.dto';
 
 @Injectable()
 export class TagsService {
@@ -55,5 +56,16 @@ export class TagsService {
       ...tag,
       titles
     };
+  }
+
+  async update(id: string, tagDto: UpdateTagDto): Promise<Tag | never> {
+    const tag = await this.getById(id);
+    Object.assign(tag, tagDto);
+    return await this.tagRepo.save(tag).catch((error) => {
+      if (error.code === DBErrors.Conflict) {
+        throw new ConflictException(ConflictMessages.Tag);
+      }
+      throw error;
+    });
   }
 }
