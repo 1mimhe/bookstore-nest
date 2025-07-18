@@ -1,7 +1,8 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, ParseEnumPipe, Post, Query } from '@nestjs/common';
 import { TagsService } from './tags.service';
 import { CreateTagDto } from './dtos/create-tag.dto';
-import { ApiOperation } from '@nestjs/swagger';
+import { ApiOperation, ApiQuery } from '@nestjs/swagger';
+import { TagType } from './entities/tag.entity';
 
 @Controller('tags')
 export class TagsController {
@@ -25,5 +26,21 @@ export class TagsController {
   @Post()
   async createTag(@Body() body: CreateTagDto) {
     return this.tagsService.create(body);
+  }
+
+  @ApiOperation({
+    summary: 'Retrieves all tags'
+  })
+  @ApiQuery({
+    name: 'type',
+    enum: TagType,
+    required: false,
+    description: 'The type of tags to retrieve (optional).',
+  })
+  @Get()
+  async getAllTags(
+    @Query('type', new ParseEnumPipe(TagType, { optional: true })) type?: TagType
+  ) {
+    return this.tagsService.getAll(type);
   }
 }

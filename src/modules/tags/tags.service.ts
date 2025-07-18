@@ -1,6 +1,6 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
-import { Tag } from './entities/tag.entity';
+import { Tag, TagType } from './entities/tag.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ConflictMessages } from 'src/common/enums/error.messages';
 import { DBErrors } from 'src/common/enums/db.errors';
@@ -18,5 +18,9 @@ export class TagsService {
       }
       throw error;
     });
+  }
+
+  async getAll(type?: TagType): Promise<Tag[]> {
+    return this.tagRepo.find({ where: { type } });
   }
 }
