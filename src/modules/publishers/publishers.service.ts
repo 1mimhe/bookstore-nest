@@ -55,6 +55,18 @@ export class PublishersService {
     });
   }
 
+  async getBySlug(slug: string): Promise<Publisher | never> {
+    return this.publisherRepo.findOneOrFail({
+      where: { slug },
+      relations: ['books.translators', 'books.title.authors']
+    }).catch((error: Error) => {
+      if (EntityNotFoundError) {
+        new NotFoundException(NotFoundMessages.Publisher);
+      }
+      throw error;
+    });;
+  }
+
   async update(id: string, publisherDto: UpdatePublisherDto): Promise<Publisher | never> {
     const publisher = await this.getById(id);
     Object.assign(publisher, publisherDto);
@@ -63,6 +75,6 @@ export class PublishersService {
         throw new ConflictException(ConflictMessages.PublisherName);
       }
       throw error;
-    });;;
+    });
   }
 }

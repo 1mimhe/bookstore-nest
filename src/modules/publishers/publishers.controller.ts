@@ -76,13 +76,32 @@ export class PublishersController {
     type: Boolean,
     description: 'Include related books in the response',
   })
-  @Get(':id')
+  @Get('id/:id')
   async getPublisherById(
     @Param('id', ParseUUIDPipe) id: string,
     @Query('complete', new ParseBoolPipe({ optional: true })) complete?: boolean,
   ) {
-    const relations = complete ? ['books'] : [];
+    const relations = complete ? ['books.translators', 'books.title.authors'] : [];
     return this.publishersService.getById(id, relations);
+  }
+
+  @ApiOperation({
+    summary: 'Retrieves a publisher by its slug',
+    description: 'Includes relations.'
+  })
+  @ApiNotFoundResponse({
+    type: NotFoundException,
+    description: NotFoundMessages.Publisher
+  })
+  @ApiQuery({
+    name: 'complete',
+    required: false,
+    type: Boolean,
+    description: 'Include related books in the response',
+  })
+  @Get(':id')
+  async getPublisherBySlug(@Param('id', ParseUUIDPipe) id: string) {
+    return this.publishersService.getBySlug(id);
   }
 
   @ApiOperation({
