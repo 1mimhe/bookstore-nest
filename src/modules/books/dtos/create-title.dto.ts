@@ -30,4 +30,10 @@ export class CreateTitleDto {
   @IsOptional()
   @IsDateString()
   originallyPublishedAt?: Date;
+
+  @IsOptional()
+  @ArrayMinSize(1)
+  @IsArray()
+  @IsAlphanumeric(undefined, { each: true })
+  tags?: string[];
 }

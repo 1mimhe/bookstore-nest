@@ -1,6 +1,6 @@
 import { BaseEntity } from 'src/common/entities/base.entity';
-import { Book } from 'src/modules/books/entities/book.entity';
-import { Column, Entity, ManyToMany } from 'typeorm';
+import { Title } from 'src/modules/books/entities/title.entity';
+import { Column, Entity, JoinTable, ManyToMany } from 'typeorm';
 
 export enum TagType {
   ThematicCategory = 'thematic_category',
@@ -31,6 +31,7 @@ export class Tag extends BaseEntity {
   @Column({ default: true })
   isActive: boolean;
 
-  @ManyToMany(() => Book, (book) => book.tags)
-  books: Book[];
+  @ManyToMany(() => Title, (title) => title.tags)
+  @JoinTable()
+  titles: Title[];
 }

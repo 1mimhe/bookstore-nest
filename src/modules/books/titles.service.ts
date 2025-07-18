@@ -12,6 +12,7 @@ import { ConflictMessages } from 'src/common/enums/error.messages';
 import { Author } from '../authors/entities/author.entity';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
 import { UpdateTitleDto } from './dtos/update-title.dto';
+import { Tag } from '../tags/entities/tag.entity';
 
 @Injectable()
 export class TitlesService {
@@ -22,6 +23,7 @@ export class TitlesService {
 
   async create({
     authorIds,
+    tags,
     ...titleDto
   }: CreateTitleDto): Promise<Title | never> {
     return this.dataSource.transaction(async (manager) => {
@@ -33,9 +35,17 @@ export class TitlesService {
         throw new NotFoundException(NotFoundMessages.SomeAuthors);
       }
 
+      let dbTags: Tag[] | undefined;
+      if (tags && tags.length > 0) {
+        dbTags = await manager.findBy(Tag, {
+          name: In(tags),
+        });
+      }
+
       const title = manager.create(Title, {
         ...titleDto,
         authors,
+        tags: dbTags
       });
 
       return manager.save(Title, title).catch((error) => {
@@ -47,7 +57,7 @@ export class TitlesService {
     });
   }
 
-  async update(id: string, { authorIds, ...titleDto }: UpdateTitleDto): Promise<Title | never> {
+  async update(id: string, { authorIds, tags, ...titleDto }: UpdateTitleDto): Promise<Title | never> {
     return this.dataSource.transaction(async (manager) => {
       const existingTitle = await manager.findOne(Title, {
         where: { id },
@@ -71,8 +81,16 @@ export class TitlesService {
         authors = foundAuthors;
       }
 
+      let newTags: Tag[] | undefined;
+      if (tags && tags.length > 0) {
+        newTags = await manager.findBy(Tag, {
+          name: In(tags),
+        });
+      }
+
       const updatedTitle = manager.merge(Title, existingTitle, titleDto) as Title;
       updatedTitle.authors = authors;
+      updatedTitle.tags = [...(existingTitle.tags || []), ...(newTags || [])];;
 
       return manager.save(Title, updatedTitle).catch((error) => {
         if (error.code === DBErrors.Conflict) {

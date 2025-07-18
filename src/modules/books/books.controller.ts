@@ -1,6 +1,4 @@
 import { Body, ConflictException, Controller, Delete, Get, NotFoundException, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
-import { LanguagesService } from '../languages/languages.service';
-import { CreateLanguageDto } from './dtos/create-language.dto';
 import { ApiBadRequestResponse, ApiConflictResponse, ApiNotFoundResponse, ApiOperation } from '@nestjs/swagger';
 import { ConflictMessages } from 'src/common/enums/error.messages';
 import { TitlesService } from './titles.service';
@@ -10,12 +8,10 @@ import { NotFoundMessages } from 'src/common/enums/error.messages';
 import { CreateBookDto } from './dtos/create-book.dto';
 import { BooksService } from './books.service';
 import { UpdateBookDto } from './dtos/update-book.dto';
-import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 
 @Controller('books')
 export class BooksController {
   constructor(
-    private languagesService: LanguagesService,
     private titlesService: TitlesService,
     private booksService: BooksService
   ) {}
@@ -41,7 +37,7 @@ export class BooksController {
 
   @ApiOperation({
     summary: 'Update a title',
-    description: 'It override authors if included.'
+    description: 'It override authors and tags will be merged if included.'
   })
   @ApiBadRequestResponse({
     type: ValidationErrorResponseDto,
