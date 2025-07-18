@@ -35,6 +35,11 @@ export class BooksController {
     return this.titlesService.create(body);
   }
 
+  @Get('titles/:slug')
+  async getTitleBySlug(@Param('slug') slug: string) {
+    return this.titlesService.getBySlug(slug);
+  }
+
   @ApiOperation({
     summary: 'Update a title',
     description: 'It override authors and tags will be merged if included.'

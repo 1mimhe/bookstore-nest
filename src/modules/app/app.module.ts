@@ -15,6 +15,7 @@ import { PublishersModule } from '../publishers/publishers.module';
 import { BooksModule } from '../books/books.module';
 import { AuthModule } from '../auth/auth.module';
 import { TagsModule } from '../tags/tags.module';
+import { LanguagesModule } from '../languages/languages.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { TagsModule } from '../tags/tags.module';
     AuthorsModule,
     PublishersModule,
     BooksModule,
+    LanguagesModule,
     TagsModule
   ],
   providers: [

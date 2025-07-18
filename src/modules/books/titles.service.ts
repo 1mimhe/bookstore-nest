@@ -45,7 +45,7 @@ export class TitlesService {
       const title = manager.create(Title, {
         ...titleDto,
         authors,
-        tags: dbTags
+        tags: dbTags,
       });
 
       return manager.save(Title, title).catch((error) => {
@@ -57,7 +57,10 @@ export class TitlesService {
     });
   }
 
-  async update(id: string, { authorIds, tags, ...titleDto }: UpdateTitleDto): Promise<Title | never> {
+  async update(
+    id: string,
+    { authorIds, tags, ...titleDto }: UpdateTitleDto,
+  ): Promise<Title | never> {
     return this.dataSource.transaction(async (manager) => {
       const existingTitle = await manager.findOne(Title, {
         where: { id },
@@ -88,9 +91,13 @@ export class TitlesService {
         });
       }
 
-      const updatedTitle = manager.merge(Title, existingTitle, titleDto) as Title;
+      const updatedTitle = manager.merge(
+        Title,
+        existingTitle,
+        titleDto,
+      ) as Title;
       updatedTitle.authors = authors;
-      updatedTitle.tags = [...(existingTitle.tags || []), ...(newTags || [])];;
+      updatedTitle.tags = [...(existingTitle.tags || []), ...(newTags || [])];
 
       return manager.save(Title, updatedTitle).catch((error) => {
         if (error.code === DBErrors.Conflict) {
@@ -101,17 +108,25 @@ export class TitlesService {
     });
   }
 
-  async getByTag(tagName: string, page = 1, limit = 10) {
+  async getAllByTag(tagName: string, page = 1, limit = 10): Promise<Title[]> {
     const skip = (page - 1) * limit;
     return this.titleRepo.find({
       where: {
         tags: {
-          name: tagName
-        }
+          name: tagName,
+        },
       },
       relations: ['tags'],
       skip,
-      take: limit
+      take: limit,
+    });
+  }
+
+  getBySlug(slug: string): Promise<Title | never> {
+    return this.titleRepo.findOneOrFail({
+      where: { slug },
+      relations: ['authors', 'tags', 'books',
+        'books.publisher', 'books.translators', 'books.language', 'books.images'],
     });
   }
 }

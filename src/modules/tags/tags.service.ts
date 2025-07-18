@@ -50,7 +50,7 @@ export class TagsService {
       throw error;
     });
 
-    const titles = await this.titlesService.getByTag(name, page, limit);
+    const titles = await this.titlesService.getAllByTag(name, page, limit);
 
     return {
       ...tag,
