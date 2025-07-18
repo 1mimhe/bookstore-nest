@@ -12,7 +12,8 @@ export enum ConflictMessages {
   Slug = 'Slug already exists.',
   PublisherName = 'PublisherName already exists.',
   Language = 'Language already exists.',
-  ISBN = 'ISBN already exists.'
+  ISBN = 'ISBN already exists.',
+  Tag = 'Tag already exists.'
 }
 
 export enum NotFoundMessages {

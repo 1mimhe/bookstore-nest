@@ -14,6 +14,7 @@ import { AuthorsModule } from '../authors/authors.module';
 import { PublishersModule } from '../publishers/publishers.module';
 import { BooksModule } from '../books/books.module';
 import { AuthModule } from '../auth/auth.module';
+import { TagsModule } from '../tags/tags.module';
 
 @Module({
   imports: [
@@ -49,7 +50,8 @@ import { AuthModule } from '../auth/auth.module';
     AuthModule,
     AuthorsModule,
     PublishersModule,
-    BooksModule
+    BooksModule,
+    TagsModule
   ],
   providers: [
     {
