@@ -21,6 +21,7 @@ import { Language } from '../languages/entities/language.entity';
     ])
   ],
   controllers: [BooksController],
-  providers: [LanguagesService, TitlesService, BooksService]
+  providers: [LanguagesService, TitlesService, BooksService],
+  exports: [TitlesService]
 })
 export class BooksModule {}
