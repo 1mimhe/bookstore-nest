@@ -45,6 +45,9 @@ export class TagsController {
     return this.tagsService.getAll(type);
   }
 
+  @ApiOperation({
+    summary: 'Retrieves a tag by name with its relations'
+  })
   @ApiQuery({
     name: 'page',
     type: Number,
@@ -52,13 +55,10 @@ export class TagsController {
     description: 'Page number for paginated relations (default: 1)',
   })
   @ApiQuery({
-  name: 'limit',
-  type: Number,
-  required: false,
-  description: 'Number of titles per page (default: 10)',
-  })
-  @ApiOperation({
-    summary: 'Retrieves a tag by name with its relations'
+    name: 'limit',
+    type: Number,
+    required: false,
+    description: 'Number of titles per page (default: 10)',
   })
   @Get(':name')
   async getTagByName(

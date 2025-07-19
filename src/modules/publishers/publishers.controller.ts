@@ -2,10 +2,12 @@ import {
   Body,
   ConflictException,
   Controller,
+  DefaultValuePipe,
   Get,
   NotFoundException,
   Param,
   ParseBoolPipe,
+  ParseIntPipe,
   ParseUUIDPipe,
   Patch,
   Post,
@@ -76,13 +78,26 @@ export class PublishersController {
     type: Boolean,
     description: 'Include related books in the response',
   })
+  @ApiQuery({
+    name: 'page',
+    type: Number,
+    required: false,
+    description: 'Page number for paginated relations (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    type: Number,
+    required: false,
+    description: 'Number of titles per page (default: 10)',
+  })
   @Get('id/:id')
   async getPublisherById(
     @Param('id', ParseUUIDPipe) id: string,
     @Query('complete', new ParseBoolPipe({ optional: true })) complete?: boolean,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
   ) {
-    const relations = complete ? ['books.translators', 'books.title.authors'] : [];
-    return this.publishersService.getById(id, relations);
+    return this.publishersService.get({ id }, page, limit, complete);
   }
 
   @ApiOperation({
@@ -99,9 +114,26 @@ export class PublishersController {
     type: Boolean,
     description: 'Include related books in the response',
   })
-  @Get(':id')
-  async getPublisherBySlug(@Param('id', ParseUUIDPipe) id: string) {
-    return this.publishersService.getBySlug(id);
+  @ApiQuery({
+    name: 'page',
+    type: Number,
+    required: false,
+    description: 'Page number for paginated relations (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    type: Number,
+    required: false,
+    description: 'Number of titles per page (default: 10)',
+  })
+  @Get('slug/:slug')
+  async getPublisherBySlug(
+    @Param('slug') slug: string,
+    @Query('complete', new ParseBoolPipe({ optional: true })) complete?: boolean,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
+  ) {
+    return this.publishersService.get({ slug }, page, limit, complete);
   }
 
   @ApiOperation({

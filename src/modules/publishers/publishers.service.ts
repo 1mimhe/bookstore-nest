@@ -1,7 +1,7 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Publisher } from './entities/publisher.entity';
-import { EntityManager, EntityNotFoundError, Repository } from 'typeorm';
+import { EntityManager, EntityNotFoundError, FindOptionsWhere, Repository } from 'typeorm';
 import { Roles } from '../users/entities/role.entity';
 import { User } from '../users/entities/user.entity';
 import { CreatePublisherDto } from './dtos/create-publisher.dto';
@@ -10,12 +10,15 @@ import { UpdatePublisherDto } from './dtos/update-publisher.dto';
 import { ConflictMessages } from 'src/common/enums/error.messages';
 import { DBErrors } from 'src/common/enums/db.errors';
 import { AuthService } from '../auth/auth.service';
+import { BooksService } from '../books/books.service';
+import { Book } from '../books/entities/book.entity';
 
 @Injectable()
 export class PublishersService {
   constructor(
     @InjectRepository(Publisher) private publisherRepo: Repository<Publisher>,
-    private authService: AuthService
+    private authService: AuthService,
+    private booksService: BooksService
   ) {}
 
   async signup(publisherDto: CreatePublisherDto): Promise<Publisher | never> {
@@ -43,32 +46,43 @@ export class PublishersService {
     );
   }
 
-  async getById(id: string, relations?: string[]): Promise<Publisher | never> {    
-    return this.publisherRepo.findOneOrFail({
-      where: { id },
-      relations
+  async get(
+    identifier: { id?: string; slug?: string },
+    page: number = 1,
+    limit: number = 10,
+    complete = false,
+  ): Promise<Publisher | never> {
+    const where: FindOptionsWhere<Publisher> = {};
+    if (identifier.id) {
+      where.id = identifier.id;
+    } else if (identifier.slug) {
+      where.slug = identifier.slug;
+    } else {
+      throw new BadRequestException('Either id or slug must be provided.');
+    }
+
+    const publisher = await this.publisherRepo.findOneOrFail({
+      where
     }).catch((error: Error) => {
-      if (EntityNotFoundError) {
-        new NotFoundException(NotFoundMessages.Publisher);
+      if (error instanceof EntityNotFoundError) {
+        throw new NotFoundException(NotFoundMessages.Publisher);
       }
       throw error;
     });
-  }
 
-  async getBySlug(slug: string): Promise<Publisher | never> {
-    return this.publisherRepo.findOneOrFail({
-      where: { slug },
-      relations: ['books.translators', 'books.title.authors']
-    }).catch((error: Error) => {
-      if (EntityNotFoundError) {
-        new NotFoundException(NotFoundMessages.Publisher);
-      }
-      throw error;
-    });;
+    let books: Book[] = [];
+    if (complete) {
+      books = await this.booksService.getByPublisherId(publisher.id, page, limit);
+    }
+
+    return {
+      ...publisher,
+      books
+    };
   }
 
   async update(id: string, publisherDto: UpdatePublisherDto): Promise<Publisher | never> {
-    const publisher = await this.getById(id);
+    const publisher = await this.get({ id });
     Object.assign(publisher, publisherDto);
     return this.publisherRepo.save(publisher).catch((error) => {
       if (error.code === DBErrors.Conflict) {

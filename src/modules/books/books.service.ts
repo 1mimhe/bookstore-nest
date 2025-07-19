@@ -16,8 +16,9 @@ import { Language } from '../languages/entities/language.entity';
 @Injectable()
 export class BooksService {
   constructor(
-    private dataSource: DataSource,
+    @InjectRepository(Book) private bookRepo: Repository<Book>,
     @InjectRepository(BookImage) private bookImageRepo: Repository<BookImage>,
+    private dataSource: DataSource,
   ) {}
 
   async create(
@@ -62,6 +63,18 @@ export class BooksService {
         }
         throw error;
       });
+    });
+  }
+
+  async getByPublisherId(
+    publisherId: string,
+    page = 1, limit = 10
+  ): Promise<Book[]> {
+    const skip = (page - 1) * limit;
+    return this.bookRepo.find({
+      where: { publisherId },
+      skip,
+      take: limit
     });
   }
 
