@@ -42,6 +42,7 @@ export class TagsService {
     });
   }
 
+  // TODO
   async getBySlug(slug: string, page = 1, limit = 10): Promise<Tag | never> {
     const tag = await this.tagRepo.findOneOrFail({
       where: { slug },

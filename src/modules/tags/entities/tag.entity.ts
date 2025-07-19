@@ -22,13 +22,16 @@ export class Tag extends BaseEntity {
   slug: string;
 
   @Column({ nullable: true })
-  description?: string;
+  description?: string;  
 
   @Column({
     type: 'enum',
     enum: TagType
   })
   type: TagType;
+
+  @Column({ nullable: true })
+  color?: string;
   
   @Column({ default: 0 })
   usageCount: number;

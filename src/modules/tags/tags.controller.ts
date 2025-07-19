@@ -1,7 +1,21 @@
-import { Body, Controller, DefaultValuePipe, Get, HttpCode, HttpStatus, Param, ParseEnumPipe, ParseIntPipe, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  DefaultValuePipe,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseEnumPipe,
+  ParseIntPipe,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { TagsService } from './tags.service';
 import { CreateTagDto } from './dtos/create-tag.dto';
-import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiQuery } from '@nestjs/swagger';
+import { ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { TagType } from './entities/tag.entity';
 import { UpdateTagDto } from './dtos/update-tag.dto';
 import { ApiQueryPagination } from 'src/common/decorators/query.decorators';
@@ -25,18 +39,16 @@ export class TagsController {
       - literature_award => e.g. Nobel Literature, Man Booker, Pulitzer Fiction, Goncourt Prize, etc.\n
       - nation_literature => e.g. Iranian, American, French, Japanese, Russian, German, English, Canadian Literature\n
       - system_tags => e.g. Festival Sales, Recommended Books, Bestsellers, New Releases, Signed Editions, etc.\n
-    `
+    `,
   })
   @HttpCode(HttpStatus.CREATED)
   @Post()
-  async createTag(
-    @Body() body: CreateTagDto
-  ): Promise<TagCompactResponseDto> {
+  async createTag(@Body() body: CreateTagDto): Promise<TagCompactResponseDto> {
     return this.tagsService.create(body);
   }
 
   @ApiOperation({
-    summary: 'Retrieves all tags'
+    summary: 'Retrieves all tags',
   })
   @ApiQuery({
     name: 'type',
@@ -47,13 +59,14 @@ export class TagsController {
   // TODO
   @Get()
   async getAllTags(
-    @Query('type', new ParseEnumPipe(TagType, { optional: true })) type?: TagType
+    @Query('type', new ParseEnumPipe(TagType, { optional: true }))
+    type?: TagType,
   ): Promise<TagCompactResponseDto[]> {
     return this.tagsService.getAll(type);
   }
 
   @ApiOperation({
-    summary: 'Retrieves a tag by slug with its relations'
+    summary: 'Retrieves a tag by slug with its relations',
   })
   @ApiQueryPagination()
   @Serialize(TagResponseDto)
@@ -73,7 +86,7 @@ export class TagsController {
   @Patch(':id')
   async updateTag(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: UpdateTagDto
+    @Body() body: UpdateTagDto,
   ): Promise<TagResponseDto> {
     return this.tagsService.update(id, body);
   }

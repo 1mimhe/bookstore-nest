@@ -23,7 +23,6 @@ export class UsersController {
     summary: 'Retrieves the current authorized user',
   })
   @ApiUnauthorizedResponse({
-    type: UnauthorizedException,
     description: AuthMessages.MissingAccessToken,
   })
   @ApiBearerAuth()

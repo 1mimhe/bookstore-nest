@@ -16,9 +16,7 @@ import {
 import {
   ApiBadRequestResponse,
   ApiConflictResponse,
-  ApiCreatedResponse,
   ApiNotFoundResponse,
-  ApiOkResponse,
   ApiOperation,
 } from '@nestjs/swagger';
 import { ConflictMessages } from 'src/common/enums/error.messages';

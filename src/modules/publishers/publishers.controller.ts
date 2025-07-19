@@ -1,10 +1,8 @@
 import {
   Body,
-  ConflictException,
   Controller,
   DefaultValuePipe,
   Get,
-  NotFoundException,
   Param,
   ParseBoolPipe,
   ParseIntPipe,
@@ -17,14 +15,11 @@ import { PublishersService } from './publishers.service';
 import {
   ApiBadRequestResponse,
   ApiConflictResponse,
-  ApiCreatedResponse,
   ApiNotFoundResponse,
-  ApiOkResponse,
   ApiOperation,
   ApiQuery,
 } from '@nestjs/swagger';
 import { CreatePublisherDto } from './dtos/create-publisher.dto';
-import { UserResponseDto } from '../users/dtos/user-response.dto';
 import {
   ConflictResponseDto,
   ValidationErrorResponseDto,

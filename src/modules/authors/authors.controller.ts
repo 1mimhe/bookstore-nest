@@ -1,38 +1,62 @@
-import { Body, ConflictException, Controller, DefaultValuePipe, Delete, Get, HttpCode, HttpStatus, NotFoundException, Param, ParseBoolPipe, ParseIntPipe, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  DefaultValuePipe,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseBoolPipe,
+  ParseIntPipe,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { CreateAuthorDto } from './dtos/create-author.dto';
 import { Author } from './entities/author.entity';
 import { AuthorsService } from './authors.service';
-import { ApiBadRequestResponse, ApiConflictResponse, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiConflictResponse,
+  ApiNotFoundResponse,
+  ApiOperation,
+} from '@nestjs/swagger';
 import { UpdateAuthorDto } from './dtos/update-author.dto';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
 import { ConflictMessages } from 'src/common/enums/error.messages';
-import { ApiQueryComplete, ApiQueryPagination } from 'src/common/decorators/query.decorators';
-import { AuthorPlusCountResDto, AuthorResponseDto } from './dtos/author-response.dto';
+import {
+  ApiQueryComplete,
+  ApiQueryPagination,
+} from 'src/common/decorators/query.decorators';
+import {
+  AuthorPlusCountResDto,
+  AuthorResponseDto,
+} from './dtos/author-response.dto';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 
 @Controller('authors')
 export class AuthorsController {
-  constructor(
-    private authorsService: AuthorsService
-  ) {}
-  
-  @ApiOperation({ 
+  constructor(private authorsService: AuthorsService) {}
+
+  @ApiOperation({
     summary: 'Create a new author',
-    description: 'Creates a new author (or translator) with the provided information'
+    description:
+      'Creates a new author (or translator) with the provided information',
   })
   @ApiConflictResponse({
-    description: ConflictMessages.Slug
+    description: ConflictMessages.Slug,
   })
   @Serialize(AuthorResponseDto)
   @HttpCode(HttpStatus.CREATED)
   @Post()
   async createAuthor(
-    @Body() body: CreateAuthorDto
+    @Body() body: CreateAuthorDto,
   ): Promise<AuthorResponseDto> {
     return this.authorsService.create(body);
   }
 
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Retrieves all authors',
   })
   @ApiQueryPagination()
@@ -49,7 +73,7 @@ export class AuthorsController {
     summary: 'Retrieves a author by its id',
   })
   @ApiNotFoundResponse({
-    description: NotFoundMessages.Publisher
+    description: NotFoundMessages.Publisher,
   })
   @ApiQueryComplete('books')
   @ApiQueryPagination()
@@ -57,7 +81,8 @@ export class AuthorsController {
   @Get('id/:id')
   async getPublisherById(
     @Param('id', ParseUUIDPipe) id: string,
-    @Query('complete', new ParseBoolPipe({ optional: true })) complete?: boolean,
+    @Query('complete', new ParseBoolPipe({ optional: true }))
+    complete?: boolean,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
   ): Promise<AuthorResponseDto> {
@@ -66,10 +91,10 @@ export class AuthorsController {
 
   @ApiOperation({
     summary: 'Retrieves a author by its slug',
-    description: 'Includes relations.'
+    description: 'Includes relations.',
   })
   @ApiNotFoundResponse({
-    description: NotFoundMessages.Publisher
+    description: NotFoundMessages.Publisher,
   })
   @ApiQueryComplete('books')
   @ApiQueryPagination()
@@ -77,36 +102,37 @@ export class AuthorsController {
   @Get('slug/:slug')
   async getPublisherBySlug(
     @Param('slug') slug: string,
-    @Query('complete', new ParseBoolPipe({ optional: true })) complete?: boolean,
+    @Query('complete', new ParseBoolPipe({ optional: true }))
+    complete?: boolean,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
   ): Promise<AuthorResponseDto> {
     return this.authorsService.get({ slug }, page, limit, complete);
   }
 
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Update a author',
   })
   @ApiConflictResponse({
-    description: ConflictMessages.Slug
+    description: ConflictMessages.Slug,
   })
   @ApiNotFoundResponse({
-    description: NotFoundMessages.Author
+    description: NotFoundMessages.Author,
   })
   @Serialize(AuthorResponseDto)
   @Patch(':id')
   async updateAuthor(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: UpdateAuthorDto
-  ): Promise<AuthorResponseDto> {    
+    @Body() body: UpdateAuthorDto,
+  ): Promise<AuthorResponseDto> {
     return this.authorsService.update(id, body);
   }
 
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Delete a author',
   })
   @ApiNotFoundResponse({
-    description: NotFoundMessages.Author
+    description: NotFoundMessages.Author,
   })
   @Serialize(AuthorResponseDto)
   @Delete(':id')
