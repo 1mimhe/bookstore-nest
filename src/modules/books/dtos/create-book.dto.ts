@@ -15,7 +15,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Quartos, Covers } from '../entities/book.entity';
-import { BookImageDto } from './book-image.dto';
+import { CreateBookImageDto } from './book-image.dto';
 import { Type } from 'class-transformer';
 
 export class CreateBookDto {
@@ -44,8 +44,8 @@ export class CreateBookDto {
   @IsArray()
   @ArrayNotEmpty()
   @ValidateNested({ each: true })
-  @Type(() => BookImageDto)
-  images?: BookImageDto[];
+  @Type(() => CreateBookImageDto)
+  images?: CreateBookImageDto[];
 
   @IsOptional()
   @IsString()

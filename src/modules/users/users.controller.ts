@@ -12,7 +12,7 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { AuthMessages } from 'src/common/enums/error.messages';
-import { UserDto } from './dtos/user.dto';
+import { UserResponseDto } from './dtos/user-response.dto';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 import { Request } from 'express';
 import { AuthGuard } from '../auth/guards/auth.guard';
@@ -23,17 +23,13 @@ export class UsersController {
     summary: 'Retrieves the current authorized user',
   })
   @ApiUnauthorizedResponse({
-    type: UnauthorizedException,
     description: AuthMessages.MissingAccessToken,
-  })
-  @ApiOkResponse({
-    type: UserDto,
   })
   @ApiBearerAuth()
   @UseGuards(AuthGuard)
-  @Serialize(UserDto)
+  @Serialize(UserResponseDto)
   @Get('whoami')
-  whoAmI(@Req() req: Request) {
-    return req.user;
+  whoAmI(@Req() req: Request): UserResponseDto {
+    return req.user!;
   }
 }

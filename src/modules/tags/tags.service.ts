@@ -16,6 +16,8 @@ export class TagsService {
   ) {}
 
   async create(tagDto: CreateTagDto): Promise<Tag | never> {
+    console.log(tagDto);
+    
     const tag = this.tagRepo.create(tagDto);
     return await this.tagRepo.save(tag).catch((error) => {
       if (error.code === DBErrors.Conflict) {
@@ -40,6 +42,7 @@ export class TagsService {
     });
   }
 
+  // TODO
   async getBySlug(slug: string, page = 1, limit = 10): Promise<Tag | never> {
     const tag = await this.tagRepo.findOneOrFail({
       where: { slug },

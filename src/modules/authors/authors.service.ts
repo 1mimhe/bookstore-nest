@@ -42,16 +42,17 @@ export class AuthorsService {
     const skip = (page - 1) * limit;
     const authors = await this.authorRepo
       .createQueryBuilder('author')
+      .leftJoin('author.titles', 'titles')
       .leftJoin('author.books', 'books')
-      .select(['author', 'COUNT(books.id) as bookCount'])
+      .select(['author', 'COUNT(books.id) + COUNT(titles.id) as bookCount'])
       .groupBy('author.id')
       .skip(skip)
       .limit(limit)
       .getRawAndEntities();
-
+    
     return authors.entities.map((author, index) => ({
       ...author,
-      bookCount: parseInt(authors.raw[index].bookCount, 10),
+      bookCount: parseInt(authors.raw[index].bookCount),
     }));
   }
 

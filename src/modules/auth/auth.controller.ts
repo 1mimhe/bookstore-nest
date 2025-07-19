@@ -32,7 +32,7 @@ import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 import { AccessTokenDto } from '../auth/dto/access-token.dto';
 import { Cookies } from 'src/common/decorators/cookies.decorator';
 import { ConflictMessages } from 'src/common/enums/error.messages';
-import { UserDto } from '../users/dtos/user.dto';
+import { UserResponseDto } from '../users/dtos/user-response.dto';
 import { TokenService } from './token.service';
 
 @Controller('auth')
@@ -56,9 +56,9 @@ export class AuthController {
     type: ValidationErrorResponseDto,
   })
   @ApiCreatedResponse({
-    type: UserDto,
+    type: UserResponseDto,
   })
-  @Serialize(UserDto)
+  @Serialize(UserResponseDto)
   @Post('signup')
   signup(@Body() body: CreateUserDto) {
     return this.authService.signup(body);

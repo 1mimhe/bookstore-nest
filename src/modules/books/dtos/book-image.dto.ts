@@ -1,7 +1,7 @@
 import { IsEnum, IsUrl } from 'class-validator';
 import { BookImageTypes } from '../entities/book-image.entity';
 
-export class BookImageDto {
+export class CreateBookImageDto {
   @IsEnum(BookImageTypes)
   type: BookImageTypes;
 
