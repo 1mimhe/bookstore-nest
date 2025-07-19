@@ -60,7 +60,7 @@ export class AuthorsController {
     summary: 'Retrieves all authors',
   })
   @ApiQueryPagination()
-  // TODO
+  @Serialize(AuthorPlusCountResDto)
   @Get()
   async getAllAuthors(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,

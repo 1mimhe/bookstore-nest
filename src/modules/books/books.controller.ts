@@ -98,7 +98,7 @@ export class BooksController {
     description: NotFoundMessages.Publisher,
   })
   @ApiQueryPagination()
-  // TODO
+  @Serialize(BookResponseDto)
   @Get('author/:id')
   async getBooksByAuthorId(
     @Param('id', ParseUUIDPipe) id: string,

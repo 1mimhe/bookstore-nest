@@ -56,7 +56,7 @@ export class TagsController {
     required: false,
     description: 'The type of tags to retrieve (optional).',
   })
-  // TODO
+  @Serialize(TagCompactResponseDto)
   @Get()
   async getAllTags(
     @Query('type', new ParseEnumPipe(TagType, { optional: true }))

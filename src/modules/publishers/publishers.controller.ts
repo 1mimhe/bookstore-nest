@@ -75,7 +75,7 @@ export class PublishersController {
     required: false,
     description: 'Number of titles per page (default: 10)',
   })
-  // TODO
+  @Serialize(PublisherPlusResDto)
   @Get()
   async getAllAuthors(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
