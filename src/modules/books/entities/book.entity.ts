@@ -106,17 +106,23 @@ export class Book extends BaseEntity {
   })
   sold?: number;
 
+  @Column()
+  titleId: string;
   @ManyToOne(() => Title, (title) => title.books)
   @JoinColumn()
   title: Title;
 
+  @Column()
+  publisherId: string;
   @ManyToOne(() => Publisher, (publisher) => publisher.books)
-  @JoinColumn()
+  @JoinColumn({ name: 'publisherId' })
   publisher: Publisher;
 
   @ManyToMany(() => Author, (author) => author.books)
   translators: Author[];
 
+  @Column()
+  languageId: string;
   @ManyToOne(() => Language, (language) => language.books)
   @JoinColumn()
   language: Language;

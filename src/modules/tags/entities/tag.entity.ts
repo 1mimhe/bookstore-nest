@@ -32,6 +32,10 @@ export class Tag extends BaseEntity {
   isActive: boolean;
 
   @ManyToMany(() => Title, (title) => title.tags)
-  @JoinTable()
+  @JoinTable({
+    name: 'title_tag',
+    joinColumn: { name: 'titleId', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'tagId', referencedColumnName: 'id' }
+  })
   titles: Title[];
 }
