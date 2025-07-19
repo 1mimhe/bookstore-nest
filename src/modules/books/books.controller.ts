@@ -17,6 +17,7 @@ import {
   ApiBadRequestResponse,
   ApiConflictResponse,
   ApiNotFoundResponse,
+  ApiOkResponse,
   ApiOperation,
 } from '@nestjs/swagger';
 import { ConflictMessages } from 'src/common/enums/error.messages';
@@ -27,7 +28,10 @@ import { NotFoundMessages } from 'src/common/enums/error.messages';
 import { CreateBookDto } from './dtos/create-book.dto';
 import { BooksService } from './books.service';
 import { UpdateBookDto } from './dtos/update-book.dto';
-import { ApiQueryPagination } from 'src/common/decorators/query.decoretors';
+import { ApiQueryPagination } from 'src/common/decorators/query.decorators';
+import { Serialize } from 'src/common/interceptors/serialize.interceptor';
+import { BookResponseDto } from './dtos/book-response.dto';
+import { TitleResponseDto } from './dtos/title-response.dto';
 
 @Controller('books')
 export class BooksController {
@@ -56,11 +60,14 @@ export class BooksController {
   }
 
   @ApiOperation({
-    summary: 'Retrieves a complete title by slug',
+    summary: 'Retrieves a complete title by its slug',
   })
   @ApiNotFoundResponse({
     type: NotFoundException,
     description: NotFoundMessages.Title,
+  })
+  @ApiOkResponse({
+    type: TitleResponseDto
   })
   @Get('titles/:slug')
   async getTitleBySlug(@Param('slug') slug: string) {
@@ -73,6 +80,9 @@ export class BooksController {
   @ApiNotFoundResponse({
     type: NotFoundException,
     description: NotFoundMessages.Publisher,
+  })
+  @ApiOkResponse({
+    type: [BookResponseDto]
   })
   @ApiQueryPagination()
   @Get('publisher/:id')
@@ -90,6 +100,9 @@ export class BooksController {
   @ApiNotFoundResponse({
     type: NotFoundException,
     description: NotFoundMessages.Publisher,
+  })
+  @ApiOkResponse({
+    type: [BookResponseDto]
   })
   @ApiQueryPagination()
   @Get('author/:id')

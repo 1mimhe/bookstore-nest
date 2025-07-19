@@ -2,11 +2,13 @@ import { Body, ConflictException, Controller, DefaultValuePipe, Delete, Get, Htt
 import { CreateAuthorDto } from './dtos/create-author.dto';
 import { Author } from './entities/author.entity';
 import { AuthorsService } from './authors.service';
-import { ApiBadRequestResponse, ApiConflictResponse, ApiNotFoundResponse, ApiOperation, ApiQuery } from '@nestjs/swagger';
+import { ApiBadRequestResponse, ApiConflictResponse, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { UpdateAuthorDto } from './dtos/update-author.dto';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
 import { ConflictMessages } from 'src/common/enums/error.messages';
-import { ApiQueryComplete, ApiQueryPagination } from 'src/common/decorators/query.decoretors';
+import { ApiQueryComplete, ApiQueryPagination } from 'src/common/decorators/query.decorators';
+import { AuthorResponseDto } from './dtos/author-response.dto';
+import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 
 @Controller('authors')
 export class AuthorsController {
@@ -24,20 +26,8 @@ export class AuthorsController {
   })
   @HttpCode(HttpStatus.CREATED)
   @Post()
-  async createAuthor(@Body() body: CreateAuthorDto): Promise<Author> {
+  async createAuthor(@Body() body: CreateAuthorDto): Promise<AuthorResponseDto> {
     return this.authorsService.create(body);
-  }
-
-  @ApiOperation({ 
-    summary: 'Retrieves a author by its id',
-  })
-  @ApiNotFoundResponse({
-    type: NotFoundException,
-    description: NotFoundMessages.Author
-  })
-  @Get(':id')
-  async getAuthorById(@Param('id', ParseUUIDPipe) id: string): Promise<Author> {
-    return this.authorsService.getById(id);
   }
 
   @ApiOperation({ 
@@ -53,7 +43,7 @@ export class AuthorsController {
   }
 
   @ApiOperation({
-    summary: 'Retrieves a publisher by its id',
+    summary: 'Retrieves a author by its id',
   })
   @ApiNotFoundResponse({
     type: NotFoundException,
@@ -61,18 +51,19 @@ export class AuthorsController {
   })
   @ApiQueryComplete('books')
   @ApiQueryPagination()
+  @Serialize(AuthorResponseDto)
   @Get('id/:id')
   async getPublisherById(
     @Param('id', ParseUUIDPipe) id: string,
     @Query('complete', new ParseBoolPipe({ optional: true })) complete?: boolean,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
-  ) {
+  ): Promise<AuthorResponseDto> {
     return this.authorsService.get({ id }, page, limit, complete);
   }
 
   @ApiOperation({
-    summary: 'Retrieves a publisher by its slug',
+    summary: 'Retrieves a author by its slug',
     description: 'Includes relations.'
   })
   @ApiNotFoundResponse({
@@ -81,13 +72,14 @@ export class AuthorsController {
   })
   @ApiQueryComplete('books')
   @ApiQueryPagination()
+  @Serialize(AuthorResponseDto)
   @Get('slug/:slug')
   async getPublisherBySlug(
     @Param('slug') slug: string,
     @Query('complete', new ParseBoolPipe({ optional: true })) complete?: boolean,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
-  ) {
+  ): Promise<AuthorResponseDto> {
     return this.authorsService.get({ slug }, page, limit, complete);
   }
 
@@ -102,11 +94,12 @@ export class AuthorsController {
     type: NotFoundException,
     description: NotFoundMessages.Author
   })
+  @Serialize(AuthorResponseDto)
   @Patch(':id')
   async updateAuthor(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: UpdateAuthorDto
-  ): Promise<Author> {    
+  ): Promise<AuthorResponseDto> {    
     return this.authorsService.update(id, body);
   }
 
@@ -117,6 +110,7 @@ export class AuthorsController {
     type: NotFoundException,
     description: NotFoundMessages.Author
   })
+  @Serialize(AuthorResponseDto)
   @Delete(':id')
   async deleteAuthor(@Param('id', ParseUUIDPipe) id: string): Promise<Author> {
     return this.authorsService.delete(id);

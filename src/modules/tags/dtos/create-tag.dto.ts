@@ -15,6 +15,7 @@ export class CreateTagDto {
     }
     return undefined;
   })
+  @IsOptional()
   slug?: string;
 
   @IsOptional()

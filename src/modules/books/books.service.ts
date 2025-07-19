@@ -85,6 +85,7 @@ export class BooksService {
     const skip = (page - 1) * limit;
     return this.bookRepo.find({
       where: { publisherId },
+      relations: ['images'],
       skip,
       take: limit,
     });
@@ -107,6 +108,7 @@ export class BooksService {
           },
         },
       ],
+      relations: ['images'],
       skip,
       take: limit,
     });

@@ -1,10 +1,11 @@
 import { Body, Controller, DefaultValuePipe, Get, Param, ParseEnumPipe, ParseIntPipe, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
 import { TagsService } from './tags.service';
 import { CreateTagDto } from './dtos/create-tag.dto';
-import { ApiOperation, ApiQuery } from '@nestjs/swagger';
+import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { TagType } from './entities/tag.entity';
 import { UpdateTagDto } from './dtos/update-tag.dto';
-import { ApiQueryPagination } from 'src/common/decorators/query.decoretors';
+import { ApiQueryPagination } from 'src/common/decorators/query.decorators';
+import { TagCompactResponseDto, TagResponseDto } from './dtos/tag-response.dto';
 
 @Controller('tags')
 export class TagsController {
@@ -25,6 +26,9 @@ export class TagsController {
       - system_tags => e.g. Festival Sales, Recommended Books, Bestsellers, New Releases, Signed Editions, etc.\n
     `
   })
+  @ApiCreatedResponse({
+    type: TagCompactResponseDto
+  })
   @Post()
   async createTag(@Body() body: CreateTagDto) {
     return this.tagsService.create(body);
@@ -32,6 +36,9 @@ export class TagsController {
 
   @ApiOperation({
     summary: 'Retrieves all tags'
+  })
+  @ApiOkResponse({
+    type: [TagCompactResponseDto]
   })
   @ApiQuery({
     name: 'type',
@@ -47,20 +54,26 @@ export class TagsController {
   }
 
   @ApiOperation({
-    summary: 'Retrieves a tag by name with its relations'
+    summary: 'Retrieves a tag by slug with its relations'
+  })
+  @ApiOkResponse({
+    type: TagResponseDto
   })
   @ApiQueryPagination()
-  @Get(':name')
+  @Get(':slug')
   async getTagByName(
-    @Param('name') name: string,
+    @Param('slug') slug: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
   ) {
-    return this.tagsService.getBySlug(name, page, limit);
+    return this.tagsService.getBySlug(slug, page, limit);
   }
 
   @ApiOperation({
     summary: 'Update a tag by id',
+  })
+  @ApiCreatedResponse({
+    type: TagResponseDto
   })
   @Patch(':id')
   async updateTag(

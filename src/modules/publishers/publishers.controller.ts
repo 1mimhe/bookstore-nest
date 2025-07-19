@@ -19,6 +19,7 @@ import {
   ApiConflictResponse,
   ApiCreatedResponse,
   ApiNotFoundResponse,
+  ApiOkResponse,
   ApiOperation,
   ApiQuery,
 } from '@nestjs/swagger';
@@ -29,11 +30,11 @@ import {
   ValidationErrorResponseDto,
 } from 'src/common/dtos/error.dtos';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
-import { PublisherDto } from './dtos/publisher.dto';
+import { CreatePublisherResponseDto, PublisherResponseDto } from './dtos/publisher.dto';
 import { UpdatePublisherDto } from './dtos/update-publisher.dto';
 import { ConflictMessages } from 'src/common/enums/error.messages';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
-import { ApiQueryComplete, ApiQueryPagination } from 'src/common/decorators/query.decoretors';
+import { ApiQueryComplete, ApiQueryPagination } from 'src/common/decorators/query.decorators';
 
 @Controller('publishers')
 export class PublishersController {
@@ -60,7 +61,7 @@ export class PublishersController {
   @ApiCreatedResponse({
     type: UserDto,
   })
-  @Serialize(PublisherDto)
+  @Serialize(CreatePublisherResponseDto)
   @Post('signup')
   async signup(@Body() body: CreatePublisherDto) {
     return this.publishersService.signup(body);
@@ -96,8 +97,12 @@ export class PublishersController {
     type: NotFoundException,
     description: NotFoundMessages.Publisher
   })
+  @ApiOkResponse({
+    type: PublisherResponseDto
+  })
   @ApiQueryComplete('books')
   @ApiQueryPagination()
+  @Serialize(PublisherResponseDto)
   @Get('id/:id')
   async getPublisherById(
     @Param('id', ParseUUIDPipe) id: string,
@@ -115,8 +120,12 @@ export class PublishersController {
     type: NotFoundException,
     description: NotFoundMessages.Publisher
   })
+  @ApiOkResponse({
+    type: PublisherResponseDto
+  })
   @ApiQueryComplete('books')
   @ApiQueryPagination()
+  @Serialize(PublisherResponseDto)
   @Get('slug/:slug')
   async getPublisherBySlug(
     @Param('slug') slug: string,
@@ -141,6 +150,7 @@ export class PublishersController {
     type: NotFoundException,
     description: NotFoundMessages.Publisher
   })
+  @Serialize(PublisherResponseDto)
   @Patch(':id')
   async updatePublisher(
     @Param('id', ParseUUIDPipe) id: string,

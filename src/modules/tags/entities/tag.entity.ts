@@ -1,6 +1,6 @@
 import { BaseEntity } from 'src/common/entities/base.entity';
 import { Title } from 'src/modules/books/entities/title.entity';
-import { Column, Entity, JoinTable, ManyToMany } from 'typeorm';
+import { Column, Entity, Index, JoinTable, ManyToMany, Unique } from 'typeorm';
 
 export enum TagType {
   ThematicCategory = 'thematic_category',
@@ -12,11 +12,13 @@ export enum TagType {
 }
 
 @Entity('tags')
+@Unique(['name'])
+@Index(['slug'], { unique: true })
 export class Tag extends BaseEntity {
-  @Column({ unique: true })
+  @Column()
   name: string;
 
-  @Column({ unique: true })
+  @Column()
   slug: string;
 
   @Column({ nullable: true })
