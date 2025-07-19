@@ -65,6 +65,29 @@ export class PublishersController {
     return this.publishersService.signup(body);
   }
 
+  @ApiOperation({ 
+    summary: 'Retrieves all publishers',
+  })
+  @ApiQuery({
+    name: 'page',
+    type: Number,
+    required: false,
+    description: 'Page number for paginated relations (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    type: Number,
+    required: false,
+    description: 'Number of titles per page (default: 10)',
+  })
+  @Get()
+  async getAllAuthors(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
+  ) {
+    return this.publishersService.getAll(page, limit);
+  }
+
   @ApiOperation({
     summary: 'Retrieves a publisher by its id',
   })

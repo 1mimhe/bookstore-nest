@@ -46,6 +46,23 @@ export class PublishersService {
     );
   }
 
+  async getAll(page = 1, limit = 10): Promise<(Publisher & { bookCount: number })[]> {
+    const skip = (page - 1) * limit;
+    const publishers = await this.publisherRepo
+      .createQueryBuilder('author')
+      .leftJoin('publisher.books', 'books')
+      .select(['publisher', 'COUNT(books.id) as bookCount'])
+      .groupBy('publisher.id')
+      .skip(skip)
+      .limit(limit)
+      .getRawAndEntities();
+
+    return publishers.entities.map((author, index) => ({
+      ...author,
+      bookCount: parseInt(publishers.raw[index].bookCount, 10),
+    }));
+  }
+
   async get(
     identifier: { id?: string; slug?: string },
     page: number = 1,
