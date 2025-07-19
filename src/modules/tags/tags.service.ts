@@ -40,9 +40,9 @@ export class TagsService {
     });
   }
 
-  async getByName(name: string, page = 1, limit = 10): Promise<Tag | never> {
+  async getBySlug(slug: string, page = 1, limit = 10): Promise<Tag | never> {
     const tag = await this.tagRepo.findOneOrFail({
-      where: { name },
+      where: { slug },
     }).catch((error: Error) => {
       if (error instanceof EntityNotFoundError) {
         throw new NotFoundException(NotFoundMessages.Tag);
@@ -50,7 +50,7 @@ export class TagsService {
       throw error;
     });
 
-    const titles = await this.titlesService.getAllByTag(name, page, limit);
+    const titles = await this.titlesService.getAllByTag(slug, page, limit);
 
     return {
       ...tag,

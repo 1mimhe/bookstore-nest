@@ -108,15 +108,14 @@ export class TitlesService {
     });
   }
 
-  async getAllByTag(tagName: string, page = 1, limit = 10): Promise<Title[]> {
+  async getAllByTag(tagSlug: string, page = 1, limit = 10): Promise<Title[]> {
     const skip = (page - 1) * limit;
     return this.titleRepo.find({
       where: {
         tags: {
-          name: tagName,
+          slug: tagSlug,
         },
       },
-      relations: ['tags'],
       skip,
       take: limit,
     });
