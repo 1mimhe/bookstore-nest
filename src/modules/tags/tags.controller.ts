@@ -1,4 +1,4 @@
-import { Body, Controller, DefaultValuePipe, Get, Param, ParseEnumPipe, ParseIntPipe, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, DefaultValuePipe, Get, HttpCode, HttpStatus, Param, ParseEnumPipe, ParseIntPipe, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
 import { TagsService } from './tags.service';
 import { CreateTagDto } from './dtos/create-tag.dto';
 import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiQuery } from '@nestjs/swagger';
@@ -6,6 +6,7 @@ import { TagType } from './entities/tag.entity';
 import { UpdateTagDto } from './dtos/update-tag.dto';
 import { ApiQueryPagination } from 'src/common/decorators/query.decorators';
 import { TagCompactResponseDto, TagResponseDto } from './dtos/tag-response.dto';
+import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 
 @Controller('tags')
 export class TagsController {
@@ -26,19 +27,16 @@ export class TagsController {
       - system_tags => e.g. Festival Sales, Recommended Books, Bestsellers, New Releases, Signed Editions, etc.\n
     `
   })
-  @ApiCreatedResponse({
-    type: TagCompactResponseDto
-  })
+  @HttpCode(HttpStatus.CREATED)
   @Post()
-  async createTag(@Body() body: CreateTagDto) {
+  async createTag(
+    @Body() body: CreateTagDto
+  ): Promise<TagCompactResponseDto> {
     return this.tagsService.create(body);
   }
 
   @ApiOperation({
     summary: 'Retrieves all tags'
-  })
-  @ApiOkResponse({
-    type: [TagCompactResponseDto]
   })
   @ApiQuery({
     name: 'type',
@@ -46,41 +44,37 @@ export class TagsController {
     required: false,
     description: 'The type of tags to retrieve (optional).',
   })
+  // TODO
   @Get()
   async getAllTags(
     @Query('type', new ParseEnumPipe(TagType, { optional: true })) type?: TagType
-  ) {
+  ): Promise<TagCompactResponseDto[]> {
     return this.tagsService.getAll(type);
   }
 
   @ApiOperation({
     summary: 'Retrieves a tag by slug with its relations'
   })
-  @ApiOkResponse({
-    type: TagResponseDto
-  })
   @ApiQueryPagination()
+  @Serialize(TagResponseDto)
   @Get(':slug')
   async getTagByName(
     @Param('slug') slug: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
-  ) {
+  ): Promise<TagResponseDto> {
     return this.tagsService.getBySlug(slug, page, limit);
   }
 
   @ApiOperation({
     summary: 'Update a tag by id',
   })
-  @ApiCreatedResponse({
-    type: TagResponseDto
-  })
+  @Serialize(TagResponseDto)
   @Patch(':id')
   async updateTag(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: UpdateTagDto
-  ) {
+  ): Promise<TagResponseDto> {
     return this.tagsService.update(id, body);
   }
-
 }

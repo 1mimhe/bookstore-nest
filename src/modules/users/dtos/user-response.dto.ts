@@ -1,7 +1,7 @@
 import { Genders } from '../entities/user.entity';
 import { Expose, Transform } from 'class-transformer';
 
-export class UserDto {
+export class UserResponseDto {
   @Expose()
   username: string;
 

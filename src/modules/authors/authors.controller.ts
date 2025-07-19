@@ -7,7 +7,7 @@ import { UpdateAuthorDto } from './dtos/update-author.dto';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
 import { ConflictMessages } from 'src/common/enums/error.messages';
 import { ApiQueryComplete, ApiQueryPagination } from 'src/common/decorators/query.decorators';
-import { AuthorResponseDto } from './dtos/author-response.dto';
+import { AuthorPlusCountResDto, AuthorResponseDto } from './dtos/author-response.dto';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 
 @Controller('authors')
@@ -21,12 +21,14 @@ export class AuthorsController {
     description: 'Creates a new author (or translator) with the provided information'
   })
   @ApiConflictResponse({
-    type: ConflictException,
     description: ConflictMessages.Slug
   })
+  @Serialize(AuthorResponseDto)
   @HttpCode(HttpStatus.CREATED)
   @Post()
-  async createAuthor(@Body() body: CreateAuthorDto): Promise<AuthorResponseDto> {
+  async createAuthor(
+    @Body() body: CreateAuthorDto
+  ): Promise<AuthorResponseDto> {
     return this.authorsService.create(body);
   }
 
@@ -34,11 +36,12 @@ export class AuthorsController {
     summary: 'Retrieves all authors',
   })
   @ApiQueryPagination()
+  // TODO
   @Get()
   async getAllAuthors(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
-  ) {
+  ): Promise<AuthorPlusCountResDto[]> {
     return this.authorsService.getAll(page, limit);
   }
 
@@ -46,7 +49,6 @@ export class AuthorsController {
     summary: 'Retrieves a author by its id',
   })
   @ApiNotFoundResponse({
-    type: NotFoundException,
     description: NotFoundMessages.Publisher
   })
   @ApiQueryComplete('books')
@@ -67,7 +69,6 @@ export class AuthorsController {
     description: 'Includes relations.'
   })
   @ApiNotFoundResponse({
-    type: NotFoundException,
     description: NotFoundMessages.Publisher
   })
   @ApiQueryComplete('books')
@@ -87,11 +88,9 @@ export class AuthorsController {
     summary: 'Update a author',
   })
   @ApiConflictResponse({
-    type: ConflictException,
     description: ConflictMessages.Slug
   })
   @ApiNotFoundResponse({
-    type: NotFoundException,
     description: NotFoundMessages.Author
   })
   @Serialize(AuthorResponseDto)
@@ -107,7 +106,6 @@ export class AuthorsController {
     summary: 'Delete a author',
   })
   @ApiNotFoundResponse({
-    type: NotFoundException,
     description: NotFoundMessages.Author
   })
   @Serialize(AuthorResponseDto)

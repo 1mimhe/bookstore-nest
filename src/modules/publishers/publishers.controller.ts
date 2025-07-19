@@ -24,13 +24,13 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { CreatePublisherDto } from './dtos/create-publisher.dto';
-import { UserDto } from '../users/dtos/user.dto';
+import { UserResponseDto } from '../users/dtos/user-response.dto';
 import {
   ConflictResponseDto,
   ValidationErrorResponseDto,
 } from 'src/common/dtos/error.dtos';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
-import { CreatePublisherResponseDto, PublisherResponseDto } from './dtos/publisher.dto';
+import { CreatePublisherResponseDto, PublisherPlusResDto, PublisherResponseDto } from './dtos/publisher-response.dto';
 import { UpdatePublisherDto } from './dtos/update-publisher.dto';
 import { ConflictMessages } from 'src/common/enums/error.messages';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
@@ -49,7 +49,6 @@ export class PublishersController {
     type: ValidationErrorResponseDto,
   })
   @ApiConflictResponse({
-    type: ConflictException,
     description: ConflictMessages.PublisherName
   })
   @ApiConflictResponse({
@@ -58,12 +57,11 @@ export class PublishersController {
   @ApiBadRequestResponse({
     type: ValidationErrorResponseDto,
   })
-  @ApiCreatedResponse({
-    type: UserDto,
-  })
   @Serialize(CreatePublisherResponseDto)
   @Post('signup')
-  async signup(@Body() body: CreatePublisherDto) {
+  async signup(
+    @Body() body: CreatePublisherDto
+  ): Promise<CreatePublisherResponseDto> {
     return this.publishersService.signup(body);
   }
 
@@ -82,11 +80,12 @@ export class PublishersController {
     required: false,
     description: 'Number of titles per page (default: 10)',
   })
+  // TODO
   @Get()
   async getAllAuthors(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
-  ) {
+  ): Promise<PublisherPlusResDto[]> {
     return this.publishersService.getAll(page, limit);
   }
 
@@ -94,11 +93,7 @@ export class PublishersController {
     summary: 'Retrieves a publisher by its id',
   })
   @ApiNotFoundResponse({
-    type: NotFoundException,
     description: NotFoundMessages.Publisher
-  })
-  @ApiOkResponse({
-    type: PublisherResponseDto
   })
   @ApiQueryComplete('books')
   @ApiQueryPagination()
@@ -109,7 +104,7 @@ export class PublishersController {
     @Query('complete', new ParseBoolPipe({ optional: true })) complete?: boolean,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
-  ) {
+  ): Promise<PublisherResponseDto> {
     return this.publishersService.get({ id }, page, limit, complete);
   }
 
@@ -117,11 +112,7 @@ export class PublishersController {
     summary: 'Retrieves a publisher by its slug'
   })
   @ApiNotFoundResponse({
-    type: NotFoundException,
     description: NotFoundMessages.Publisher
-  })
-  @ApiOkResponse({
-    type: PublisherResponseDto
   })
   @ApiQueryComplete('books')
   @ApiQueryPagination()
@@ -132,7 +123,7 @@ export class PublishersController {
     @Query('complete', new ParseBoolPipe({ optional: true })) complete?: boolean,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
-  ) {
+  ): Promise<PublisherResponseDto> {
     return this.publishersService.get({ slug }, page, limit, complete);
   }
 
@@ -143,11 +134,9 @@ export class PublishersController {
     type: ValidationErrorResponseDto,
   })
   @ApiConflictResponse({
-    type: ConflictException,
     description: ConflictMessages.PublisherName
   })
   @ApiNotFoundResponse({
-    type: NotFoundException,
     description: NotFoundMessages.Publisher
   })
   @Serialize(PublisherResponseDto)
@@ -155,7 +144,7 @@ export class PublishersController {
   async updatePublisher(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: UpdatePublisherDto
-  ) {
+  ): Promise<PublisherResponseDto> {
     return this.publishersService.update(id, body);
   }
 }

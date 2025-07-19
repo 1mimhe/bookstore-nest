@@ -13,7 +13,7 @@ export class TagCompactResponseDto {
   slug: string;
 
   @Expose()
-  description: string;
+  description?: string;
 
   @Expose()
   type: TagType;

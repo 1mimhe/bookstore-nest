@@ -1,6 +1,6 @@
 import { Expose, Type } from 'class-transformer';
 import { BookResponseDto } from 'src/modules/books/dtos/book-response.dto';
-import { UserDto } from 'src/modules/users/dtos/user.dto';
+import { UserResponseDto } from 'src/modules/users/dtos/user-response.dto';
 
 export class CreatePublisherResponseDto {
   @Expose()
@@ -19,8 +19,8 @@ export class CreatePublisherResponseDto {
   logoUrl?: string;
 
   @Expose()
-  @Type(() => UserDto)
-  user: UserDto;
+  @Type(() => UserResponseDto)
+  user: UserResponseDto;
 
   @Expose()
   createdAt: Date;
@@ -60,4 +60,9 @@ export class PublisherResponseDto {
 
   @Expose()
   deletedAt: Date | null;
+}
+
+export class PublisherPlusResDto extends PublisherResponseDto {
+  @Expose()
+  bookCount: number;
 }

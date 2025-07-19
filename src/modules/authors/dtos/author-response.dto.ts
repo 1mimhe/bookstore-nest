@@ -39,3 +39,8 @@ export class AuthorResponseDto {
   @Expose()
   deletedAt: Date | null;
 }
+
+export class AuthorPlusCountResDto extends AuthorResponseDto {
+  @Expose()
+  bookCount: number;
+}

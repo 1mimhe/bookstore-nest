@@ -1,11 +1,11 @@
 import {
   Body,
-  ConflictException,
   Controller,
   DefaultValuePipe,
   Delete,
   Get,
-  NotFoundException,
+  HttpCode,
+  HttpStatus,
   Param,
   ParseIntPipe,
   ParseUUIDPipe,
@@ -16,6 +16,7 @@ import {
 import {
   ApiBadRequestResponse,
   ApiConflictResponse,
+  ApiCreatedResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
@@ -29,9 +30,9 @@ import { CreateBookDto } from './dtos/create-book.dto';
 import { BooksService } from './books.service';
 import { UpdateBookDto } from './dtos/update-book.dto';
 import { ApiQueryPagination } from 'src/common/decorators/query.decorators';
+import { BookResponseDto, ImageResponseDto } from './dtos/book-response.dto';
+import { TitleCompactResponseDto, TitleResponseDto } from './dtos/title-response.dto';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
-import { BookResponseDto } from './dtos/book-response.dto';
-import { TitleResponseDto } from './dtos/title-response.dto';
 
 @Controller('books')
 export class BooksController {
@@ -47,15 +48,17 @@ export class BooksController {
     type: ValidationErrorResponseDto,
   })
   @ApiNotFoundResponse({
-    type: NotFoundException,
     description: NotFoundMessages.SomeAuthors,
   })
   @ApiConflictResponse({
-    type: ConflictException,
     description: ConflictMessages.Slug,
   })
+  @Serialize(TitleCompactResponseDto)
+  @HttpCode(HttpStatus.CREATED)
   @Post('titles')
-  async createTitle(@Body() body: CreateTitleDto) {
+  async createTitle(
+    @Body() body: CreateTitleDto
+  ): Promise<TitleCompactResponseDto> {
     return this.titlesService.create(body);
   }
 
@@ -63,14 +66,13 @@ export class BooksController {
     summary: 'Retrieves a complete title by its slug',
   })
   @ApiNotFoundResponse({
-    type: NotFoundException,
     description: NotFoundMessages.Title,
   })
-  @ApiOkResponse({
-    type: TitleResponseDto
-  })
+  @Serialize(TitleResponseDto)
   @Get('titles/:slug')
-  async getTitleBySlug(@Param('slug') slug: string) {
+  async getTitleBySlug(
+    @Param('slug') slug: string
+  ): Promise<TitleResponseDto> {
     return this.titlesService.getBySlug(slug);
   }
 
@@ -78,19 +80,16 @@ export class BooksController {
     summary: 'Retrieves all books by its publisher id',
   })
   @ApiNotFoundResponse({
-    type: NotFoundException,
     description: NotFoundMessages.Publisher,
   })
-  @ApiOkResponse({
-    type: [BookResponseDto]
-  })
   @ApiQueryPagination()
+  // Serialize for arrays?
   @Get('publisher/:id')
   async getBooksByPublisherId(
     @Param('id', ParseUUIDPipe) id: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
-  ) {
+  ): Promise<BookResponseDto[]> {
     return this.booksService.getByPublisherId(id, page, limit);
   }
 
@@ -98,19 +97,16 @@ export class BooksController {
     summary: 'Retrieves all books by its author and translator id',
   })
   @ApiNotFoundResponse({
-    type: NotFoundException,
     description: NotFoundMessages.Publisher,
   })
-  @ApiOkResponse({
-    type: [BookResponseDto]
-  })
   @ApiQueryPagination()
+  // TODO
   @Get('author/:id')
   async getBooksByAuthorId(
     @Param('id', ParseUUIDPipe) id: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
-  ) {
+  ): Promise<BookResponseDto[]> {
     return this.booksService.getByAuthorId(id, page, limit);
   }
 
@@ -122,22 +118,20 @@ export class BooksController {
     type: ValidationErrorResponseDto,
   })
   @ApiNotFoundResponse({
-    type: NotFoundException,
     description: NotFoundMessages.SomeAuthors,
   })
   @ApiNotFoundResponse({
-    type: NotFoundException,
     description: NotFoundMessages.Title,
   })
   @ApiConflictResponse({
-    type: ConflictException,
     description: ConflictMessages.Slug,
   })
+  @Serialize(TitleCompactResponseDto)
   @Patch('titles/:id')
   async updateTitle(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: CreateTitleDto,
-  ) {
+  ): Promise<TitleCompactResponseDto> {
     return this.titlesService.update(id, body);
   }
 
@@ -148,27 +142,26 @@ export class BooksController {
     type: ValidationErrorResponseDto,
   })
   @ApiNotFoundResponse({
-    type: NotFoundException,
     description: NotFoundMessages.Language,
   })
   @ApiNotFoundResponse({
-    type: NotFoundException,
     description: NotFoundMessages.SomeAuthors,
   })
   @ApiNotFoundResponse({
-    type: NotFoundException,
     description: NotFoundMessages.Publisher,
   })
   @ApiNotFoundResponse({
-    type: NotFoundException,
     description: NotFoundMessages.Title,
   })
   @ApiConflictResponse({
-    type: ConflictException,
     description: ConflictMessages.ISBN,
   })
+  @Serialize(BookResponseDto)
+  @HttpCode(HttpStatus.CREATED)
   @Post()
-  async createBook(@Body() body: CreateBookDto) {
+  async createBook(
+    @Body() body: CreateBookDto
+  ): Promise<BookResponseDto> {
     return this.booksService.create(body);
   }
 
@@ -180,30 +173,26 @@ export class BooksController {
     type: ValidationErrorResponseDto,
   })
   @ApiNotFoundResponse({
-    type: NotFoundException,
     description: NotFoundMessages.Language,
   })
   @ApiNotFoundResponse({
-    type: NotFoundException,
     description: NotFoundMessages.SomeAuthors,
   })
   @ApiNotFoundResponse({
-    type: NotFoundException,
     description: NotFoundMessages.Publisher,
   })
   @ApiNotFoundResponse({
-    type: NotFoundException,
     description: NotFoundMessages.Title,
   })
   @ApiConflictResponse({
-    type: ConflictException,
     description: ConflictMessages.ISBN,
   })
+  @Serialize(BookResponseDto)
   @Patch(':id')
   async updateBook(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: UpdateBookDto,
-  ) {
+  ): Promise<BookResponseDto> {
     return this.booksService.update(id, body);
   }
 
@@ -211,11 +200,13 @@ export class BooksController {
     summary: 'Delete a book image by id',
   })
   @ApiNotFoundResponse({
-    type: NotFoundException,
     description: NotFoundMessages.BookImage,
   })
+  @Serialize(ImageResponseDto)
   @Delete('images/:id')
-  async deleteBookImage(@Param('id', ParseUUIDPipe) id: string) {
+  async deleteBookImage(
+    @Param('id', ParseUUIDPipe) id: string
+  ): Promise<ImageResponseDto> {
     return this.booksService.deleteImage(id);
   }
 }
