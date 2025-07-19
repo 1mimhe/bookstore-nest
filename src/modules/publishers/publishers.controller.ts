@@ -33,6 +33,7 @@ import { PublisherDto } from './dtos/publisher.dto';
 import { UpdatePublisherDto } from './dtos/update-publisher.dto';
 import { ConflictMessages } from 'src/common/enums/error.messages';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
+import { ApiQueryComplete, ApiQueryPagination } from 'src/common/decorators/query.decoretors';
 
 @Controller('publishers')
 export class PublishersController {
@@ -95,24 +96,8 @@ export class PublishersController {
     type: NotFoundException,
     description: NotFoundMessages.Publisher
   })
-  @ApiQuery({
-    name: 'complete',
-    required: false,
-    type: Boolean,
-    description: 'Include related books in the response',
-  })
-  @ApiQuery({
-    name: 'page',
-    type: Number,
-    required: false,
-    description: 'Page number for paginated relations (default: 1)',
-  })
-  @ApiQuery({
-    name: 'limit',
-    type: Number,
-    required: false,
-    description: 'Number of titles per page (default: 10)',
-  })
+  @ApiQueryComplete('books')
+  @ApiQueryPagination()
   @Get('id/:id')
   async getPublisherById(
     @Param('id', ParseUUIDPipe) id: string,
@@ -131,24 +116,8 @@ export class PublishersController {
     type: NotFoundException,
     description: NotFoundMessages.Publisher
   })
-  @ApiQuery({
-    name: 'complete',
-    required: false,
-    type: Boolean,
-    description: 'Include related books in the response',
-  })
-  @ApiQuery({
-    name: 'page',
-    type: Number,
-    required: false,
-    description: 'Page number for paginated relations (default: 1)',
-  })
-  @ApiQuery({
-    name: 'limit',
-    type: Number,
-    required: false,
-    description: 'Number of titles per page (default: 10)',
-  })
+  @ApiQueryComplete('books')
+  @ApiQueryPagination()
   @Get('slug/:slug')
   async getPublisherBySlug(
     @Param('slug') slug: string,
