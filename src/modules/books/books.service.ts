@@ -54,6 +54,8 @@ export class BooksService {
         throw new NotFoundException(NotFoundMessages.SomeTranslators);
       }
 
+      if (!bookDto.name) bookDto.name = title.name;
+
       const book = manager.create(Book, {
         ...bookDto,
         title,

@@ -109,8 +109,7 @@ export class PublishersController {
   }
 
   @ApiOperation({
-    summary: 'Retrieves a publisher by its slug',
-    description: 'Includes relations.'
+    summary: 'Retrieves a publisher by its slug'
   })
   @ApiNotFoundResponse({
     type: NotFoundException,
@@ -129,7 +128,7 @@ export class PublishersController {
   }
 
   @ApiOperation({
-    summary: 'Update a publisher by its id  (publisher related details only)',
+    summary: 'Update a publisher by its id (publisher related details only)',
   })
   @ApiBadRequestResponse({
     type: ValidationErrorResponseDto,

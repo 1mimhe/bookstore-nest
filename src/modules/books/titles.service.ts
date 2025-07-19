@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Title } from './entities/title.entity';
-import { DataSource, In, Repository } from 'typeorm';
+import { DataSource, EntityNotFoundError, In, Repository } from 'typeorm';
 import { CreateTitleDto } from './dtos/create-title.dto';
 import { DBErrors } from 'src/common/enums/db.errors';
 import { ConflictMessages } from 'src/common/enums/error.messages';
@@ -121,11 +121,16 @@ export class TitlesService {
     });
   }
 
-  getBySlug(slug: string): Promise<Title | never> {
+  async getBySlug(slug: string): Promise<Title | never> {
     return this.titleRepo.findOneOrFail({
       where: { slug },
       relations: ['authors', 'tags', 'books',
         'books.publisher', 'books.translators', 'books.language', 'books.images'],
+    }).catch((error: Error) => {
+      if (error instanceof EntityNotFoundError) {
+        throw new NotFoundException(NotFoundMessages.Title);
+      }
+      throw error;
     });
   }
 }
