@@ -1,4 +1,8 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Book } from './entities/book.entity';
 import { DataSource, EntityNotFoundError, In, Repository } from 'typeorm';
@@ -21,27 +25,32 @@ export class BooksService {
     private dataSource: DataSource,
   ) {}
 
-  async create(
-    {
-      titleId,
-      publisherId,
-      languageId,
-      translatorIds,
-      ...bookDto
-    }: CreateBookDto): Promise<Book | never> {
+  async create({
+    titleId,
+    publisherId,
+    languageId,
+    translatorIds,
+    ...bookDto
+  }: CreateBookDto): Promise<Book | never> {
     return this.dataSource.transaction(async (manager) => {
       const [title, publisher, language, translators] = await Promise.all([
         manager.findOne(Title, { where: { id: titleId } }),
         manager.findOne(Publisher, { where: { id: publisherId } }),
         manager.findOne(Language, { where: { id: languageId } }),
-        translatorIds ? manager.findBy(Author, { id: In(translatorIds) }) : Promise.resolve(undefined)
+        translatorIds
+          ? manager.findBy(Author, { id: In(translatorIds) })
+          : Promise.resolve(undefined),
       ]);
 
       if (!title) throw new NotFoundException(NotFoundMessages.Title);
       if (!publisher) throw new NotFoundException(NotFoundMessages.Publisher);
       if (!language) throw new NotFoundException(NotFoundMessages.Language);
 
-      if (translatorIds && translators && translators.length !== translatorIds.length) {
+      if (
+        translatorIds &&
+        translators &&
+        translators.length !== translatorIds.length
+      ) {
         throw new NotFoundException(NotFoundMessages.SomeTranslators);
       }
 
@@ -50,10 +59,10 @@ export class BooksService {
         title,
         publisher,
         translators,
-        language
+        language,
       });
 
-      return manager.save(Book, book).catch(error => {
+      return manager.save(Book, book).catch((error) => {
         if (error.code === DBErrors.Conflict) {
           const sqlMessage = error.driverError.sqlMessage as string;
 
@@ -68,13 +77,36 @@ export class BooksService {
 
   async getByPublisherId(
     publisherId: string,
-    page = 1, limit = 10
+    page = 1,
+    limit = 10,
   ): Promise<Book[]> {
     const skip = (page - 1) * limit;
     return this.bookRepo.find({
       where: { publisherId },
       skip,
-      take: limit
+      take: limit,
+    });
+  }
+
+  async getByAuthorId(authorId: string, page = 1, limit = 10): Promise<Book[]> {
+    const skip = (page - 1) * limit;
+    return this.bookRepo.find({
+      where: [
+        {
+          title: {
+            authors: {
+              id: authorId,
+            },
+          },
+        },
+        {
+          translators: {
+            id: authorId,
+          },
+        },
+      ],
+      skip,
+      take: limit,
     });
   }
 
@@ -87,7 +119,7 @@ export class BooksService {
       translatorIds,
       images,
       ...bookDto
-    }: UpdateBookDto
+    }: UpdateBookDto,
   ): Promise<Book | never> {
     return this.dataSource.transaction(async (manager) => {
       const existingBook = await manager.findOne(Book, {
@@ -116,11 +148,11 @@ export class BooksService {
 
       let newImages: BookImage[] | undefined = undefined;
       if (images) {
-        newImages = images.map(image => 
-          manager.create(BookImage, { 
+        newImages = images.map((image) =>
+          manager.create(BookImage, {
             ...image,
-            book: existingBook 
-          })
+            book: existingBook,
+          }),
         );
       }
 
@@ -131,7 +163,7 @@ export class BooksService {
       updatedBook.translators = translators;
       updatedBook.images = [...(existingBook.images || []), ...(newImages || [])];
 
-      return manager.save(Book, updatedBook).catch(error => {
+      return manager.save(Book, updatedBook).catch((error) => {
         if (error.code === DBErrors.Conflict) {
           const sqlMessage = error.driverError.sqlMessage as string;
 
@@ -145,7 +177,8 @@ export class BooksService {
   }
 
   async deleteImage(id: string): Promise<BookImage | never> {
-    const bookImage = await this.bookImageRepo.findOneOrFail({ where : { id } })
+    const bookImage = await this.bookImageRepo
+      .findOneOrFail({ where: { id } })
       .catch((error) => {
         if (error instanceof EntityNotFoundError) {
           throw new NotFoundException(NotFoundMessages.BookImage);

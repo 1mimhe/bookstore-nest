@@ -7,11 +7,12 @@ import { ConflictMessages } from 'src/common/enums/error.messages';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
 import { UpdateAuthorDto } from './dtos/update-author.dto';
 import { DBErrors } from 'src/common/enums/db.errors';
+import { BooksService } from '../books/books.service';
 
 @Injectable()
 export class AuthorsService {
   constructor(
-    @InjectRepository(Author) private authorRepo: Repository<Author>
+    @InjectRepository(Author) private authorRepo: Repository<Author>,
   ) {}
 
   async create(authorDto: CreateAuthorDto): Promise<Author | never> {
@@ -46,8 +47,21 @@ export class AuthorsService {
     });
   }
 
-  async getAll(): Promise<Author[]> {
-    return this.authorRepo.find();
+  async getAll(page = 1, limit = 10): Promise<(Author & { bookCount: number })[]> {
+    const skip = (page - 1) * limit;
+    const authors = await this.authorRepo
+      .createQueryBuilder('author')
+      .leftJoin('author.books', 'books')
+      .select(['author', 'COUNT(books.id) as bookCount'])
+      .groupBy('author.id')
+      .skip(skip)
+      .limit(limit)
+      .getRawAndEntities();
+
+    return authors.entities.map((author, index) => ({
+      ...author,
+      bookCount: parseInt(authors.raw[index].bookCount, 10),
+    }));
   }
 
   async update(id: string, authorDto: UpdateAuthorDto): Promise<Author | never> {
