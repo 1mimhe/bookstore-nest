@@ -1,11 +1,12 @@
-import { Body, ConflictException, Controller, Delete, Get, HttpCode, HttpStatus, NotFoundException, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
+import { Body, ConflictException, Controller, DefaultValuePipe, Delete, Get, HttpCode, HttpStatus, NotFoundException, Param, ParseBoolPipe, ParseIntPipe, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
 import { CreateAuthorDto } from './dtos/create-author.dto';
 import { Author } from './entities/author.entity';
 import { AuthorsService } from './authors.service';
-import { ApiBadRequestResponse, ApiConflictResponse, ApiNotFoundResponse, ApiOperation } from '@nestjs/swagger';
+import { ApiBadRequestResponse, ApiConflictResponse, ApiNotFoundResponse, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { UpdateAuthorDto } from './dtos/update-author.dto';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
 import { ConflictMessages } from 'src/common/enums/error.messages';
+import { ApiQueryComplete, ApiQueryPagination } from 'src/common/decorators/query.decoretors';
 
 @Controller('authors')
 export class AuthorsController {
@@ -40,23 +41,54 @@ export class AuthorsController {
   }
 
   @ApiOperation({ 
-    summary: 'Retrieves a author by its slug',
+    summary: 'Retrieves all authors',
+  })
+  @ApiQueryPagination()
+  @Get()
+  async getAllAuthors(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
+  ) {
+    return this.authorsService.getAll(page, limit);
+  }
+
+  @ApiOperation({
+    summary: 'Retrieves a publisher by its id',
   })
   @ApiNotFoundResponse({
     type: NotFoundException,
-    description: NotFoundMessages.Author
+    description: NotFoundMessages.Publisher
   })
-  @Get('/by-slug/:slug')
-  async getAuthorBySlug(@Param('slug') slug: string): Promise<Author> {
-    return this.authorsService.getBySlug(slug);
+  @ApiQueryComplete('books')
+  @ApiQueryPagination()
+  @Get('id/:id')
+  async getPublisherById(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query('complete', new ParseBoolPipe({ optional: true })) complete?: boolean,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
+  ) {
+    return this.authorsService.get({ id }, page, limit, complete);
   }
 
-  @ApiOperation({ 
-    summary: 'Retrieves all authors',
+  @ApiOperation({
+    summary: 'Retrieves a publisher by its slug',
+    description: 'Includes relations.'
   })
-  @Get()
-  async getAllAuthors(): Promise<Author[]> {
-    return this.authorsService.getAll();
+  @ApiNotFoundResponse({
+    type: NotFoundException,
+    description: NotFoundMessages.Publisher
+  })
+  @ApiQueryComplete('books')
+  @ApiQueryPagination()
+  @Get('slug/:slug')
+  async getPublisherBySlug(
+    @Param('slug') slug: string,
+    @Query('complete', new ParseBoolPipe({ optional: true })) complete?: boolean,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
+  ) {
+    return this.authorsService.get({ slug }, page, limit, complete);
   }
 
   @ApiOperation({ 

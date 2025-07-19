@@ -1,5 +1,24 @@
-import { Body, ConflictException, Controller, Delete, Get, NotFoundException, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
-import { ApiBadRequestResponse, ApiConflictResponse, ApiNotFoundResponse, ApiOperation } from '@nestjs/swagger';
+import {
+  Body,
+  ConflictException,
+  Controller,
+  DefaultValuePipe,
+  Delete,
+  Get,
+  NotFoundException,
+  Param,
+  ParseIntPipe,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
+import {
+  ApiBadRequestResponse,
+  ApiConflictResponse,
+  ApiNotFoundResponse,
+  ApiOperation,
+} from '@nestjs/swagger';
 import { ConflictMessages } from 'src/common/enums/error.messages';
 import { TitlesService } from './titles.service';
 import { CreateTitleDto } from './dtos/create-title.dto';
@@ -8,12 +27,13 @@ import { NotFoundMessages } from 'src/common/enums/error.messages';
 import { CreateBookDto } from './dtos/create-book.dto';
 import { BooksService } from './books.service';
 import { UpdateBookDto } from './dtos/update-book.dto';
+import { ApiQueryPagination } from 'src/common/decorators/query.decoretors';
 
 @Controller('books')
 export class BooksController {
   constructor(
     private titlesService: TitlesService,
-    private booksService: BooksService
+    private booksService: BooksService,
   ) {}
 
   @ApiOperation({
@@ -24,11 +44,11 @@ export class BooksController {
   })
   @ApiNotFoundResponse({
     type: NotFoundException,
-    description: NotFoundMessages.SomeAuthors
+    description: NotFoundMessages.SomeAuthors,
   })
   @ApiConflictResponse({
     type: ConflictException,
-    description: ConflictMessages.Slug
+    description: ConflictMessages.Slug,
   })
   @Post('titles')
   async createTitle(@Body() body: CreateTitleDto) {
@@ -36,28 +56,74 @@ export class BooksController {
   }
 
   @ApiOperation({
+    summary: 'Retrieves a complete title by slug',
+  })
+  @ApiNotFoundResponse({
+    type: NotFoundException,
+    description: NotFoundMessages.Title,
+  })
+  @Get('titles/:slug')
+  async getTitleBySlug(@Param('slug') slug: string) {
+    return this.titlesService.getBySlug(slug);
+  }
+
+  @ApiOperation({
+    summary: 'Retrieves all books by its publisher id',
+  })
+  @ApiNotFoundResponse({
+    type: NotFoundException,
+    description: NotFoundMessages.Publisher,
+  })
+  @ApiQueryPagination()
+  @Get('publisher/:id')
+  async getBooksByPublisherId(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
+  ) {
+    return this.booksService.getByPublisherId(id, page, limit);
+  }
+
+  @ApiOperation({
+    summary: 'Retrieves all books by its author and translator id',
+  })
+  @ApiNotFoundResponse({
+    type: NotFoundException,
+    description: NotFoundMessages.Publisher,
+  })
+  @ApiQueryPagination()
+  @Get('author/:id')
+  async getBooksByAuthorId(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
+  ) {
+    return this.booksService.getByAuthorId(id, page, limit);
+  }
+
+  @ApiOperation({
     summary: 'Update a title',
-    description: 'It override authors and tags will be merged if included.'
+    description: 'It override authors and tags will be merged if included.',
   })
   @ApiBadRequestResponse({
     type: ValidationErrorResponseDto,
   })
   @ApiNotFoundResponse({
     type: NotFoundException,
-    description: NotFoundMessages.SomeAuthors
+    description: NotFoundMessages.SomeAuthors,
   })
   @ApiNotFoundResponse({
     type: NotFoundException,
-    description: NotFoundMessages.Title
+    description: NotFoundMessages.Title,
   })
   @ApiConflictResponse({
     type: ConflictException,
-    description: ConflictMessages.Slug
+    description: ConflictMessages.Slug,
   })
   @Patch('titles/:id')
   async updateTitle(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: CreateTitleDto
+    @Body() body: CreateTitleDto,
   ) {
     return this.titlesService.update(id, body);
   }
@@ -70,23 +136,23 @@ export class BooksController {
   })
   @ApiNotFoundResponse({
     type: NotFoundException,
-    description: NotFoundMessages.Language
+    description: NotFoundMessages.Language,
   })
   @ApiNotFoundResponse({
     type: NotFoundException,
-    description: NotFoundMessages.SomeAuthors
+    description: NotFoundMessages.SomeAuthors,
   })
   @ApiNotFoundResponse({
     type: NotFoundException,
-    description: NotFoundMessages.Publisher
+    description: NotFoundMessages.Publisher,
   })
   @ApiNotFoundResponse({
     type: NotFoundException,
-    description: NotFoundMessages.Title
+    description: NotFoundMessages.Title,
   })
   @ApiConflictResponse({
     type: ConflictException,
-    description: ConflictMessages.ISBN
+    description: ConflictMessages.ISBN,
   })
   @Post()
   async createBook(@Body() body: CreateBookDto) {
@@ -95,35 +161,35 @@ export class BooksController {
 
   @ApiOperation({
     summary: 'Update a book',
-    description: 'It override translators and merge book images if included.'
+    description: 'It override translators and merge book images if included.',
   })
   @ApiBadRequestResponse({
     type: ValidationErrorResponseDto,
   })
   @ApiNotFoundResponse({
     type: NotFoundException,
-    description: NotFoundMessages.Language
+    description: NotFoundMessages.Language,
   })
   @ApiNotFoundResponse({
     type: NotFoundException,
-    description: NotFoundMessages.SomeAuthors
+    description: NotFoundMessages.SomeAuthors,
   })
   @ApiNotFoundResponse({
     type: NotFoundException,
-    description: NotFoundMessages.Publisher
+    description: NotFoundMessages.Publisher,
   })
   @ApiNotFoundResponse({
     type: NotFoundException,
-    description: NotFoundMessages.Title
+    description: NotFoundMessages.Title,
   })
   @ApiConflictResponse({
     type: ConflictException,
-    description: ConflictMessages.ISBN
+    description: ConflictMessages.ISBN,
   })
   @Patch(':id')
   async updateBook(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: UpdateBookDto
+    @Body() body: UpdateBookDto,
   ) {
     return this.booksService.update(id, body);
   }
@@ -133,7 +199,7 @@ export class BooksController {
   })
   @ApiNotFoundResponse({
     type: NotFoundException,
-    description: NotFoundMessages.BookImage
+    description: NotFoundMessages.BookImage,
   })
   @Delete('images/:id')
   async deleteBookImage(@Param('id', ParseUUIDPipe) id: string) {

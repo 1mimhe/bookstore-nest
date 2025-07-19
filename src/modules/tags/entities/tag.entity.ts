@@ -16,6 +16,9 @@ export class Tag extends BaseEntity {
   @Column({ unique: true })
   name: string;
 
+  @Column({ unique: true })
+  slug: string;
+
   @Column({ nullable: true })
   description?: string;
 
@@ -32,6 +35,10 @@ export class Tag extends BaseEntity {
   isActive: boolean;
 
   @ManyToMany(() => Title, (title) => title.tags)
-  @JoinTable()
+  @JoinTable({
+    name: 'title_tag',
+    joinColumn: { name: 'titleId', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'tagId', referencedColumnName: 'id' }
+  })
   titles: Title[];
 }

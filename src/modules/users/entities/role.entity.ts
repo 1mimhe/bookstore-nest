@@ -26,6 +26,8 @@ export class Role extends BaseEntity {
   })
   role: Roles;
 
+  @Column()
+  userId: string;
   @ManyToOne(() => User, (user) => user.roles)
   @JoinColumn()
   user: User;

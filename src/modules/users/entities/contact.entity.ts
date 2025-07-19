@@ -25,6 +25,8 @@ export class Contact extends BaseEntity {
   @Column({ default: false })
   isVerifiedEmail: boolean;
 
+  @Column()
+  userId: string;
   @OneToOne(() => User, (user) => user.contact)
   @JoinColumn()
   user: User;

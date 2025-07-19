@@ -25,6 +25,8 @@ export class Publisher extends BaseEntity {
   })
   logoUrl?: string;
 
+  @Column()
+  userId: string;
   @OneToOne(() => User, (user) => user.publisher)
   @JoinColumn()
   user: User;

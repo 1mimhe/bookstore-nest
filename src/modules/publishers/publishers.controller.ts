@@ -2,10 +2,12 @@ import {
   Body,
   ConflictException,
   Controller,
+  DefaultValuePipe,
   Get,
   NotFoundException,
   Param,
   ParseBoolPipe,
+  ParseIntPipe,
   ParseUUIDPipe,
   Patch,
   Post,
@@ -31,6 +33,7 @@ import { PublisherDto } from './dtos/publisher.dto';
 import { UpdatePublisherDto } from './dtos/update-publisher.dto';
 import { ConflictMessages } from 'src/common/enums/error.messages';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
+import { ApiQueryComplete, ApiQueryPagination } from 'src/common/decorators/query.decoretors';
 
 @Controller('publishers')
 export class PublishersController {
@@ -63,6 +66,29 @@ export class PublishersController {
     return this.publishersService.signup(body);
   }
 
+  @ApiOperation({ 
+    summary: 'Retrieves all publishers',
+  })
+  @ApiQuery({
+    name: 'page',
+    type: Number,
+    required: false,
+    description: 'Page number for paginated relations (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    type: Number,
+    required: false,
+    description: 'Number of titles per page (default: 10)',
+  })
+  @Get()
+  async getAllAuthors(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
+  ) {
+    return this.publishersService.getAll(page, limit);
+  }
+
   @ApiOperation({
     summary: 'Retrieves a publisher by its id',
   })
@@ -70,23 +96,39 @@ export class PublishersController {
     type: NotFoundException,
     description: NotFoundMessages.Publisher
   })
-  @ApiQuery({
-    name: 'complete',
-    required: false,
-    type: Boolean,
-    description: 'Include related books in the response',
-  })
-  @Get(':id')
+  @ApiQueryComplete('books')
+  @ApiQueryPagination()
+  @Get('id/:id')
   async getPublisherById(
     @Param('id', ParseUUIDPipe) id: string,
     @Query('complete', new ParseBoolPipe({ optional: true })) complete?: boolean,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
   ) {
-    const relations = complete ? ['books'] : [];
-    return this.publishersService.getById(id, relations);
+    return this.publishersService.get({ id }, page, limit, complete);
   }
 
   @ApiOperation({
-    summary: 'Update a publisher by its id  (publisher related details only)',
+    summary: 'Retrieves a publisher by its slug'
+  })
+  @ApiNotFoundResponse({
+    type: NotFoundException,
+    description: NotFoundMessages.Publisher
+  })
+  @ApiQueryComplete('books')
+  @ApiQueryPagination()
+  @Get('slug/:slug')
+  async getPublisherBySlug(
+    @Param('slug') slug: string,
+    @Query('complete', new ParseBoolPipe({ optional: true })) complete?: boolean,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
+  ) {
+    return this.publishersService.get({ slug }, page, limit, complete);
+  }
+
+  @ApiOperation({
+    summary: 'Update a publisher by its id (publisher related details only)',
   })
   @ApiBadRequestResponse({
     type: ValidationErrorResponseDto,

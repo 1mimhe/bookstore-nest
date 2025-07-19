@@ -30,6 +30,8 @@ export class BookImage extends BaseEntity {
   })
   url: string;
 
+  @Column()
+  bookId: string;
   @Exclude()
   @ManyToOne(() => Book, (book) => book.images)
   @JoinColumn()

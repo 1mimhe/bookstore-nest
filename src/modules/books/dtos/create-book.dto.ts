@@ -19,9 +19,9 @@ import { BookImageDto } from './book-image.dto';
 import { Type } from 'class-transformer';
 
 export class CreateBookDto {
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  name: string;
+  name?: string;
 
   @IsNotEmpty()
   @IsUUID()

@@ -4,6 +4,7 @@ import { CreateTagDto } from './dtos/create-tag.dto';
 import { ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { TagType } from './entities/tag.entity';
 import { UpdateTagDto } from './dtos/update-tag.dto';
+import { ApiQueryPagination } from 'src/common/decorators/query.decoretors';
 
 @Controller('tags')
 export class TagsController {
@@ -45,28 +46,17 @@ export class TagsController {
     return this.tagsService.getAll(type);
   }
 
-  @ApiQuery({
-    name: 'page',
-    type: Number,
-    required: false,
-    description: 'Page number for paginated relations (default: 1)',
-  })
-  @ApiQuery({
-  name: 'limit',
-  type: Number,
-  required: false,
-  description: 'Number of titles per page (default: 10)',
-  })
   @ApiOperation({
     summary: 'Retrieves a tag by name with its relations'
   })
+  @ApiQueryPagination()
   @Get(':name')
   async getTagByName(
     @Param('name') name: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
   ) {
-    return this.tagsService.getByName(name, page, limit);
+    return this.tagsService.getBySlug(name, page, limit);
   }
 
   @ApiOperation({
