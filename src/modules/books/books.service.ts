@@ -9,13 +9,13 @@ import { DataSource, EntityNotFoundError, In, Repository } from 'typeorm';
 import { CreateBookDto } from './dtos/create-book.dto';
 import { Title } from './entities/title.entity';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
-import { Publisher } from '../publishers/entities/publisher.entity';
+import { Publisher } from '../publishers/publisher.entity';
 import { DBErrors } from 'src/common/enums/db.errors';
 import { ConflictMessages } from 'src/common/enums/error.messages';
-import { Author } from '../authors/entities/author.entity';
+import { Author } from '../authors/author.entity';
 import { UpdateBookDto } from './dtos/update-book.dto';
 import { BookImage } from './entities/book-image.entity';
-import { Language } from '../languages/entities/language.entity';
+import { Language } from '../languages/language.entity';
 
 @Injectable()
 export class BooksService {

@@ -1,6 +1,6 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Publisher } from './entities/publisher.entity';
+import { Publisher } from './publisher.entity';
 import { EntityManager, EntityNotFoundError, FindOptionsWhere, Repository } from 'typeorm';
 import { Roles } from '../users/entities/role.entity';
 import { User } from '../users/entities/user.entity';

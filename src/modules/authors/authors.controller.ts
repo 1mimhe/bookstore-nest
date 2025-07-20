@@ -15,7 +15,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { CreateAuthorDto } from './dtos/create-author.dto';
-import { Author } from './entities/author.entity';
+import { Author } from './author.entity';
 import { AuthorsService } from './authors.service';
 import {
   ApiConflictResponse,

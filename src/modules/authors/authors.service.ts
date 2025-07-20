@@ -1,6 +1,6 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Author } from './entities/author.entity';
+import { Author } from './author.entity';
 import { EntityNotFoundError, FindOptionsWhere, Repository } from 'typeorm';
 import { CreateAuthorDto } from './dtos/create-author.dto';
 import { ConflictMessages } from 'src/common/enums/error.messages';

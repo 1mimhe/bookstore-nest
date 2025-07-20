@@ -1,5 +1,5 @@
 import { Expose, Type } from 'class-transformer';
-import { TagType } from '../entities/tag.entity';
+import { TagType } from '../tag.entity';
 import { TitleCompactResponseDto } from 'src/modules/books/dtos/title-response.dto';
 
 export class TagCompactResponseDto {

@@ -9,7 +9,7 @@ import {
 import { Contact } from './contact.entity';
 import { Role } from './role.entity';
 import { BaseEntity } from 'src/common/entities/base.entity';
-import { Publisher } from 'src/modules/publishers/entities/publisher.entity';
+import { Publisher } from 'src/modules/publishers/publisher.entity';
 
 export enum Genders {
   Male = 'male',

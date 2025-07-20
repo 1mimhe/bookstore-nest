@@ -1,8 +1,8 @@
 import { BaseEntity } from 'src/common/entities/base.entity';
-import { Author } from 'src/modules/authors/entities/author.entity';
+import { Author } from 'src/modules/authors/author.entity';
 import { Column, Entity, Index, ManyToMany, OneToMany } from 'typeorm';
 import { Book } from './book.entity';
-import { Tag } from 'src/modules/tags/entities/tag.entity';
+import { Tag } from 'src/modules/tags/tag.entity';
 
 @Entity('titles')
 @Index(['slug'], { unique: true })
