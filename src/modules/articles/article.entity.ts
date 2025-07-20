@@ -8,40 +8,50 @@ import { Tag } from '../tags/tag.entity';
 @Index(['titleId'])
 @Index(['authorId'])
 @Index(['publisherId'])
+@Index(['slug'], { unique: true })
 @Entity()
 export class Article extends BaseEntity {
   @Column('varchar')
   subject: string;
 
+  @Column('varchar')
+  otherSubject?: string;
+
+  @Column('varchar')
+  slug: string;
+
   @Column('text')
-  summary: string;
+  summary?: string;
+
+  @Column('text')
+  picUrl?: string;
 
   @Column('text')
   content: string;
 
   @Index()
   @Column('uuid')
-  titleId: string;
+  titleId?: string;
 
   @Index()
   @Column('uuid')
-  authorId: string;
+  authorId?: string;
 
   @Index()
   @Column('uuid')
-  publisherId: string;
+  publisherId?: string;
 
   @ManyToOne(() => Title)
   @JoinColumn({ name: 'titleId' })
-  title: Title;
+  title?: Title;
 
   @ManyToOne(() => Author)
   @JoinColumn({ name: 'authorId' })
-  author: Author;
+  author?: Author;
 
   @ManyToOne(() => Publisher)
   @JoinColumn({ name: 'publisherId' })
-  publisher: Publisher;
+  publisher?: Publisher;
 
   @ManyToMany(() => Tag, (tag) => tag.articles)
   tags: Tag[];
