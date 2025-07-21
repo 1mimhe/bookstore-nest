@@ -1,4 +1,4 @@
-import { Expose } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
 import { AuthorResponseDto } from 'src/modules/authors/dtos/author-response.dto';
 import { TitleResponseDto } from 'src/modules/books/dtos/title-response.dto';
 import { PublisherResponseDto } from 'src/modules/publishers/dtos/publisher-response.dto';
@@ -33,5 +33,6 @@ export class BlogResponseDto {
   publisher?: PublisherResponseDto;
 
   @Expose()
+  @Type(() => TagCompactResponseDto)
   tags?: TagCompactResponseDto[];
 }

@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Blog } from './blog.entity';
 import { DataSource, In, Repository } from 'typeorm';
@@ -17,43 +17,43 @@ export class BlogsService {
     private dataSource: DataSource,
   ) {}
 
-
   async create({
     titleId,
-    publisherId,
     authorId,
+    publisherId,
     tags,
     ...blogDto
   }: CreateBlogDto): Promise<Blog | never> {
     return this.dataSource.transaction(async (manager) => {
-      const [title, author, publisher] = await Promise.all([
-          manager.findOne(Title, { where: { id: titleId } }),
-          manager.findOne(Author, { where: { id: authorId } }),
-          manager.findOne(Publisher, { where: { id: publisherId } }),
-        ]);
-    
-      if (!title) throw new NotFoundException(NotFoundMessages.Title);
-      if (!author) throw new NotFoundException(NotFoundMessages.Author);
-      if (!publisher) throw new NotFoundException(NotFoundMessages.Publisher);
-
       let dbTags: Tag[] | undefined;
       if (tags && tags.length > 0) {
         dbTags = await manager.findBy(Tag, {
           name: In(tags),
         });
-      }
+      }      
 
       const blog = manager.create(Blog, {
         ...blogDto,
-        title,
-        author,
-        publisher,
+        titleId,
+        authorId,
+        publisherId,
         tags: dbTags
       });
 
       return manager.save(Blog, blog).catch((error) => {
         if (error.code === DBErrors.Conflict) {
           throw new ConflictException(ConflictMessages.Slug);
+        }
+        if (error.code === DBErrors.ReferenceNotFound) {
+          if (error.message.includes('titleId')) {
+            throw new NotFoundException(NotFoundMessages.Title);
+          }
+          if (error.message.includes('authorId')) {
+            throw new NotFoundException(NotFoundMessages.Author);
+          }
+          if (error.message.includes('publisherId')) {
+            throw new NotFoundException(NotFoundMessages.Publisher);
+          }
         }
         throw error;
       });

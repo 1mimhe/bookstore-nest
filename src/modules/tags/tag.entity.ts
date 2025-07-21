@@ -1,6 +1,7 @@
 import { BaseEntity } from 'src/common/entities/base.entity';
 import { Title } from 'src/modules/books/entities/title.entity';
 import { Column, Entity, Index, JoinTable, ManyToMany, Unique } from 'typeorm';
+import { Blog } from '../blogs/blog.entity';
 
 export enum TagType {
   ThematicCategory = 'thematic_category',
@@ -47,11 +48,11 @@ export class Tag extends BaseEntity {
   })
   titles: Title[];
 
-  @ManyToMany(() => Title, (title) => title.tags)
+  @ManyToMany(() => Blog, (blog) => blog.tags)
   @JoinTable({
     name: 'blog_tag',
     joinColumn: { name: 'blogId', referencedColumnName: 'id' },
     inverseJoinColumn: { name: 'tagId', referencedColumnName: 'id' }
   })
-  blogs: Title[];
+  blogs: Blog[];
 }
