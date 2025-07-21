@@ -15,7 +15,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { CreateAuthorDto } from './dtos/create-author.dto';
-import { Author } from './entities/author.entity';
+import { Author } from './author.entity';
 import { AuthorsService } from './authors.service';
 import {
   ApiConflictResponse,
@@ -30,6 +30,7 @@ import {
   ApiQueryPagination,
 } from 'src/common/decorators/query.decorators';
 import {
+  AuthorCompactResponseDto,
   AuthorPlusCountResDto,
   AuthorResponseDto,
 } from './dtos/author-response.dto';
@@ -119,12 +120,12 @@ export class AuthorsController {
   @ApiNotFoundResponse({
     description: NotFoundMessages.Author,
   })
-  @Serialize(AuthorResponseDto)
+  @Serialize(AuthorCompactResponseDto)
   @Patch(':id')
   async updateAuthor(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: UpdateAuthorDto,
-  ): Promise<AuthorResponseDto> {
+  ): Promise<AuthorCompactResponseDto> {
     return this.authorsService.update(id, body);
   }
 
@@ -134,9 +135,11 @@ export class AuthorsController {
   @ApiNotFoundResponse({
     description: NotFoundMessages.Author,
   })
-  @Serialize(AuthorResponseDto)
+  @Serialize(AuthorCompactResponseDto)
   @Delete(':id')
-  async deleteAuthor(@Param('id', ParseUUIDPipe) id: string): Promise<Author> {
+  async deleteAuthor(
+    @Param('id', ParseUUIDPipe) id: string
+  ): Promise<AuthorCompactResponseDto> {
     return this.authorsService.delete(id);
   }
 }

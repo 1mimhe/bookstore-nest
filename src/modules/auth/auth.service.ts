@@ -9,7 +9,7 @@ import { CreateUserDto } from './dto/sign-up.dto';
 import { pbkdf2, randomBytes } from 'crypto';
 import { SigninDto } from './dto/sign-in.dto';
 import { AuthMessages } from 'src/common/enums/error.messages';
-import { Publisher } from '../publishers/entities/publisher.entity';
+import { Publisher } from '../publishers/publisher.entity';
 import { User } from '../users/entities/user.entity';
 import { Roles } from '../users/entities/role.entity';
 import { TokenService } from './token.service';

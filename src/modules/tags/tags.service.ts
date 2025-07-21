@@ -1,6 +1,6 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { EntityNotFoundError, Repository } from 'typeorm';
-import { Tag, TagType } from './entities/tag.entity';
+import { Tag, TagType } from './tag.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ConflictMessages, NotFoundMessages } from 'src/common/enums/error.messages';
 import { DBErrors } from 'src/common/enums/db.errors';
@@ -15,9 +15,7 @@ export class TagsService {
     private titlesService: TitlesService
   ) {}
 
-  async create(tagDto: CreateTagDto): Promise<Tag | never> {
-    console.log(tagDto);
-    
+  async create(tagDto: CreateTagDto): Promise<Tag | never> {    
     const tag = this.tagRepo.create(tagDto);
     return await this.tagRepo.save(tag).catch((error) => {
       if (error.code === DBErrors.Conflict) {

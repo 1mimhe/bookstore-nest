@@ -25,5 +25,6 @@ export enum NotFoundMessages {
   Book = 'Book not found.',
   Language = 'Language not found.',
   BookImage = 'Book image not found.',
-  Tag = 'Tag not found.'
+  Tag = 'Tag not found.',
+  Blog = 'Blog not found.'
 }

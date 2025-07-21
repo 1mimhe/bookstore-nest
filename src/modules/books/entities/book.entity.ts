@@ -1,5 +1,5 @@
 import { BaseEntity } from 'src/common/entities/base.entity';
-import { Publisher } from 'src/modules/publishers/entities/publisher.entity';
+import { Publisher } from 'src/modules/publishers/publisher.entity';
 import {
   Column,
   Entity,
@@ -11,9 +11,9 @@ import {
   Unique,
 } from 'typeorm';
 import { Title } from './title.entity';
-import { Author } from 'src/modules/authors/entities/author.entity';
+import { Author } from 'src/modules/authors/author.entity';
 import { BookImage } from './book-image.entity';
-import { Language } from 'src/modules/languages/entities/language.entity';
+import { Language } from 'src/modules/languages/language.entity';
 
 export enum Quartos {
   Vaziri = 'vaziri',

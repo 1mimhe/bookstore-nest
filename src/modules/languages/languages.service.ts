@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { CreateLanguageDto } from '../books/dtos/create-language.dto';
 import { ConflictMessages } from 'src/common/enums/error.messages';
 import { DBErrors } from 'src/common/enums/db.errors';
-import { Language } from './entities/language.entity';
+import { Language } from './language.entity';
 
 @Injectable()
 export class LanguagesService {

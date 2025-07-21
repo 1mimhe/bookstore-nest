@@ -19,13 +19,13 @@ import {
   ApiOperation,
   ApiQuery,
 } from '@nestjs/swagger';
-import { CreatePublisherDto } from './dtos/create-publisher.dto';
+import { SignupPublisherDto } from './dtos/create-publisher.dto';
 import {
   ConflictResponseDto,
   ValidationErrorResponseDto,
 } from 'src/common/dtos/error.dtos';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
-import { CreatePublisherResponseDto, PublisherPlusResDto, PublisherResponseDto } from './dtos/publisher-response.dto';
+import { CreatePublisherResponseDto, PublisherCompactResponseDto, PublisherPlusResDto, PublisherResponseDto } from './dtos/publisher-response.dto';
 import { UpdatePublisherDto } from './dtos/update-publisher.dto';
 import { ConflictMessages } from 'src/common/enums/error.messages';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
@@ -55,7 +55,7 @@ export class PublishersController {
   @Serialize(CreatePublisherResponseDto)
   @Post('signup')
   async signup(
-    @Body() body: CreatePublisherDto
+    @Body() body: SignupPublisherDto
   ): Promise<CreatePublisherResponseDto> {
     return this.publishersService.signup(body);
   }
@@ -134,12 +134,12 @@ export class PublishersController {
   @ApiNotFoundResponse({
     description: NotFoundMessages.Publisher
   })
-  @Serialize(PublisherResponseDto)
+  @Serialize(PublisherCompactResponseDto)
   @Patch(':id')
   async updatePublisher(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: UpdatePublisherDto
-  ): Promise<PublisherResponseDto> {
+  ): Promise<PublisherCompactResponseDto> {
     return this.publishersService.update(id, body);
   }
 }

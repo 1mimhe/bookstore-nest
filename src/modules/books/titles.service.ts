@@ -9,10 +9,10 @@ import { DataSource, EntityNotFoundError, In, Repository } from 'typeorm';
 import { CreateTitleDto } from './dtos/create-title.dto';
 import { DBErrors } from 'src/common/enums/db.errors';
 import { ConflictMessages } from 'src/common/enums/error.messages';
-import { Author } from '../authors/entities/author.entity';
+import { Author } from '../authors/author.entity';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
 import { UpdateTitleDto } from './dtos/update-title.dto';
-import { Tag } from '../tags/entities/tag.entity';
+import { Tag } from '../tags/tag.entity';
 
 @Injectable()
 export class TitlesService {
@@ -64,7 +64,7 @@ export class TitlesService {
     return this.dataSource.transaction(async (manager) => {
       const existingTitle = await manager.findOne(Title, {
         where: { id },
-        relations: ['authors'],
+        relations: ['authors', 'tags'],
       });
 
       if (!existingTitle) {

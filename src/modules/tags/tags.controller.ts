@@ -16,7 +16,7 @@ import {
 import { TagsService } from './tags.service';
 import { CreateTagDto } from './dtos/create-tag.dto';
 import { ApiOperation, ApiQuery } from '@nestjs/swagger';
-import { TagType } from './entities/tag.entity';
+import { TagType } from './tag.entity';
 import { UpdateTagDto } from './dtos/update-tag.dto';
 import { ApiQueryPagination } from 'src/common/decorators/query.decorators';
 import { TagCompactResponseDto, TagResponseDto } from './dtos/tag-response.dto';
@@ -28,7 +28,7 @@ export class TagsController {
 
   @ApiOperation({
     summary: 'Create a new tag',
-    description: `Create a new tag for books and articles,... categorization.\n
+    description: `Create a new tag for titles and blogs,... categorization.\n
       **Tag types:\n
       - thematic_category => e.g. Fiction Literature, Self Development,
       Psychology, Philosophy, Short Story, Drama Literature, History, Politics\n

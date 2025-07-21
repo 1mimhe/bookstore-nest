@@ -1,7 +1,8 @@
 import { BaseEntity } from 'src/common/entities/base.entity';
 import { Book } from 'src/modules/books/entities/book.entity';
 import { Title } from 'src/modules/books/entities/title.entity';
-import { Column, Entity, Index, JoinTable, ManyToMany, Unique } from 'typeorm';
+import { Column, Entity, Index, JoinTable, ManyToMany, OneToMany, Unique } from 'typeorm';
+import { Blog } from '../blogs/blog.entity';
 
 @Entity('authors')
 @Index(['slug'], { unique: true })
@@ -45,4 +46,7 @@ export class Author extends BaseEntity {
     inverseJoinColumn: { name: 'translatorId', referencedColumnName: 'id' },
   })
   books: Book[];
+
+  @OneToMany(() => Blog, (blog) => blog.author)
+  blogs?: Blog[];
 }

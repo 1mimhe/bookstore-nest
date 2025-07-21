@@ -2,6 +2,7 @@ import { BaseEntity } from 'src/common/entities/base.entity';
 import { Book } from 'src/modules/books/entities/book.entity';
 import { User } from 'src/modules/users/entities/user.entity';
 import { Column, Entity, Index, JoinColumn, OneToMany, OneToOne, Unique } from 'typeorm';
+import { Blog } from '../blogs/blog.entity';
 
 @Entity('publishers')
 @Index(['slug'], { unique: true })
@@ -33,4 +34,7 @@ export class Publisher extends BaseEntity {
 
   @OneToMany(() => Book, (book) => book.publisher)
   books: Book[];
+
+  @OneToMany(() => Blog, (blog) => blog.publisher)
+  blogs?: Blog[];
 }

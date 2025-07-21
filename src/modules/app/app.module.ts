@@ -16,6 +16,7 @@ import { BooksModule } from '../books/books.module';
 import { AuthModule } from '../auth/auth.module';
 import { TagsModule } from '../tags/tags.module';
 import { LanguagesModule } from '../languages/languages.module';
+import { BlogsModule } from '../blogs/blogs.module';
 
 @Module({
   imports: [
@@ -53,7 +54,8 @@ import { LanguagesModule } from '../languages/languages.module';
     PublishersModule,
     BooksModule,
     LanguagesModule,
-    TagsModule
+    TagsModule,
+    BlogsModule
   ],
   providers: [
     {

@@ -1,5 +1,5 @@
 import { IsAlphanumeric, IsEnum, IsHexColor, IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { TagType } from '../entities/tag.entity';
+import { TagType } from '../tag.entity';
 import { Transform } from 'class-transformer';
 import { makeUnique } from 'src/common/utilities/make-unique';
 
