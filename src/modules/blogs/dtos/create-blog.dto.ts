@@ -2,7 +2,7 @@ import { Transform } from 'class-transformer';
 import { IsString, IsUUID, IsArray, IsNotEmpty, IsOptional, IsAlphanumeric, ArrayMinSize } from 'class-validator';
 import { makeUnique } from 'src/common/utilities/make-unique';
 
-export class CreateArticleDto {
+export class CreateBlogDto {
   @IsString()
   @IsNotEmpty()
   subject: string;

@@ -28,7 +28,7 @@ export class TagsController {
 
   @ApiOperation({
     summary: 'Create a new tag',
-    description: `Create a new tag for books and articles,... categorization.\n
+    description: `Create a new tag for titles and blogs,... categorization.\n
       **Tag types:\n
       - thematic_category => e.g. Fiction Literature, Self Development,
       Psychology, Philosophy, Short Story, Drama Literature, History, Politics\n

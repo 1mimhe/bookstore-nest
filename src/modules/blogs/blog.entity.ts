@@ -10,7 +10,7 @@ import { Tag } from '../tags/tag.entity';
 @Index(['publisherId'])
 @Index(['slug'], { unique: true })
 @Entity()
-export class Article extends BaseEntity {
+export class Blog extends BaseEntity {
   @Column('varchar')
   subject: string;
 
@@ -53,6 +53,6 @@ export class Article extends BaseEntity {
   @JoinColumn({ name: 'publisherId' })
   publisher?: Publisher;
 
-  @ManyToMany(() => Tag, (tag) => tag.articles)
+  @ManyToMany(() => Tag, (tag) => tag.blogs)
   tags: Tag[];
 }

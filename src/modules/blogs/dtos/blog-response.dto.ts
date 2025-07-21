@@ -4,7 +4,7 @@ import { TitleResponseDto } from 'src/modules/books/dtos/title-response.dto';
 import { PublisherResponseDto } from 'src/modules/publishers/dtos/publisher-response.dto';
 import { TagCompactResponseDto } from 'src/modules/tags/dtos/tag-response.dto';
 
-export class ArticleResponseDto {
+export class BlogResponseDto {
   @Expose()
   subject: string;
 

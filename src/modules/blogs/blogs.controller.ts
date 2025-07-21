@@ -1,18 +1,18 @@
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
-import { ArticlesService } from './articles.service';
-import { CreateArticleDto } from './dtos/create-article.dto';
+import { BlogsService } from './blogs.service';
+import { CreateBlogDto } from './dtos/create-blog.dto';
 import { ApiBadRequestResponse, ApiConflictResponse, ApiNotFoundResponse, ApiOperation } from '@nestjs/swagger';
 import { ValidationErrorResponseDto } from 'src/common/dtos/error.dtos';
 import { ConflictMessages, NotFoundMessages } from 'src/common/enums/error.messages';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
-import { ArticleResponseDto } from './dtos/article-response.dto';
+import { BlogResponseDto } from './dtos/blog-response.dto';
 
-@Controller('articles')
-export class ArticlesController {
-  constructor(private articlesService: ArticlesService) {}
+@Controller('blogs')
+export class BlogsController {
+  constructor(private blogsService: BlogsService) {}
 
   @ApiOperation({
-    summary: 'Create a Article',
+    summary: 'Create a Blog',
   })
   @ApiBadRequestResponse({
     type: ValidationErrorResponseDto,
@@ -29,12 +29,12 @@ export class ArticlesController {
   @ApiConflictResponse({
     description: ConflictMessages.Slug,
   })
-  @Serialize(ArticleResponseDto)
+  @Serialize(BlogResponseDto)
   @HttpCode(HttpStatus.CREATED)
   @Post()
-  async createArticle(
-    @Body() body: CreateArticleDto
-  ): Promise<ArticleResponseDto> {
-    return this.articlesService.create(body);
+  async createBlog(
+    @Body() body: CreateBlogDto
+  ): Promise<BlogResponseDto> {
+    return this.blogsService.create(body);
   }
 }
