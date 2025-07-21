@@ -4,7 +4,7 @@ import { Publisher } from './publisher.entity';
 import { EntityManager, EntityNotFoundError, FindOptionsWhere, Repository } from 'typeorm';
 import { Roles } from '../users/entities/role.entity';
 import { User } from '../users/entities/user.entity';
-import { CreatePublisherDto } from './dtos/create-publisher.dto';
+import { SignupPublisherDto } from './dtos/create-publisher.dto';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
 import { UpdatePublisherDto } from './dtos/update-publisher.dto';
 import { ConflictMessages } from 'src/common/enums/error.messages';
@@ -21,7 +21,7 @@ export class PublishersService {
     private booksService: BooksService
   ) {}
 
-  async signup(publisherDto: CreatePublisherDto): Promise<Publisher | never> {
+  async signup(publisherDto: SignupPublisherDto): Promise<Publisher | never> {
     const { publisherName, slug, description, logoUrl, ...userDto } = publisherDto;
     
     return this.authService.signup(
