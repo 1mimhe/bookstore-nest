@@ -12,7 +12,7 @@ export class CreateBlogDto {
   otherSubject?: string;
 
   @Transform(({ obj, value }) => {
-    if (value) return makeUnique(value);
+    if (value) return makeUnique(value);    
     if (obj.otherSubject && obj.otherSubject.trim()) {
       return makeUnique(obj.otherSubject);
     }
@@ -35,7 +35,7 @@ export class CreateBlogDto {
 
   @IsNotEmpty()
   @IsString()
-  content?: string;
+  content: string;
 
   @IsOptional()
   @IsUUID()

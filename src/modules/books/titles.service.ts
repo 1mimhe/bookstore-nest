@@ -64,7 +64,7 @@ export class TitlesService {
     return this.dataSource.transaction(async (manager) => {
       const existingTitle = await manager.findOne(Title, {
         where: { id },
-        relations: ['authors'],
+        relations: ['authors', 'tags'],
       });
 
       if (!existingTitle) {
