@@ -1,7 +1,7 @@
 import { Expose, Type } from 'class-transformer';
 import { BookResponseDto } from 'src/modules/books/dtos/book-response.dto';
 
-export class AuthorResponseDto {
+export class AuthorCompactResponseDto {
   @Expose()
   id: string;
 
@@ -27,10 +27,6 @@ export class AuthorResponseDto {
   dateOfDeath?: Date;
 
   @Expose()
-  @Type(() => BookResponseDto)
-  books?: BookResponseDto[];
-
-  @Expose()
   createdAt: Date;
 
   @Expose()
@@ -38,6 +34,12 @@ export class AuthorResponseDto {
 
   @Expose()
   deletedAt: Date | null;
+}
+
+export class AuthorResponseDto extends AuthorCompactResponseDto {
+  @Expose()
+  @Type(() => BookResponseDto)
+  books?: BookResponseDto[];
 }
 
 export class AuthorPlusCountResDto extends AuthorResponseDto {

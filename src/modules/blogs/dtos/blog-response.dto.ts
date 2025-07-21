@@ -1,7 +1,7 @@
 import { Expose, Type } from 'class-transformer';
-import { AuthorResponseDto } from 'src/modules/authors/dtos/author-response.dto';
-import { TitleResponseDto } from 'src/modules/books/dtos/title-response.dto';
-import { PublisherResponseDto } from 'src/modules/publishers/dtos/publisher-response.dto';
+import { AuthorCompactResponseDto } from 'src/modules/authors/dtos/author-response.dto';
+import { TitleCompactResponseDto } from 'src/modules/books/dtos/title-response.dto';
+import { PublisherCompactResponseDto } from 'src/modules/publishers/dtos/publisher-response.dto';
 import { TagCompactResponseDto } from 'src/modules/tags/dtos/tag-response.dto';
 
 export class BlogCompactResponseDto {
@@ -39,11 +39,11 @@ export class BlogCompactResponseDto {
 
 export class BlogResponseDto extends BlogCompactResponseDto {
   @Expose()
-  title?: TitleResponseDto;
+  title?: TitleCompactResponseDto;
 
   @Expose()
-  author?: AuthorResponseDto;
+  author?: AuthorCompactResponseDto;
 
   @Expose()
-  publisher?: PublisherResponseDto;
+  publisher?: PublisherCompactResponseDto;
 }

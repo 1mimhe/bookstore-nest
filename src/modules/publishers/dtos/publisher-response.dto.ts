@@ -2,7 +2,7 @@ import { Expose, Type } from 'class-transformer';
 import { BookResponseDto } from 'src/modules/books/dtos/book-response.dto';
 import { UserResponseDto } from 'src/modules/users/dtos/user-response.dto';
 
-export class CreatePublisherResponseDto {
+export class PublisherCompactResponseDto {
   @Expose()
   id: string;
 
@@ -17,10 +17,6 @@ export class CreatePublisherResponseDto {
 
   @Expose()
   logoUrl?: string;
-
-  @Expose()
-  @Type(() => UserResponseDto)
-  user: UserResponseDto;
 
   @Expose()
   createdAt: Date;
@@ -32,34 +28,16 @@ export class CreatePublisherResponseDto {
   deletedAt: Date | null;
 }
 
-export class PublisherResponseDto {
+export class CreatePublisherResponseDto extends PublisherCompactResponseDto {
   @Expose()
-  id: string;
+  @Type(() => UserResponseDto)
+  user: UserResponseDto;
+}
 
-  @Expose()
-  publisherName: string;
-
-  @Expose()
-  slug: string;
-
-  @Expose()
-  description?: string;
-
-  @Expose()
-  logoUrl?: string;
-
+export class PublisherResponseDto extends PublisherCompactResponseDto {
   @Expose()
   @Type(() => BookResponseDto)
   books?: BookResponseDto[];
-
-  @Expose()
-  createdAt: Date;
-
-  @Expose()
-  updatedAt: Date;
-
-  @Expose()
-  deletedAt: Date | null;
 }
 
 export class PublisherPlusResDto extends PublisherResponseDto {

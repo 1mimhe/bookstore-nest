@@ -1,7 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Blog } from './blog.entity';
-import { DataSource, EntityNotFoundError, In, Repository } from 'typeorm';
+import { DataSource, EntityNotFoundError, FindOptionsWhere, In, Repository } from 'typeorm';
 import { CreateBlogDto } from './dtos/create-blog.dto';
 import { Tag } from '../tags/tag.entity';
 import { dbErrorHandler } from 'src/common/utilities/error-handler';
@@ -45,6 +45,32 @@ export class BlogsService {
       }
       throw error;
     });
+  }
+
+  async get(
+    identifier: { 
+      id?: string;
+      slug?: string
+    },
+  ): Promise<Blog | never> {
+    const where: FindOptionsWhere<Blog> = {};
+    if (identifier.id) {
+      where.id = identifier.id;
+    } else if (identifier.slug) {
+      where.slug = identifier.slug;
+    } else {
+      throw new BadRequestException('Either id or slug must be provided.');
+    }
+
+    return this.blogRepo.findOneOrFail({
+      where,
+      relations: ['title', 'author', 'publisher', 'tags']
+    }).catch((error: Error) => {
+        if (error instanceof EntityNotFoundError) {
+          throw new NotFoundException(NotFoundMessages.Blog);
+        }
+        throw error;
+      });
   }
 
   async update(
