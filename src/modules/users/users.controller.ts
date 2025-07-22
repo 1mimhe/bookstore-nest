@@ -2,6 +2,8 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
+  HttpStatus,
   Post,
   Req,
   UnauthorizedException,
@@ -44,11 +46,22 @@ export class UsersController {
   })
   @ApiBearerAuth()
   @UseGuards(AuthGuard)
+  @HttpCode(HttpStatus.CREATED)
   @Post('addresses')
   createAddress(
     @Body() body: CreateAddressDto,
     @Req() req: Request
   ) {
     return this.usersService.createAddress(req.user?.id!, body);
+  }
+
+  @ApiOperation({
+    summary: 'Retrieves all user addresses',
+  })
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard)
+  @Get('addresses')
+  getAllUserAddresses(@Req() req: Request) {
+    return this.usersService.getAllUserAddresses(req.user?.id!);
   }
 }

@@ -89,4 +89,10 @@ export class UsersService {
     });
     return this.addressRepo.save(address);
   }
+
+  async getAllUserAddresses(userId: string): Promise<Address[]> {
+    return this.addressRepo.find({
+      where: { userId }
+    });
+  }
 }
