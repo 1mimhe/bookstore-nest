@@ -1,18 +1,23 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
-import { EntityNotFoundError, FindOptionsWhere, Repository } from 'typeorm';
+import { DataSource, EntityNotFoundError, FindOptionsWhere, Repository } from 'typeorm';
 import { ConflictDto } from 'src/common/dtos/error.dtos';
 import { CreateAddressDto } from './dtos/create-address.dto';
 import { Address } from './entities/address.entity';
 import { UpdateAddressDto } from './dtos/update-address.dto';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
+import { UpdateUserDto } from './dtos/update-user.dto';
+import { AuthService } from '../auth/auth.service';
+import { Contact } from './entities/contact.entity';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User) private userRepo: Repository<User>,
-    @InjectRepository(Address) private addressRepo: Repository<Address>
+    @InjectRepository(Address) private addressRepo: Repository<Address>,
+    private dataSource: DataSource,
+    private authService: AuthService
   ) {}
 
   findOne(id: string) {
@@ -79,6 +84,58 @@ export class UsersService {
     }
 
     return conflicts;
+  }
+
+  async update(
+    id: string,
+    {
+      password,
+      email,
+      phoneNumber,
+      ...userDto
+    }: UpdateUserDto
+  ): Promise<User | never> {
+    return this.dataSource.transaction(async (manager) => {
+      const existingUser = await manager.findOne(User, {
+        where: { id },
+        relations: ['contact']
+      });
+
+      if (!existingUser) {
+        throw new NotFoundException(NotFoundMessages.User);
+      }
+
+      const conflicts = await this.checkUniqueConstraints(
+        userDto.username,
+        phoneNumber,
+        email
+      );
+      
+      if (conflicts.length > 0) {
+        throw new ConflictException(conflicts);
+      }
+
+      let hashedPassword: string | undefined;
+      if (password) {
+        hashedPassword = await this.authService.hashPassword(password);
+      }
+    
+      Object.assign(existingUser, {
+        ...userDto,
+        ...(hashedPassword && { hashedPassword })
+      });
+
+      if (email || phoneNumber) {
+        if (!existingUser.contact) {
+          existingUser.contact = manager.create(Contact, {});
+        }
+        
+        if (email) existingUser.contact.email = email;
+        if (phoneNumber) existingUser.contact.phoneNumber = phoneNumber;
+      }
+    
+      return manager.save(existingUser);
+    });
   }
 
   async createAddress(

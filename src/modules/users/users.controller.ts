@@ -25,6 +25,7 @@ import { AuthGuard } from '../auth/guards/auth.guard';
 import { CreateAddressDto } from './dtos/create-address.dto';
 import { UsersService } from './users.service';
 import { UpdateAddressDto } from './dtos/update-address.dto';
+import { UpdateUserDto } from './dtos/update-user.dto';
 
 @Controller('users')
 export class UsersController {
@@ -42,6 +43,19 @@ export class UsersController {
   @Get('whoami')
   whoAmI(@Req() req: Request): UserResponseDto {
     return req.user!;
+  }
+
+  @ApiOperation({
+    summary: 'Update authorized user',
+  })
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard)
+  @Patch()
+  updateUser(
+    @Req() req: Request,
+    @Body() body: UpdateUserDto,
+  ) {
+    return this.usersService.update(req.user?.id!, body);
   }
 
   @ApiOperation({

@@ -17,6 +17,7 @@ export enum ConflictMessages {
 }
 
 export enum NotFoundMessages {
+  User = 'User not found.',
   Author = 'Author not found.',
   SomeAuthors = 'Some authors not found.',
   SomeTranslators = 'Some translators not found.',
