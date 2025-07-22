@@ -4,6 +4,8 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Param,
+  Patch,
   Post,
   Req,
   UnauthorizedException,
@@ -22,6 +24,7 @@ import { Request } from 'express';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { CreateAddressDto } from './dtos/create-address.dto';
 import { UsersService } from './users.service';
+import { UpdateAddressDto } from './dtos/update-address.dto';
 
 @Controller('users')
 export class UsersController {
@@ -63,5 +66,18 @@ export class UsersController {
   @Get('addresses')
   getAllUserAddresses(@Req() req: Request) {
     return this.usersService.getAllUserAddresses(req.user?.id!);
+  }
+
+  @ApiOperation({
+    summary: 'Update a address by its id',
+  })
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard)
+  @Patch('addresses/:id')
+  updateAddress(
+    @Param('id') id: string,
+    @Body() body: UpdateAddressDto,
+  ) {
+    return this.usersService.updateAddress(id, body);
   }
 }

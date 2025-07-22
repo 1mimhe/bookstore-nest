@@ -1,10 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
-import { FindOptionsWhere, Repository } from 'typeorm';
+import { EntityNotFoundError, FindOptionsWhere, Repository } from 'typeorm';
 import { ConflictDto } from 'src/common/dtos/error.dtos';
 import { CreateAddressDto } from './dtos/create-address.dto';
 import { Address } from './entities/address.entity';
+import { UpdateAddressDto } from './dtos/update-address.dto';
+import { NotFoundMessages } from 'src/common/enums/error.messages';
 
 @Injectable()
 export class UsersService {
@@ -94,5 +96,25 @@ export class UsersService {
     return this.addressRepo.find({
       where: { userId }
     });
+  }
+
+  async getAddressById(id: string): Promise<Address | never> {
+    return this.addressRepo.findOneOrFail({
+      where: { id }
+    }).catch((error: Error) => {
+      if (error instanceof EntityNotFoundError) {
+        throw new NotFoundException(NotFoundMessages.Address);
+      }
+      throw error;
+    });
+  }
+
+  async updateAddress(
+    id: string,
+    addressDto: UpdateAddressDto
+  ): Promise<Address | never> {
+    const address = await this.getAddressById(id);
+    Object.assign(address, addressDto);
+    return this.addressRepo.save(address);
   }
 }
