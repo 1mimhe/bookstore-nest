@@ -24,6 +24,12 @@ export class Address extends BaseEntity {
   postalAddress: string;
 
   @Column()
+  postalCode: string;
+
+  @Column()
+  plate: number;
+
+  @Column()
   userId: string;
 
   @ManyToOne(() => User, (user) => user.addresses)
