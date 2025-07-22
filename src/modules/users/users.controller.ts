@@ -1,10 +1,12 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Req,
@@ -89,9 +91,19 @@ export class UsersController {
   @UseGuards(AuthGuard)
   @Patch('addresses/:id')
   updateAddress(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() body: UpdateAddressDto,
   ) {
     return this.usersService.updateAddress(id, body);
+  }
+
+  @ApiOperation({
+    summary: 'Delete a address by its id',
+  })
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard)
+  @Delete('addresses/:id')
+  deleteAddress(@Param('id', ParseUUIDPipe) id: string) {
+    return this.usersService.deleteAddress(id);
   }
 }

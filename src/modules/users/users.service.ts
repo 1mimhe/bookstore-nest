@@ -174,4 +174,9 @@ export class UsersService {
     Object.assign(address, addressDto);
     return this.addressRepo.save(address);
   }
+
+  async deleteAddress(id: string): Promise<Address | never> {
+    const address = await this.getAddressById(id);
+    return this.addressRepo.remove(address);
+  }
 }
