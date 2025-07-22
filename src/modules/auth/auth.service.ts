@@ -172,7 +172,7 @@ export class AuthService {
     return conflicts;
   }
 
-  private hashPassword(password: string): Promise<string | never> {
+  hashPassword(password: string): Promise<string | never> {
     const salt = randomBytes(16).toString('hex');
     return new Promise((resolve, reject) => {
       pbkdf2(password, salt, 1000, 64, 'sha512', (err, derivedKey) => {

@@ -10,6 +10,7 @@ import { Contact } from './contact.entity';
 import { Role } from './role.entity';
 import { BaseEntity } from 'src/common/entities/base.entity';
 import { Publisher } from 'src/modules/publishers/publisher.entity';
+import { Address } from './address.entity';
 
 export enum Genders {
   Male = 'male',
@@ -57,4 +58,7 @@ export class User extends BaseEntity {
 
   @OneToOne(() => Publisher, (publisher) => publisher.user)
   publisher?: Publisher;
+
+  @OneToMany(() => Address, (address) => address.user)
+  addresses: Address[];
 }

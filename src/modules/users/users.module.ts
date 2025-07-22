@@ -5,10 +5,11 @@ import { UsersController } from './users.controller';
 import { User } from './entities/user.entity';
 import { CurrentUserMiddleware } from 'src/common/middlewares/current-user.middleware';
 import { AuthModule } from '../auth/auth.module';
+import { Address } from './entities/address.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([User, Address]),
     AuthModule
   ],
   providers: [UsersService],
