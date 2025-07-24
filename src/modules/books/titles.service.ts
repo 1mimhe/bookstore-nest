@@ -15,13 +15,14 @@ import { UpdateTitleDto } from './dtos/update-title.dto';
 import { Tag } from '../tags/tag.entity';
 import { Quote } from './entities/quote.entity';
 import { Feature } from './entities/feature.entity';
+import { Character } from './entities/characters.entity';
+import { CreateCharacterDto } from './dtos/create-character.dto';
 
 @Injectable()
 export class TitlesService {
   constructor(
     @InjectRepository(Title) private titleRepo: Repository<Title>,
-    @InjectRepository(Feature) private featureRepo: Repository<Feature>,
-    @InjectRepository(Quote) private quoteRepo: Repository<Quote>,
+    @InjectRepository(Character) private characterRepo: Repository<Character>,
     private dataSource: DataSource,
   ) {}
 
@@ -161,5 +162,10 @@ export class TitlesService {
       }
       throw error;
     });
+  }
+
+  async createCharacter(characterDto: CreateCharacterDto): Promise<Character | never> {
+    const character = this.characterRepo.create(characterDto);
+    return this.characterRepo.save(character);
   }
 }

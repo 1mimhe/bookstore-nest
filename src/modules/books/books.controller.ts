@@ -33,6 +33,7 @@ import { BookResponseDto, ImageResponseDto } from './dtos/book-response.dto';
 import { TitleCompactResponseDto, TitleResponseDto } from './dtos/title-response.dto';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 import { UpdateTitleDto } from './dtos/update-title.dto';
+import { CreateCharacterDto } from './dtos/create-character.dto';
 
 @Controller('books')
 export class BooksController {
@@ -211,5 +212,14 @@ export class BooksController {
     @Param('id', ParseUUIDPipe) id: string
   ): Promise<ImageResponseDto> {
     return this.booksService.deleteImage(id);
+  }
+
+  @ApiOperation({
+    summary: 'Create a book character',
+  })
+  @HttpCode(HttpStatus.CREATED)
+  @Post('characters')
+  async createBookCharacter(@Body() body: CreateCharacterDto) {
+    return this.titlesService.createCharacter(body);
   }
 }
