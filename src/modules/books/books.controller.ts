@@ -7,6 +7,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  ParseBoolPipe,
   ParseIntPipe,
   ParseUUIDPipe,
   Patch,
@@ -17,6 +18,7 @@ import {
   ApiBadRequestResponse,
   ApiConflictResponse,
   ApiNotFoundResponse,
+  ApiOkResponse,
   ApiOperation,
 } from '@nestjs/swagger';
 import { ConflictMessages } from 'src/common/enums/error.messages';
@@ -27,10 +29,14 @@ import { NotFoundMessages } from 'src/common/enums/error.messages';
 import { CreateBookDto } from './dtos/create-book.dto';
 import { BooksService } from './books.service';
 import { UpdateBookDto } from './dtos/update-book.dto';
-import { ApiQueryPagination } from 'src/common/decorators/query.decorators';
+import { ApiQueryComplete, ApiQueryPagination } from 'src/common/decorators/query.decorators';
 import { BookResponseDto, ImageResponseDto } from './dtos/book-response.dto';
 import { TitleCompactResponseDto, TitleResponseDto } from './dtos/title-response.dto';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
+import { UpdateTitleDto } from './dtos/update-title.dto';
+import { CreateCharacterDto } from './dtos/create-character.dto';
+import { UpdateCharacterDto } from './dtos/update-character.dto';
+import { CharacterCompactResponseDto, CharacterResponseDto } from './dtos/character-response.dto';
 
 @Controller('books')
 export class BooksController {
@@ -66,6 +72,9 @@ export class BooksController {
   @ApiNotFoundResponse({
     description: NotFoundMessages.Title,
   })
+  @ApiOkResponse({
+    type: TitleResponseDto
+  })
   @Serialize(TitleResponseDto)
   @Get('titles/:slug')
   async getTitleBySlug(
@@ -81,7 +90,7 @@ export class BooksController {
     description: NotFoundMessages.Publisher,
   })
   @ApiQueryPagination()
-  // Serialize for arrays?
+  @Serialize(BookResponseDto)
   @Get('publisher/:id')
   async getBooksByPublisherId(
     @Param('id', ParseUUIDPipe) id: string,
@@ -110,7 +119,7 @@ export class BooksController {
 
   @ApiOperation({
     summary: 'Update a title',
-    description: 'It override authors and tags will be merged if included.',
+    description: 'It override authors, features and quotes; tags and characters will be merged if included.',
   })
   @ApiBadRequestResponse({
     type: ValidationErrorResponseDto,
@@ -128,9 +137,33 @@ export class BooksController {
   @Patch('titles/:id')
   async updateTitle(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: CreateTitleDto,
+    @Body() body: UpdateTitleDto,
   ): Promise<TitleCompactResponseDto> {
     return this.titlesService.update(id, body);
+  }
+
+  @ApiOperation({
+    summary: 'Delete a tag from a title',
+    description: 'Doesn\'t retrieve anything at all.'
+  })
+  @Delete('titles/:titleId/tags/:tagId')
+  async deleteTagFromTitle(
+    @Param('titleId', ParseUUIDPipe) titleId: string,
+    @Param('tagId', ParseUUIDPipe) tagId: string,
+  ) {
+    return this.titlesService.deleteTagFromTitle(titleId, tagId);
+  }
+
+  @ApiOperation({
+    summary: 'Delete a character from a title',
+    description: 'Doesn\'t retrieve anything at all.'
+  })
+  @Delete('titles/:titleId/characters/:characterId')
+  async deleteCharacterFromTitle(
+    @Param('titleId', ParseUUIDPipe) titleId: string,
+    @Param('characterId', ParseUUIDPipe) characterId: string,
+  ) {
+    return this.titlesService.deleteCharacterFromTitle(titleId, characterId);
   }
 
   @ApiOperation({
@@ -206,5 +239,76 @@ export class BooksController {
     @Param('id', ParseUUIDPipe) id: string
   ): Promise<ImageResponseDto> {
     return this.booksService.deleteImage(id);
+  }
+
+  @ApiOperation({
+    summary: 'Create a book character',
+  })
+  @ApiBadRequestResponse({
+    type: ValidationErrorResponseDto,
+  })
+  @HttpCode(HttpStatus.CREATED)
+  @Serialize(CharacterCompactResponseDto)
+  @Post('characters')
+  async createBookCharacter(
+    @Body() body: CreateCharacterDto
+  ): Promise<CharacterCompactResponseDto> {
+    return this.titlesService.createCharacter(body);
+  }
+
+  @ApiOperation({
+    summary: 'Retrieves a character by its id',
+  })
+  @ApiNotFoundResponse({
+    description: NotFoundMessages.Character
+  })
+  @ApiQueryComplete('books')
+  @ApiQueryPagination()
+  @Serialize(CharacterCompactResponseDto)
+  @Get('characters/id/:id')
+  async getBookCharacterById(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query('complete', new ParseBoolPipe({ optional: true })) complete?: boolean,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
+  ): Promise<CharacterResponseDto> {
+    return this.titlesService.getCharacter({ id }, page, limit, complete);
+  }
+
+  @ApiOperation({
+    summary: 'Retrieves a character by its slug',
+  })
+  @ApiNotFoundResponse({
+    description: NotFoundMessages.Character
+  })
+  @ApiQueryComplete('books')
+  @ApiQueryPagination()
+  @Serialize(CharacterCompactResponseDto)
+  @Get('characters/slug/:slug')
+  async getBookCharacterBySlug(
+    @Param('slug') slug: string,
+    @Query('complete', new ParseBoolPipe({ optional: true })) complete?: boolean,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
+  ): Promise<CharacterResponseDto> {
+    return this.titlesService.getCharacter({ slug }, page, limit, complete);
+  }
+
+  @ApiOperation({
+    summary: 'Update a character by its id',
+  })
+  @ApiBadRequestResponse({
+    type: ValidationErrorResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: NotFoundMessages.Character
+  })
+  @Serialize(CharacterCompactResponseDto)
+  @Patch('characters/:id')
+  async updateBookCharacter(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: UpdateCharacterDto
+  ): Promise<CharacterCompactResponseDto> {
+    return this.titlesService.updateCharacter(id, body);
   }
 }

@@ -19,6 +19,9 @@ export class Author extends BaseEntity {
   @Column()
   slug: string;
 
+  @Column('text')
+  picUrl?: string;
+
   @Column({
     type: 'text',
     nullable: true
@@ -34,16 +37,16 @@ export class Author extends BaseEntity {
   @ManyToMany(() => Title, (title) => title.authors)
   @JoinTable({
     name: 'title_author',
-    joinColumn: { name: 'titleId', referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'authorId', referencedColumnName: 'id' },
+    joinColumn: { name: 'authorId', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'titleId', referencedColumnName: 'id' },
   })
   titles: Title[];
 
   @ManyToMany(() => Book, (book) => book.translators)
   @JoinTable({
     name: 'book_translator',
-    joinColumn: { name: 'bookId', referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'translatorId', referencedColumnName: 'id' },
+    joinColumn: { name: 'translatorId', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'bookId', referencedColumnName: 'id' },
   })
   books: Book[];
 

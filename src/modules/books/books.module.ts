@@ -9,6 +9,9 @@ import { BooksService } from './books.service';
 import { Book } from './entities/book.entity';
 import { BookImage } from './entities/book-image.entity';
 import { Language } from '../languages/language.entity';
+import { Quote } from './entities/quote.entity';
+import { Feature } from './entities/feature.entity';
+import { Character } from './entities/characters.entity';
 
 @Module({
   imports: [
@@ -17,7 +20,10 @@ import { Language } from '../languages/language.entity';
       Title,
       Author,
       Book,
-      BookImage
+      BookImage,
+      Quote,
+      Feature,
+      Character
     ])
   ],
   controllers: [BooksController],

@@ -15,6 +15,9 @@ export class AuthorCompactResponseDto {
   nickname?: string;
 
   @Expose()
+  picUrl?: string;
+
+  @Expose()
   slug: string;
 
   @Expose()

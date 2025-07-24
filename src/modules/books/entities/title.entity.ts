@@ -4,6 +4,9 @@ import { Column, Entity, Index, ManyToMany, OneToMany } from 'typeorm';
 import { Book } from './book.entity';
 import { Tag } from 'src/modules/tags/tag.entity';
 import { Blog } from 'src/modules/blogs/blog.entity';
+import { Quote } from './quote.entity';
+import { Feature } from './feature.entity';
+import { Character } from './characters.entity';
 
 @Entity('titles')
 @Index(['slug'], { unique: true })
@@ -31,4 +34,13 @@ export class Title extends BaseEntity {
 
   @OneToMany(() => Blog, (blog) => blog.title)
   blogs?: Blog[];
+
+  @OneToMany(() => Quote, (quote) => quote.title, { cascade: true })
+  quotes: Quote[];
+
+  @OneToMany(() => Feature, (feature) => feature.title, { cascade: true })
+  features: Feature[];
+
+  @ManyToMany(() => Character, (character) => character.titles)
+  characters: Character[];
 }

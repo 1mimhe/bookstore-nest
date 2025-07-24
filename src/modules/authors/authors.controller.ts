@@ -82,8 +82,7 @@ export class AuthorsController {
   @Get('id/:id')
   async getPublisherById(
     @Param('id', ParseUUIDPipe) id: string,
-    @Query('complete', new ParseBoolPipe({ optional: true }))
-    complete?: boolean,
+    @Query('complete', new ParseBoolPipe({ optional: true })) complete?: boolean,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
   ): Promise<AuthorResponseDto> {

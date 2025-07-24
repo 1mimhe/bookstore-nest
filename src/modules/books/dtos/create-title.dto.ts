@@ -35,5 +35,22 @@ export class CreateTitleDto {
   @ArrayMinSize(1)
   @IsArray()
   @IsAlphanumeric(undefined, { each: true })
+  features: string[];
+
+  @IsOptional()
+  @ArrayMinSize(1)
+  @IsArray()
+  @IsAlphanumeric(undefined, { each: true })
+  quotes: string[];
+
+  @IsArray()
+  @ArrayMinSize(1)
+  @IsUUID('4', { each: true })
+  characterIds?: string[];
+
+  @IsOptional()
+  @ArrayMinSize(1)
+  @IsArray()
+  @IsAlphanumeric(undefined, { each: true })
   tags?: string[];
 }
