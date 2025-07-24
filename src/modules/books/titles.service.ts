@@ -195,6 +195,14 @@ export class TitlesService {
     });
   }
 
+  async deleteTagFromTitle(titleId: string, tagId: string): Promise<void> {
+    return this.titleRepo
+      .createQueryBuilder()
+      .relation(Title, 'tags')
+      .of(titleId)
+      .remove(tagId)
+  }
+
   async createCharacter(characterDto: CreateCharacterDto): Promise<Character | never> {
     const character = this.characterRepo.create(characterDto);
     return this.characterRepo.save(character);
