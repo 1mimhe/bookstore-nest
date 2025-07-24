@@ -4,6 +4,7 @@ import { TagCompactResponseDto } from 'src/modules/tags/dtos/tag-response.dto';
 import { BookResponseDto } from './book-response.dto';
 import { Feature } from '../entities/feature.entity';
 import { Quote } from '../entities/quote.entity';
+import { CharacterCompactResponseDto } from './character-response.dto';
 
 export class TitleCompactResponseDto {
   @Expose()
@@ -32,13 +33,17 @@ export class TitleCompactResponseDto {
 }
 
 export class TitleResponseDto extends TitleCompactResponseDto {
+  @Expose()
+  @Type(() => CharacterCompactResponseDto)
+  characters: CharacterCompactResponseDto[];
+
   @Transform(({ obj }) => obj.features?.map((feature: Feature) => feature.feature))
   @Expose()
-  features?: string[];
+  features?: Feature[] | string[];
 
   @Transform(({ obj }) => obj.quotes?.map((quote: Quote) => quote.quote))
   @Expose()
-  quotes?: string[];
+  quotes?: Quote[] | string[];
 
   @Expose()
   @Type(() => AuthorResponseDto)

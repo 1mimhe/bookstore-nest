@@ -36,6 +36,7 @@ import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 import { UpdateTitleDto } from './dtos/update-title.dto';
 import { CreateCharacterDto } from './dtos/create-character.dto';
 import { UpdateCharacterDto } from './dtos/update-character.dto';
+import { CharacterCompactResponseDto, CharacterResponseDto } from './dtos/character-response.dto';
 
 @Controller('books')
 export class BooksController {
@@ -78,7 +79,7 @@ export class BooksController {
   @Get('titles/:slug')
   async getTitleBySlug(
     @Param('slug') slug: string
-  ) {
+  ): Promise<TitleResponseDto> {
     return this.titlesService.getBySlug(slug);
   }
 
@@ -247,8 +248,11 @@ export class BooksController {
     type: ValidationErrorResponseDto,
   })
   @HttpCode(HttpStatus.CREATED)
+  @Serialize(CharacterCompactResponseDto)
   @Post('characters')
-  async createBookCharacter(@Body() body: CreateCharacterDto) {
+  async createBookCharacter(
+    @Body() body: CreateCharacterDto
+  ): Promise<CharacterCompactResponseDto> {
     return this.titlesService.createCharacter(body);
   }
 
@@ -260,13 +264,14 @@ export class BooksController {
   })
   @ApiQueryComplete('books')
   @ApiQueryPagination()
+  @Serialize(CharacterCompactResponseDto)
   @Get('characters/id/:id')
   async getBookCharacterById(
     @Param('id', ParseUUIDPipe) id: string,
     @Query('complete', new ParseBoolPipe({ optional: true })) complete?: boolean,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
-  ) {
+  ): Promise<CharacterResponseDto> {
     return this.titlesService.getCharacter({ id }, page, limit, complete);
   }
 
@@ -278,13 +283,14 @@ export class BooksController {
   })
   @ApiQueryComplete('books')
   @ApiQueryPagination()
+  @Serialize(CharacterCompactResponseDto)
   @Get('characters/slug/:slug')
   async getBookCharacterBySlug(
     @Param('slug') slug: string,
     @Query('complete', new ParseBoolPipe({ optional: true })) complete?: boolean,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
-  ) {
+  ): Promise<CharacterResponseDto> {
     return this.titlesService.getCharacter({ slug }, page, limit, complete);
   }
 
@@ -297,11 +303,12 @@ export class BooksController {
   @ApiNotFoundResponse({
     description: NotFoundMessages.Character
   })
+  @Serialize(CharacterCompactResponseDto)
   @Patch('characters/:id')
   async updateBookCharacter(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: UpdateCharacterDto
-  ) {
+  ): Promise<CharacterCompactResponseDto> {
     return this.titlesService.updateCharacter(id, body);
   }
 }

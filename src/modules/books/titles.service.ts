@@ -174,7 +174,7 @@ export class TitlesService {
   async getBySlug(slug: string): Promise<Title | never> {
     return this.titleRepo.findOneOrFail({
       where: { slug },
-      relations: ['authors', 'tags', 'features', 'quotes', 'books',
+      relations: ['authors', 'tags', 'characters', 'features', 'quotes', 'books',
         'books.publisher', 'books.translators', 'books.language', 'books.images'],
     }).catch((error: Error) => {
       if (error instanceof EntityNotFoundError) {
