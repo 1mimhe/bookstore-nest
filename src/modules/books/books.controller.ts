@@ -7,6 +7,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  ParseBoolPipe,
   ParseIntPipe,
   ParseUUIDPipe,
   Patch,
@@ -28,7 +29,7 @@ import { NotFoundMessages } from 'src/common/enums/error.messages';
 import { CreateBookDto } from './dtos/create-book.dto';
 import { BooksService } from './books.service';
 import { UpdateBookDto } from './dtos/update-book.dto';
-import { ApiQueryPagination } from 'src/common/decorators/query.decorators';
+import { ApiQueryComplete, ApiQueryPagination } from 'src/common/decorators/query.decorators';
 import { BookResponseDto, ImageResponseDto } from './dtos/book-response.dto';
 import { TitleCompactResponseDto, TitleResponseDto } from './dtos/title-response.dto';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
@@ -221,5 +222,41 @@ export class BooksController {
   @Post('characters')
   async createBookCharacter(@Body() body: CreateCharacterDto) {
     return this.titlesService.createCharacter(body);
+  }
+
+  @ApiOperation({
+    summary: 'Retrieves a character by its id',
+  })
+  @ApiNotFoundResponse({
+    description: NotFoundMessages.Character
+  })
+  @ApiQueryComplete('books')
+  @ApiQueryPagination()
+  @Get('characters/id/:id')
+  async getBookCharacterById(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query('complete', new ParseBoolPipe({ optional: true })) complete?: boolean,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
+  ) {
+    return this.titlesService.getCharacter({ id }, page, limit, complete);
+  }
+
+  @ApiOperation({
+    summary: 'Retrieves a character by its slug',
+  })
+  @ApiNotFoundResponse({
+    description: NotFoundMessages.Character
+  })
+  @ApiQueryComplete('books')
+  @ApiQueryPagination()
+  @Get('characters/slug/:slug')
+  async getBookCharacterBySlug(
+    @Param('slug') slug: string,
+    @Query('complete', new ParseBoolPipe({ optional: true })) complete?: boolean,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
+  ) {
+    return this.titlesService.getCharacter({ slug }, page, limit, complete);
   }
 }
