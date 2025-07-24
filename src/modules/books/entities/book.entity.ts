@@ -89,7 +89,7 @@ export class Book extends BaseEntity {
   })
   stock?: number;
 
-  @Column({ type: 'int' })
+  @Column('int')
   price: number;
 
   @Column({
@@ -106,13 +106,13 @@ export class Book extends BaseEntity {
   })
   sold?: number;
 
-  @Column()
+  @Column('uuid')
   titleId: string;
   @ManyToOne(() => Title, (title) => title.books)
   @JoinColumn()
   title: Title;
 
-  @Column()
+  @Column('uuid')
   publisherId: string;
   @ManyToOne(() => Publisher, (publisher) => publisher.books)
   @JoinColumn({ name: 'publisherId' })
@@ -121,7 +121,7 @@ export class Book extends BaseEntity {
   @ManyToMany(() => Author, (author) => author.books)
   translators: Author[];
 
-  @Column()
+  @Column('uuid')
   languageId: string;
   @ManyToOne(() => Language, (language) => language.books)
   @JoinColumn()

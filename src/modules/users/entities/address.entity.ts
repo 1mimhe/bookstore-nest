@@ -29,9 +29,8 @@ export class Address extends BaseEntity {
   @Column()
   plate: number;
 
-  @Column()
+  @Column('uuid')
   userId: string;
-
   @ManyToOne(() => User, (user) => user.addresses)
   @JoinColumn()
   user: User;
