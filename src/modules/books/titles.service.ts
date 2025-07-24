@@ -216,4 +216,10 @@ export class TitlesService {
       titles
     };
   }
+
+  async updateCharacter(id: string, characterDto: UpdateCharacterDto): Promise<Character | never> {
+    const character = await this.getCharacter({ id });
+    Object.assign(character, characterDto);
+    return this.characterRepo.save(character);
+  }
 }

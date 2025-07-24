@@ -35,6 +35,7 @@ import { TitleCompactResponseDto, TitleResponseDto } from './dtos/title-response
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 import { UpdateTitleDto } from './dtos/update-title.dto';
 import { CreateCharacterDto } from './dtos/create-character.dto';
+import { UpdateCharacterDto } from './dtos/update-character.dto';
 
 @Controller('books')
 export class BooksController {
@@ -218,6 +219,9 @@ export class BooksController {
   @ApiOperation({
     summary: 'Create a book character',
   })
+  @ApiBadRequestResponse({
+    type: ValidationErrorResponseDto,
+  })
   @HttpCode(HttpStatus.CREATED)
   @Post('characters')
   async createBookCharacter(@Body() body: CreateCharacterDto) {
@@ -258,5 +262,22 @@ export class BooksController {
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
   ) {
     return this.titlesService.getCharacter({ slug }, page, limit, complete);
+  }
+
+  @ApiOperation({
+    summary: 'Update a character by its id',
+  })
+  @ApiBadRequestResponse({
+    type: ValidationErrorResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: NotFoundMessages.Character
+  })
+  @Patch('characters/:id')
+  async updateBookCharacter(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: UpdateCharacterDto
+  ) {
+    return this.titlesService.updateCharacter(id, body);
   }
 }
