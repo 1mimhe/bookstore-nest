@@ -21,19 +21,19 @@ export class Publisher extends BaseEntity {
   description?: string;
 
   @Column({
+    type: 'text',
     nullable: true,
-    type: 'text'
   })
   logoUrl?: string;
 
-  @Column()
+  @Column('uuid')
   userId: string;
   @OneToOne(() => User, (user) => user.publisher)
   @JoinColumn()
   user: User;
 
   @OneToMany(() => Book, (book) => book.publisher)
-  books: Book[];
+  books?: Book[];
 
   @OneToMany(() => Blog, (blog) => blog.publisher)
   blogs?: Blog[];

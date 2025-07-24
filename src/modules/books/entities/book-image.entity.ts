@@ -25,12 +25,10 @@ export class BookImage extends BaseEntity {
   })
   type: BookImageTypes;
 
-  @Column({
-    type: 'text',
-  })
+  @Column('text')
   url: string;
 
-  @Column()
+  @Column('uuid')
   bookId: string;
   @Exclude()
   @ManyToOne(() => Book, (book) => book.images)
