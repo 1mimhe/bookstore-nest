@@ -13,17 +13,23 @@ import { Author } from '../authors/author.entity';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
 import { UpdateTitleDto } from './dtos/update-title.dto';
 import { Tag } from '../tags/tag.entity';
+import { Quote } from './entities/quote.entity';
+import { Feature } from './entities/feature.entity';
 
 @Injectable()
 export class TitlesService {
   constructor(
     @InjectRepository(Title) private titleRepo: Repository<Title>,
+    @InjectRepository(Feature) private featureRepo: Repository<Feature>,
+    @InjectRepository(Quote) private quoteRepo: Repository<Quote>,
     private dataSource: DataSource,
   ) {}
 
   async create({
     authorIds,
     tags,
+    features = [],
+    quotes = [],
     ...titleDto
   }: CreateTitleDto): Promise<Title | never> {
     return this.dataSource.transaction(async (manager) => {
@@ -45,6 +51,8 @@ export class TitlesService {
       const title = manager.create(Title, {
         ...titleDto,
         authors,
+        features: features.map((feature => ({ feature }))),
+        quotes: quotes.map((quote => ({ quote }))),
         tags: dbTags,
       });
 
@@ -59,19 +67,25 @@ export class TitlesService {
 
   async update(
     id: string,
-    { authorIds, tags, ...titleDto }: UpdateTitleDto,
+    {
+      authorIds,
+      tags,
+      features,
+      quotes,
+      ...titleDto
+    }: UpdateTitleDto,
   ): Promise<Title | never> {
     return this.dataSource.transaction(async (manager) => {
       const existingTitle = await manager.findOne(Title, {
         where: { id },
-        relations: ['authors', 'tags'],
+        relations: ['authors', 'tags', 'features', 'quotes'],
       });
 
       if (!existingTitle) {
         throw new NotFoundException(NotFoundMessages.Title);
       }
 
-      let authors = existingTitle.authors;
+      let authors = existingTitle.authors;      
       if (authorIds && authorIds.length > 0) {
         const foundAuthors = await manager.findBy(Author, {
           id: In(authorIds),
@@ -84,6 +98,16 @@ export class TitlesService {
         authors = foundAuthors;
       }
 
+      if (features) {
+        await manager.delete(Feature, { titleId: existingTitle.id });
+        existingTitle.features = [];
+      }
+
+      if (quotes) {
+        await manager.delete(Quote, { titleId: existingTitle.id });
+        existingTitle.quotes = [];
+      }
+
       let newTags: Tag[] | undefined;
       if (tags && tags.length > 0) {
         newTags = await manager.findBy(Tag, {
@@ -94,8 +118,13 @@ export class TitlesService {
       const updatedTitle = manager.merge(
         Title,
         existingTitle,
-        titleDto,
+        {
+          ...titleDto,
+          features: features?.map((feature) => ({ feature })),
+          quotes: quotes?.map((quote) => ({ quote }))
+        }
       ) as Title;
+
       updatedTitle.authors = authors;
       updatedTitle.tags = [...(existingTitle.tags || []), ...(newTags || [])];
 
@@ -124,7 +153,7 @@ export class TitlesService {
   async getBySlug(slug: string): Promise<Title | never> {
     return this.titleRepo.findOneOrFail({
       where: { slug },
-      relations: ['authors', 'tags', 'books',
+      relations: ['authors', 'tags', 'features', 'quotes', 'books',
         'books.publisher', 'books.translators', 'books.language', 'books.images'],
     }).catch((error: Error) => {
       if (error instanceof EntityNotFoundError) {

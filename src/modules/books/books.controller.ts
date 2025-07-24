@@ -17,6 +17,7 @@ import {
   ApiBadRequestResponse,
   ApiConflictResponse,
   ApiNotFoundResponse,
+  ApiOkResponse,
   ApiOperation,
 } from '@nestjs/swagger';
 import { ConflictMessages } from 'src/common/enums/error.messages';
@@ -31,6 +32,7 @@ import { ApiQueryPagination } from 'src/common/decorators/query.decorators';
 import { BookResponseDto, ImageResponseDto } from './dtos/book-response.dto';
 import { TitleCompactResponseDto, TitleResponseDto } from './dtos/title-response.dto';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
+import { UpdateTitleDto } from './dtos/update-title.dto';
 
 @Controller('books')
 export class BooksController {
@@ -66,11 +68,14 @@ export class BooksController {
   @ApiNotFoundResponse({
     description: NotFoundMessages.Title,
   })
+  @ApiOkResponse({
+    type: TitleResponseDto
+  })
   @Serialize(TitleResponseDto)
   @Get('titles/:slug')
   async getTitleBySlug(
     @Param('slug') slug: string
-  ): Promise<TitleResponseDto> {
+  ) {
     return this.titlesService.getBySlug(slug);
   }
 
@@ -128,7 +133,7 @@ export class BooksController {
   @Patch('titles/:id')
   async updateTitle(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: CreateTitleDto,
+    @Body() body: UpdateTitleDto,
   ): Promise<TitleCompactResponseDto> {
     return this.titlesService.update(id, body);
   }

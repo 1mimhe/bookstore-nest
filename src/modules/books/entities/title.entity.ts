@@ -34,9 +34,9 @@ export class Title extends BaseEntity {
   @OneToMany(() => Blog, (blog) => blog.title)
   blogs?: Blog[];
 
-  @OneToMany(() => Quote, (quote) => quote.title)
+  @OneToMany(() => Quote, (quote) => quote.title, { cascade: true })
   quotes: Quote[];
 
-  @OneToMany(() => Feature, (feature) => feature.title)
+  @OneToMany(() => Feature, (feature) => feature.title, { cascade: true })
   features: Feature[];
 }
