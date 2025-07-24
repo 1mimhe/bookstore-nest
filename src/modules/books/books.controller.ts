@@ -154,6 +154,18 @@ export class BooksController {
   }
 
   @ApiOperation({
+    summary: 'Delete a character from a title',
+    description: 'Doesn\'t retrieve anything at all.'
+  })
+  @Delete('titles/:titleId/characters/:characterId')
+  async deleteCharacterFromTitle(
+    @Param('titleId', ParseUUIDPipe) titleId: string,
+    @Param('characterId', ParseUUIDPipe) characterId: string,
+  ) {
+    return this.titlesService.deleteCharacterFromTitle(titleId, characterId);
+  }
+
+  @ApiOperation({
     summary: 'Create a book',
   })
   @ApiBadRequestResponse({

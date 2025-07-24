@@ -200,7 +200,15 @@ export class TitlesService {
       .createQueryBuilder()
       .relation(Title, 'tags')
       .of(titleId)
-      .remove(tagId)
+      .remove(tagId);
+  }
+
+  async deleteCharacterFromTitle(titleId: string, characterId: string): Promise<void> {
+    return this.titleRepo
+      .createQueryBuilder()
+      .relation(Title, 'characters')
+      .of(titleId)
+      .remove(characterId);
   }
 
   async createCharacter(characterDto: CreateCharacterDto): Promise<Character | never> {
