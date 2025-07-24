@@ -89,7 +89,7 @@ export class BooksController {
     description: NotFoundMessages.Publisher,
   })
   @ApiQueryPagination()
-  // Serialize for arrays?
+  @Serialize(BookResponseDto)
   @Get('publisher/:id')
   async getBooksByPublisherId(
     @Param('id', ParseUUIDPipe) id: string,
@@ -118,7 +118,7 @@ export class BooksController {
 
   @ApiOperation({
     summary: 'Update a title',
-    description: 'It override authors and tags will be merged if included.',
+    description: 'It override authors, features and quotes; tags and characters will be merged if included.',
   })
   @ApiBadRequestResponse({
     type: ValidationErrorResponseDto,

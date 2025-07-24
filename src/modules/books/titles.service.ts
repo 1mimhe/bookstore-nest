@@ -33,6 +33,7 @@ export class TitlesService {
     tags,
     features = [],
     quotes = [],
+    characterIds,
     ...titleDto
   }: CreateTitleDto): Promise<Title | never> {
     return this.dataSource.transaction(async (manager) => {
@@ -42,6 +43,13 @@ export class TitlesService {
 
       if (authors.length !== authorIds.length) {
         throw new NotFoundException(NotFoundMessages.SomeAuthors);
+      }
+
+      let characters: Character[] | undefined;
+      if (characterIds && characterIds.length > 0) {
+        characters = await manager.findBy(Character, {
+          id: In(characterIds)
+        })
       }
 
       let dbTags: Tag[] | undefined;
@@ -57,6 +65,7 @@ export class TitlesService {
         features: features.map((feature => ({ feature }))),
         quotes: quotes.map((quote => ({ quote }))),
         tags: dbTags,
+        characters,
       });
 
       return manager.save(Title, title).catch((error) => {
@@ -75,6 +84,7 @@ export class TitlesService {
       tags,
       features,
       quotes,
+      characterIds,
       ...titleDto
     }: UpdateTitleDto,
   ): Promise<Title | never> {
@@ -86,6 +96,13 @@ export class TitlesService {
 
       if (!existingTitle) {
         throw new NotFoundException(NotFoundMessages.Title);
+      }
+
+      let newCharacters: Character[] | undefined;      
+      if (characterIds && characterIds.length > 0) {
+        newCharacters = await manager.findBy(Character, {
+          id: In(characterIds),
+        });
       }
 
       let authors = existingTitle.authors;      
@@ -130,6 +147,7 @@ export class TitlesService {
 
       updatedTitle.authors = authors;
       updatedTitle.tags = [...(existingTitle.tags || []), ...(newTags || [])];
+      updatedTitle.characters = [...(existingTitle.characters || []), ...(newCharacters || [])];
 
       return manager.save(Title, updatedTitle).catch((error) => {
         if (error.code === DBErrors.Conflict) {
