@@ -22,6 +22,8 @@ import { UpdateCollectionBookDto } from './dtos/update-collection-book.dto';
 import { UuidArrayDto } from './entities/uuid-array.dto';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
 import { ApiQueryComplete, ApiQueryPagination } from 'src/common/decorators/query.decorators';
+import { CollectionBookCompactResponseDto, CollectionCompactResponseDto, CollectionResponseDto } from './dtos/collection-response.dto';
+import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 
 @Controller('collections')
 export class CollectionsController {
@@ -30,9 +32,12 @@ export class CollectionsController {
   @ApiOperation({
     summary: 'Create an empty collection',
   })
+  @Serialize(CollectionCompactResponseDto)
   @HttpCode(HttpStatus.CREATED)
   @Post()
-  async createCollection(@Body() body: CreateCollectionDto) {
+  async createCollection(
+    @Body() body: CreateCollectionDto
+  ): Promise<CollectionCompactResponseDto> {
     return this.collectionsService.create(body);
   }
 
@@ -40,11 +45,12 @@ export class CollectionsController {
     summary: 'Retrieves all collections',
   })
   @ApiQueryPagination()
+  @Serialize(CollectionCompactResponseDto)
   @Get()
   async getAllCollection(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
-  ) {
+  ): Promise<CollectionCompactResponseDto[]> {
     return this.collectionsService.getAll(page, limit);
   }
 
@@ -55,12 +61,13 @@ export class CollectionsController {
     description: NotFoundMessages.Collection,
   })
   @ApiQueryComplete('collections')
+  @Serialize(CollectionResponseDto)
   @Get('id/:id')
   async getCollectionById(
     @Param('id', ParseUUIDPipe) id: string,
     @Query('complete', new ParseBoolPipe({ optional: true }))
     complete?: boolean,
-  ) {
+  ): Promise<CollectionResponseDto> {
     return this.collectionsService.get({ id }, complete);
   }
 
@@ -71,12 +78,13 @@ export class CollectionsController {
     description: NotFoundMessages.Collection,
   })
   @ApiQueryComplete('collections')
+  @Serialize(CollectionResponseDto)
   @Get('slug/:slug')
   async getCollectionBySlug(
     @Param('slug', ParseUUIDPipe) slug: string,
     @Query('complete', new ParseBoolPipe({ optional: true }))
     complete?: boolean,
-  ) {
+  ): Promise<CollectionResponseDto> {
     return this.collectionsService.get({ slug }, complete);
   }
 
@@ -84,11 +92,12 @@ export class CollectionsController {
     summary: 'Add a book to a collection',
   })
   @HttpCode(HttpStatus.CREATED)
+  @Serialize(CollectionBookCompactResponseDto)
   @Post(':id/books')
   async createCollectionBook(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: CreateCollectionBookDto,
-  ) {
+  ): Promise<CollectionBookCompactResponseDto> {
     return this.collectionsService.createCollectionBook(id, body);
   }
 
@@ -96,12 +105,12 @@ export class CollectionsController {
     summary: 'Update a collection book by its id',
     description: 'Id is a collection book id, not book id.'
   })
-  @HttpCode(HttpStatus.CREATED)
+  @Serialize(CollectionBookCompactResponseDto)
   @Patch('books/:id')
   async updateCollectionBook(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: UpdateCollectionBookDto,
-  ) {
+  ): Promise<CollectionBookCompactResponseDto> {
     return this.collectionsService.updateCollectionBook(id, body);
   }
 
@@ -120,10 +129,11 @@ export class CollectionsController {
     summary: 'Delete a book from a collection',
     description: 'Id is a collection book id, not book id.'
   })
+  @Serialize(CollectionBookCompactResponseDto)
   @Delete('books/:id')
   async deleteCollectionBook(
     @Param('id', ParseUUIDPipe) id: string,
-  ) {
+  ): Promise<CollectionBookCompactResponseDto> {
     return this.collectionsService.deleteCollectionBooks(id);
   }
 }

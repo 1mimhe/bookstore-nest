@@ -17,12 +17,12 @@ export class CollectionsService {
     private dataSource: DataSource
   ) {}
 
-  async create(collectionRepo: CreateCollectionDto) {
+  async create(collectionRepo: CreateCollectionDto): Promise<Collection | never> {
     const collection =  this.collectionRepo.create(collectionRepo);
     return this.collectionRepo.save(collection);
   }
 
-  async getAll(page = 1, limit = 10) {
+  async getAll(page = 1, limit = 10): Promise<Collection[]> {
     const skip = (page - 1) * limit;
     return this.collectionRepo.find({
       skip, take: limit
@@ -33,7 +33,7 @@ export class CollectionsService {
     identifier: { id?: string; slug?: string },
     complete = true,
     manager?: EntityManager
-  ) {
+  ): Promise<Collection | never> {
     const where: FindOptionsWhere<Collection> = {};
     if (identifier.id) {
       where.id = identifier.id;
@@ -64,7 +64,7 @@ export class CollectionsService {
   async createCollectionBook(
     collectionId: string,
     cbDto: CreateCollectionBookDto
-  ) {
+  ): Promise<CollectionBook | never> {
     return this.dataSource.transaction(async manager => {
       const result = await manager
         .getRepository(CollectionBook)
@@ -86,7 +86,7 @@ export class CollectionsService {
     });
   }
 
-  async getCollectionBook(id: string) {
+  async getCollectionBook(id: string): Promise<CollectionBook | never> {
     return this.collectionBookRepo.findOneOrFail({
       where: { id }
     }).catch((error: Error) => {
@@ -97,7 +97,9 @@ export class CollectionsService {
     });
   }
 
-  async updateCollectionBook(id: string, cbDto: UpdateCollectionBookDto) {
+  async updateCollectionBook(
+    id: string, cbDto: UpdateCollectionBookDto
+  ): Promise<CollectionBook | never> {
     const cb = await this.getCollectionBook(id);
     Object.assign(cb, cbDto);
     return this.collectionBookRepo.save(cb).catch(error => {
@@ -106,7 +108,9 @@ export class CollectionsService {
     });
   }
 
-  async reorderCollectionBooks(collectionId: string, cbIds: string[]) {
+  async reorderCollectionBooks(
+    collectionId: string, cbIds: string[]
+  ): Promise<{ affected?: number } | never> {
     const count = await this.collectionBookRepo
       .createQueryBuilder('cb')
       .where("cb.collectionId = :collectionId", { collectionId })
@@ -132,8 +136,8 @@ export class CollectionsService {
       .execute();
   }
 
-  async deleteCollectionBooks(id: string) {
+  async deleteCollectionBooks(id: string): Promise<CollectionBook | never> {
     const cb = await this.getCollectionBook(id);
-    return this.collectionRepo.delete(cb);
+    return this.collectionBookRepo.remove(cb);
   }
 }
