@@ -1,7 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CollectionBook } from './entities/collection-book.entity';
-import { DataSource, EntityNotFoundError, Repository } from 'typeorm';
+import { DataSource, EntityManager, EntityNotFoundError, FindOptionsWhere, Repository } from 'typeorm';
 import { Collection } from './entities/collection.entity';
 import { CreateCollectionDto } from './dtos/create-collection.dto';
 import { CreateCollectionBookDto } from './dtos/create-collection-book.dto';
@@ -20,6 +20,38 @@ export class CollectionsService {
   async create(collectionRepo: CreateCollectionDto) {
     const collection =  this.collectionRepo.create(collectionRepo);
     return this.collectionRepo.save(collection);
+  }
+
+  async get(
+    identifier: { id?: string; slug?: string },
+    complete = true,
+    manager?: EntityManager
+  ) {
+    const where: FindOptionsWhere<Collection> = {};
+    if (identifier.id) {
+      where.id = identifier.id;
+    } else if (identifier.slug) {
+      where.slug = identifier.slug;
+    } else {
+      throw new BadRequestException('Either id or slug must be provided.');
+    }
+    
+    const repository = manager ? manager.getRepository(Collection) : this.collectionRepo;
+    const relations = complete ? {
+        collectionBooks: {
+          book: true
+        }
+      } : {};
+  
+    return repository.findOneOrFail({
+      where,
+      relations
+    }).catch((error: Error) => {
+      if (error instanceof EntityNotFoundError) {
+        throw new NotFoundException(NotFoundMessages.Collection);
+      }
+      throw error;
+    });
   }
 
   async createCollectionBook(
