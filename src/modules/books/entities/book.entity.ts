@@ -14,6 +14,7 @@ import { Title } from './title.entity';
 import { Author } from 'src/modules/authors/author.entity';
 import { BookImage } from './book-image.entity';
 import { Language } from 'src/modules/languages/language.entity';
+import { CollectionBook } from 'src/modules/collections/entities/collection-book.entity';
 
 export enum Quartos {
   Vaziri = 'vaziri',
@@ -129,4 +130,7 @@ export class Book extends BaseEntity {
 
   @OneToMany(() => BookImage, (image) =>  image.book, { cascade: true })
   images: BookImage[];
+
+  @OneToMany(() => CollectionBook, (collectionBook) => collectionBook.book)
+  collectionBooks: CollectionBook[];
 }
