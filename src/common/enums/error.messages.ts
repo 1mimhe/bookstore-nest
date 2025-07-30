@@ -13,7 +13,8 @@ export enum ConflictMessages {
   PublisherName = 'PublisherName already exists.',
   Language = 'Language already exists.',
   ISBN = 'ISBN already exists.',
-  Tag = 'Tag or its slug already exists.'
+  Tag = 'Tag or its slug already exists.',
+  CollectionBook = 'This book already exists at this collection.'
 }
 
 export enum NotFoundMessages {
@@ -29,5 +30,6 @@ export enum NotFoundMessages {
   Tag = 'Tag not found.',
   Blog = 'Blog not found.',
   Address = 'Address not found.',
-  Character = 'Character not found.'
+  Character = 'Character not found.',
+  Collection = 'Collection not found.'
 }

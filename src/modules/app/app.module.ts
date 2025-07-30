@@ -17,6 +17,7 @@ import { AuthModule } from '../auth/auth.module';
 import { TagsModule } from '../tags/tags.module';
 import { LanguagesModule } from '../languages/languages.module';
 import { BlogsModule } from '../blogs/blogs.module';
+import { CollectionsModule } from '../collections/collections.module';
 
 @Module({
   imports: [
@@ -55,7 +56,8 @@ import { BlogsModule } from '../blogs/blogs.module';
     BooksModule,
     LanguagesModule,
     TagsModule,
-    BlogsModule
+    BlogsModule,
+    CollectionsModule
   ],
   providers: [
     {

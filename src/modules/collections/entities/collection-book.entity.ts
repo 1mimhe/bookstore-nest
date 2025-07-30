@@ -1,10 +1,11 @@
-import { BaseEntity, Column, Entity, Index, JoinColumn, ManyToOne, Unique } from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToOne, Unique } from 'typeorm';
 import { Collection } from './collection.entity';
 import { Book } from 'src/modules/books/entities/book.entity';
+import { BaseEntity } from 'src/common/entities/base.entity';
 
 @Entity('collection_book')
 @Index(['collection'])
-@Unique(['collection', 'book'])
+@Unique('COLLECTION_BOOK_UNIQUE',['collection', 'book'])
 export class CollectionBook extends BaseEntity {
   @Column('uuid')
   collectionId: string;
@@ -22,5 +23,5 @@ export class CollectionBook extends BaseEntity {
   order: number;
 
   @Column({ nullable: true })
-  description?: number;
+  description?: string;
 }
