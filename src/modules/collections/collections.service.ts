@@ -66,4 +66,30 @@ export class CollectionsService {
       throw error;
     });
   }
+
+  async reorderCollectionBooks(collectionId: string, cbIds: string[]) {
+    const count = await this.collectionBookRepo
+      .createQueryBuilder('cb')
+      .where("cb.collectionId = :collectionId", { collectionId })
+      .where('cb.id IN (:...cbIds)', { cbIds })
+      .getCount();
+
+    if (count !== cbIds.length) {
+      throw new NotFoundException(NotFoundMessages.SomeCollectionBooks);
+    }
+
+    let caseStatement = 'CASE ';    
+    cbIds.forEach((id, index) => {
+      caseStatement += `WHEN id = '${id}' THEN ${index + 1} `;
+    });
+    caseStatement += 'ELSE `order` END';
+
+    return this.collectionBookRepo
+      .createQueryBuilder('cb')
+      .select('cb.id', 'cb.order')
+      .update(CollectionBook)
+      .set({ order: () => caseStatement })
+      .where('id IN (:...cbIds)', { cbIds })
+      .execute();
+  }
 }

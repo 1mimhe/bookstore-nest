@@ -4,6 +4,7 @@ import { ApiOperation } from '@nestjs/swagger';
 import { CreateCollectionDto } from './dtos/create-collection.dto';
 import { CreateCollectionBookDto } from './dtos/create-collection-book.dto';
 import { UpdateCollectionBookDto } from './dtos/update-collection-book.dto';
+import { UuidArrayDto } from './entities/uuid-array.dto';
 
 @Controller('collections')
 export class CollectionsController {
@@ -40,5 +41,16 @@ export class CollectionsController {
     @Body() body: UpdateCollectionBookDto 
   ) {
     return this.collectionsService.updateCollectionBook(id, body);
+  }
+
+  @ApiOperation({
+    summary: 'Reorder collection books'
+  })
+  @Patch(':id/books/reorder')
+  async reorderCollectionBook(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: UuidArrayDto
+  ) {
+    return this.collectionsService.reorderCollectionBooks(id, body.ids);
   }
 }

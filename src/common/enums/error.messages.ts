@@ -32,5 +32,6 @@ export enum NotFoundMessages {
   Address = 'Address not found.',
   Character = 'Character not found.',
   Collection = 'Collection not found.',
-  CollectionBook = 'CollectionBook not found.'
+  CollectionBook = 'CollectionBook not found.',
+  SomeCollectionBooks = 'Some collection book ids are not found within the category.'
 }
