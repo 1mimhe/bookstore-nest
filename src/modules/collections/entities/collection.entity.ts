@@ -1,12 +1,15 @@
 import { BaseEntity } from 'src/common/entities/base.entity';
-import { Book } from 'src/modules/books/entities/book.entity';
-import { Column, Entity, OneToMany } from 'typeorm';
+import { Column, Entity, OneToMany, Unique } from 'typeorm';
 import { CollectionBook } from './collection-book.entity';
 
 @Entity()
+@Unique(['slug'])
 export class Collection extends BaseEntity {
   @Column()
   name: string;
+
+  @Column()
+  slug: string;
 
   @Column({
     type: 'text',
