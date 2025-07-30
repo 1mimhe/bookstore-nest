@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   DefaultValuePipe,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -93,6 +94,7 @@ export class CollectionsController {
 
   @ApiOperation({
     summary: 'Update a collection book by its id',
+    description: 'Id is a collection book id, not book id.'
   })
   @HttpCode(HttpStatus.CREATED)
   @Patch('books/:id')
@@ -112,5 +114,16 @@ export class CollectionsController {
     @Body() body: UuidArrayDto,
   ) {
     return this.collectionsService.reorderCollectionBooks(id, body.ids);
+  }
+
+  @ApiOperation({
+    summary: 'Delete a book from a collection',
+    description: 'Id is a collection book id, not book id.'
+  })
+  @Delete('books/:id')
+  async deleteCollectionBook(
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.collectionsService.deleteCollectionBooks(id);
   }
 }

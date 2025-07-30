@@ -131,4 +131,9 @@ export class CollectionsService {
       .where('id IN (:...cbIds)', { cbIds })
       .execute();
   }
+
+  async deleteCollectionBooks(id: string) {
+    const cb = await this.getCollectionBook(id);
+    return this.collectionRepo.delete(cb);
+  }
 }
