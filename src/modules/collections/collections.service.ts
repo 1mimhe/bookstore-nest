@@ -22,6 +22,13 @@ export class CollectionsService {
     return this.collectionRepo.save(collection);
   }
 
+  async getAll(page = 1, limit = 10) {
+    const skip = (page - 1) * limit;
+    return this.collectionRepo.find({
+      skip, take: limit
+    })
+  }
+
   async get(
     identifier: { id?: string; slug?: string },
     complete = true,

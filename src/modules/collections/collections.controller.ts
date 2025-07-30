@@ -1,11 +1,13 @@
 import {
   Body,
   Controller,
+  DefaultValuePipe,
   Get,
   HttpCode,
   HttpStatus,
   Param,
   ParseBoolPipe,
+  ParseIntPipe,
   ParseUUIDPipe,
   Patch,
   Post,
@@ -18,7 +20,7 @@ import { CreateCollectionBookDto } from './dtos/create-collection-book.dto';
 import { UpdateCollectionBookDto } from './dtos/update-collection-book.dto';
 import { UuidArrayDto } from './entities/uuid-array.dto';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
-import { ApiQueryComplete } from 'src/common/decorators/query.decorators';
+import { ApiQueryComplete, ApiQueryPagination } from 'src/common/decorators/query.decorators';
 
 @Controller('collections')
 export class CollectionsController {
@@ -31,6 +33,18 @@ export class CollectionsController {
   @Post()
   async createCollection(@Body() body: CreateCollectionDto) {
     return this.collectionsService.create(body);
+  }
+
+  @ApiOperation({
+    summary: 'Retrieves all collections',
+  })
+  @ApiQueryPagination()
+  @Get()
+  async getAllCollection(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
+  ) {
+    return this.collectionsService.getAll(page, limit);
   }
 
   @ApiOperation({
