@@ -1,8 +1,9 @@
-import { Body, Controller, HttpCode, HttpStatus, Param, ParseUUIDPipe, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
 import { CollectionsService } from './collections.service';
 import { ApiOperation } from '@nestjs/swagger';
 import { CreateCollectionDto } from './dtos/create-collection.dto';
 import { CreateCollectionBookDto } from './dtos/create-collection-book.dto';
+import { UpdateCollectionBookDto } from './dtos/update-collection-book.dto';
 
 @Controller('collections')
 export class CollectionsController {
@@ -27,5 +28,17 @@ export class CollectionsController {
     @Body() body: CreateCollectionBookDto 
   ) {
     return this.collectionsService.createCollectionBook(id, body);
+  }
+
+  @ApiOperation({
+    summary: 'Update a collection book by its id'
+  })
+  @HttpCode(HttpStatus.CREATED)
+  @Patch('books/:id')
+  async updateCollectionBook(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: UpdateCollectionBookDto 
+  ) {
+    return this.collectionsService.updateCollectionBook(id, body);
   }
 }

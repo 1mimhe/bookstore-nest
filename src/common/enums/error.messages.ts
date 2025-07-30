@@ -31,5 +31,6 @@ export enum NotFoundMessages {
   Blog = 'Blog not found.',
   Address = 'Address not found.',
   Character = 'Character not found.',
-  Collection = 'Collection not found.'
+  Collection = 'Collection not found.',
+  CollectionBook = 'CollectionBook not found.'
 }

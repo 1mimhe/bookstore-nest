@@ -1,12 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CollectionBook } from './entities/collection-book.entity';
-import { DataSource, EntityManager, EntityNotFoundError, Repository } from 'typeorm';
+import { DataSource, EntityNotFoundError, Repository } from 'typeorm';
 import { Collection } from './entities/collection.entity';
 import { CreateCollectionDto } from './dtos/create-collection.dto';
 import { CreateCollectionBookDto } from './dtos/create-collection-book.dto';
-import { NotFoundMessages } from 'src/common/enums/error.messages';
 import { dbErrorHandler } from 'src/common/utilities/error-handler';
+import { NotFoundMessages } from 'src/common/enums/error.messages';
+import { UpdateCollectionBookDto } from './dtos/update-collection-book.dto';
 
 @Injectable()
 export class CollectionsService {
@@ -41,6 +42,26 @@ export class CollectionsService {
       });
       return manager.save(CollectionBook, cb);
     }).catch((error: Error) => {
+      dbErrorHandler(error);
+      throw error;
+    });
+  }
+
+  async getCollectionBook(id: string) {
+    return this.collectionBookRepo.findOneOrFail({
+      where: { id }
+    }).catch((error: Error) => {
+      if (error instanceof EntityNotFoundError) {
+        throw new NotFoundException(NotFoundMessages.CollectionBook);
+      }
+      throw error;
+    });
+  }
+
+  async updateCollectionBook(id: string, cbDto: UpdateCollectionBookDto) {
+    const cb = await this.getCollectionBook(id);
+    Object.assign(cb, cbDto);
+    return this.collectionBookRepo.save(cb).catch(error => {
       dbErrorHandler(error);
       throw error;
     });
