@@ -11,6 +11,8 @@ import { Role } from './role.entity';
 import { BaseEntity } from 'src/common/entities/base.entity';
 import { Publisher } from 'src/modules/publishers/publisher.entity';
 import { Address } from './address.entity';
+import { ReviewReaction } from 'src/modules/reviews/entities/review-like.entity';
+import { Review } from 'src/modules/reviews/entities/review.entity';
 
 export enum Genders {
   Male = 'male',
@@ -61,4 +63,10 @@ export class User extends BaseEntity {
 
   @OneToMany(() => Address, (address) => address.user)
   addresses: Address[];
+
+  @OneToMany(() => Review, (review) => review.user)
+  reviews: Review[];
+
+  @OneToMany(() => ReviewReaction, (reviewReaction) => reviewReaction.user)
+  reviewReactions: ReviewReaction[];
 }
