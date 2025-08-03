@@ -57,6 +57,9 @@ export class Review extends BaseEntity {
   @OneToMany(() => Review, review => review.parentReview)
   replies: Review[];
 
+  @Column({ default: 0 })
+  repliesCount: number;
+
   @OneToMany(() => ReviewReaction, (reviewReaction) => reviewReaction.review)
   reactions: ReviewReaction[];
 
@@ -74,7 +77,4 @@ export class Review extends BaseEntity {
   
   @Column({ default: 0 })
   tomatoCount: number;
-
-  @Column({ default: 0 })
-  repliesCount: number;
 }

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Review, ReviewableType } from './entities/review.entity';
-import { DeepPartial, FindOptionsWhere, In, Repository } from 'typeorm';
+import { DataSource, DeepPartial, EntityManager, In, Repository } from 'typeorm';
 import { CreateReviewDto } from './dtos/create-review.dto';
 import { dbErrorHandler } from 'src/common/utilities/error-handler';
 import { ReviewReaction } from './entities/review-reaction.entity';
@@ -10,18 +10,23 @@ import { ReviewReaction } from './entities/review-reaction.entity';
 export class ReviewsService {
   constructor(
     @InjectRepository(Review) private reviewRepo: Repository<Review>,
-    @InjectRepository(ReviewReaction) private reviewReactionRepo: Repository<ReviewReaction>
+    @InjectRepository(ReviewReaction) private reviewReactionRepo: Repository<ReviewReaction>,
+    private dataSource: DataSource
   ) {}
 
   async create(
     userId: string,
     reviewableType: ReviewableType,
     reviewableId: string,
-    reviewDto: CreateReviewDto
+    {
+      parentReviewId,
+      ...reviewDto
+    }: CreateReviewDto
   ): Promise<Review | never> {
     const entityLike = {
       userId,
       reviewableType,
+      parentReviewId,
       ...reviewDto
     } as DeepPartial<Review>;
 
@@ -35,10 +40,17 @@ export class ReviewsService {
         break;
     }
 
-    const review = this.reviewRepo.create(entityLike);
-    return this.reviewRepo.save(review).catch(error => {
-      dbErrorHandler(error);
-      throw error;
+    return this.dataSource.transaction(async manager => {
+      const review = manager.create(Review, entityLike);
+
+      if (parentReviewId) {
+        await this.incrementRepliesCount(parentReviewId, 1, manager);
+      }
+
+      return manager.save(Review, review).catch(error => {
+        dbErrorHandler(error);
+        throw error;
+      });
     });
   }
 
@@ -97,5 +109,14 @@ export class ReviewsService {
       ...review,
       userReaction: reactions.find(r => r.reviewId === review.id)?.reaction ?? null
     }));
+  }
+
+  private incrementRepliesCount(
+    parentId: string,
+    increment = 1,
+    manager?: EntityManager
+  ) {
+    const repository = manager ? manager.getRepository(Review) : this.reviewRepo;
+    return repository.increment({ id: parentId }, 'repliesCount',increment);
   }
 }
