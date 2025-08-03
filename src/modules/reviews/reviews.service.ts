@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Review, ReviewableType } from './entities/review.entity';
 import { DeepPartial, Repository } from 'typeorm';
 import { CreateReviewDto } from './dtos/create-review.dto';
+import { dbErrorHandler } from 'src/common/utilities/error-handler';
 
 @Injectable()
 export class ReviewsService {
@@ -11,11 +12,13 @@ export class ReviewsService {
   ) {}
 
   async create(
+    userId: string,
     reviewableType: ReviewableType,
     reviewableId: string,
     reviewDto: CreateReviewDto
   ): Promise<Review | never> {
     const entityLike = {
+      userId,
       reviewableType,
       ...reviewDto
     } as DeepPartial<Review>;
@@ -31,6 +34,9 @@ export class ReviewsService {
     }
 
     const review = this.reviewRepo.create(entityLike);
-    return this.reviewRepo.save(review);
+    return this.reviewRepo.save(review).catch(error => {
+      dbErrorHandler(error);
+      throw error;
+    });
   }
 }

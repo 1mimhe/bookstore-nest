@@ -24,6 +24,9 @@ export const dbErrorHandler = (error) => {
     if (error.message.includes('bookId')) {
       throw new NotFoundException(NotFoundMessages.Book);
     }
+    if (error.message.includes('parentReviewId')) {
+      throw new NotFoundException(NotFoundMessages.ParentReview);
+    }
   }
 
   throw error;

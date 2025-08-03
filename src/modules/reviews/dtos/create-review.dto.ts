@@ -1,9 +1,9 @@
-import { IsInt, IsNotEmpty, IsString, IsUUID, Max, Min } from 'class-validator';
+import { IsInt, IsNotEmpty, IsOptional, IsString, IsUUID, Length, Max, Min } from 'class-validator';
 
 export class CreateReviewDto {
   @IsNotEmpty()
   @IsString()
-  @Max(250)
+  @Length(3, 250)
   content: string;
 
   @IsNotEmpty()
@@ -12,9 +12,9 @@ export class CreateReviewDto {
   @Max(5)
   rate: number;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsUUID()
-  parentReviewId: string;
+  parentReviewId?: string;
 }
 
 export class CreateBookReviewDto extends CreateReviewDto {

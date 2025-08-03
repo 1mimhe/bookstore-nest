@@ -25,21 +25,34 @@ export class Review extends BaseEntity {
   })
   reviewableType: ReviewableType;
 
-  @Column('uuid')
-  bookId: string;
+  @Column({
+    type: 'uuid',
+    nullable: true
+  })
+  bookId?: string;
   @ManyToOne(() => Book, (book) => book.reviews)
-  book: Book;
+  book?: Book;
+
+  @Column({
+    type: 'uuid',
+    nullable: true
+  })
+  blogId?: string;
+  @ManyToOne(() => Blog, (blog) => blog.reviews)
+  blog?: Blog;
 
   @Column('uuid')
-  blogId: string;
-  @ManyToOne(() => Blog, (blog) => blog.reviews)
-  blog: Blog;
-
+  userId: string;
   @ManyToOne(() => User, user => user.reviews, { eager: true })
   user: User;
 
+  @Column({
+    type: 'uuid',
+    nullable: true
+  })
+  parentReviewId?: string;
   @ManyToOne(() => Review, review => review.replies, { nullable: true })
-  parentReview: Review;
+  parentReview?: Review;
 
   @OneToMany(() => Review, review => review.parentReview)
   replies: Review[];
