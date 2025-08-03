@@ -11,7 +11,7 @@ import { Role } from './role.entity';
 import { BaseEntity } from 'src/common/entities/base.entity';
 import { Publisher } from 'src/modules/publishers/publisher.entity';
 import { Address } from './address.entity';
-import { ReviewReaction } from 'src/modules/reviews/entities/review-like.entity';
+import { ReviewReaction } from 'src/modules/reviews/entities/review-reaction.entity';
 import { Review } from 'src/modules/reviews/entities/review.entity';
 
 export enum Genders {

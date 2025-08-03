@@ -6,10 +6,11 @@ import { User } from './entities/user.entity';
 import { CurrentUserMiddleware } from 'src/common/middlewares/current-user.middleware';
 import { AuthModule } from '../auth/auth.module';
 import { Address } from './entities/address.entity';
+import { ReviewReaction } from '../reviews/entities/review-reaction.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, Address]),
+    TypeOrmModule.forFeature([User, Address, ReviewReaction]),
     AuthModule
   ],
   providers: [UsersService],

@@ -1,7 +1,7 @@
 import { BaseEntity } from 'src/common/entities/base.entity';
 import { User } from 'src/modules/users/entities/user.entity';
 import { Column, Entity, Index, ManyToOne, OneToMany } from 'typeorm';
-import { ReviewReaction } from './review-like.entity';
+import { ReviewReaction } from './review-reaction.entity';
 import { Book } from 'src/modules/books/entities/book.entity';
 import { Blog } from 'src/modules/blogs/blog.entity';
 
@@ -11,7 +11,7 @@ export enum ReviewableType {
 }
 
 @Entity('reviews')
-@Index(['user', 'review'])
+@Index(['user'])
 export class Review extends BaseEntity {
   @Column('text')
   content: string;
