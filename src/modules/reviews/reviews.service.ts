@@ -1,14 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Review, ReviewableType } from './entities/review.entity';
-import { DeepPartial, Repository } from 'typeorm';
+import { DeepPartial, FindOptionsWhere, In, Repository } from 'typeorm';
 import { CreateReviewDto } from './dtos/create-review.dto';
 import { dbErrorHandler } from 'src/common/utilities/error-handler';
+import { ReviewReaction } from './entities/review-reaction.entity';
 
 @Injectable()
 export class ReviewsService {
   constructor(
-    @InjectRepository(Review) private reviewRepo: Repository<Review>
+    @InjectRepository(Review) private reviewRepo: Repository<Review>,
+    @InjectRepository(ReviewReaction) private reviewReactionRepo: Repository<ReviewReaction>
   ) {}
 
   async create(
@@ -38,5 +40,62 @@ export class ReviewsService {
       dbErrorHandler(error);
       throw error;
     });
+  }
+
+  async getAllReviews(
+    userId: string | undefined,
+    reviewableType: ReviewableType,
+    reviewableId: string,
+    page = 1,
+    limit = 10
+  ) {
+    const skip = (page - 1) * limit;
+    const whereCondition = reviewableType === ReviewableType.Book 
+      ? { bookId: reviewableId } 
+      : { blogId: reviewableId };
+
+    const queryBuilder = this.reviewRepo
+      .createQueryBuilder('review')
+      .leftJoinAndSelect('review.user', 'user')
+      .leftJoinAndSelect('review.replies', 'replies')
+      .leftJoinAndSelect('replies.user', 'repliesUser')
+      .where(whereCondition)
+      .andWhere('review.parentReviewId IS NULL')
+      .orderBy('review.createdAt', 'DESC')
+      .skip(skip)
+      .take(limit);
+
+    const [reviews, totalReviews] = await queryBuilder.getManyAndCount();
+
+    // Add user's reaction status if authenticated
+    if (userId) {
+      await this.addUserReaction(reviews, userId);
+      for (const review of reviews) {
+        await this.addUserReaction(review.replies, userId);
+      }
+    }
+
+    return {
+      reviews,
+      totalReviews,
+      totalReviewPages: Math.ceil(totalReviews / limit)
+    };
+  }
+
+  private async addUserReaction(reviews: Review[], userId: string): Promise<Review[]> {
+    if (!reviews.length) return reviews;
+
+    const reviewIds = reviews.map(r => r.id);
+    const reactions = await this.reviewReactionRepo.find({
+      where: { 
+        review: { id: In(reviewIds) }, 
+        user: { id: userId } 
+      }
+    });
+
+    return reviews.map(review => ({
+      ...review,
+      userReaction: reactions.find(r => r.reviewId === review.id)?.reaction ?? null
+    }));
   }
 }
