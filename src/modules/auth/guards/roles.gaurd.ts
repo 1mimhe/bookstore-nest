@@ -29,7 +29,7 @@ export class RolesGuard implements CanActivate {
       throw new ForbiddenException(AuthMessages.AccessDenied);
     }
 
-    const hasPermission = user?.roles.some(({ role }) =>
+    const hasPermission = user?.roles?.some(({ role }) =>
       requiredRoles.includes(role),
     );
 
