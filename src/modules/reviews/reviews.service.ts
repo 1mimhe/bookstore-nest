@@ -4,7 +4,7 @@ import { Review, ReviewableType } from './entities/review.entity';
 import { DataSource, DeepPartial, EntityManager, EntityNotFoundError, In, Repository } from 'typeorm';
 import { CreateReviewDto } from './dtos/create-review.dto';
 import { dbErrorHandler } from 'src/common/utilities/error-handler';
-import { ReviewReaction } from './entities/review-reaction.entity';
+import { ReactionsEnum, ReviewReaction } from './entities/review-reaction.entity';
 import { NotFoundError } from 'rxjs';
 import { AuthMessages, NotFoundMessages } from 'src/common/enums/error.messages';
 import { UpdateReviewDto } from './dtos/update-review.dto';
@@ -123,8 +123,12 @@ export class ReviewsService {
     return replies;
   }
 
-  async getById(id: string) {
-    return this.reviewRepo.findOneOrFail({
+  async getById(
+    id: string,
+    manager?: EntityManager
+  ) {
+    const repository = manager ? manager.getRepository(Review) : this.reviewRepo;
+    return repository.findOneOrFail({
       where: { id }
     }).catch((error: Error) => {
       if (error instanceof EntityNotFoundError) {
@@ -155,13 +159,17 @@ export class ReviewsService {
   }
 
   async delete(id: string, userId: string) {
-    const review = await this.getById(id);
+    return this.dataSource.transaction(async manager => {
+      const review = await this.getById(id, manager);
+  
+      if (review.userId !== userId) {
+        throw new ForbiddenException(AuthMessages.AccessDenied);
+      }
+  
+      await this.incrementRepliesCount(review.parentReviewId, -1, manager);
 
-    if (review.userId !== userId) {
-      throw new ForbiddenException(AuthMessages.AccessDenied);
-    }
-
-    return this.reviewRepo.softRemove(review);
+      return manager.softRemove(Review, review);
+    });
   }
 
   private async addUserReaction(reviews: Review[], userId: string): Promise<void> {
@@ -181,10 +189,11 @@ export class ReviewsService {
   }
 
   private incrementRepliesCount(
-    parentId: string,
+    parentId?: string,
     increment = 1,
     manager?: EntityManager
   ) {
+    if (!parentId) return;
     const repository = manager ? manager.getRepository(Review) : this.reviewRepo;
     return repository.increment({ id: parentId }, 'repliesCount',increment);
   }
