@@ -28,9 +28,11 @@ import {
 } from './dtos/review-response.dto';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 import { UpdateReviewDto } from './dtos/update-review.dto';
+import { ReactToReviewDto } from './dtos/react-review.dto';
+import { ChangeReactionDto } from './dtos/change-reaction.dto';
+import { OptionalAuthGuard } from '../auth/guards/soft-auth.guard';
 
 @Controller('reviews')
-@UseInterceptors(ClassSerializerInterceptor) // Add this
 export class ReviewsController {
   constructor(private reviewsService: ReviewsService) {}
 
@@ -75,14 +77,14 @@ export class ReviewsController {
   }
 
   @ApiOperation({
-    summary: 'Get all reviews of a book',
+    summary: 'Get all book\'s reviews',
   })
   @ApiOkResponse({
     type: GetBookReviewsResponseDto,
   })
   @ApiQueryPagination()
   @ApiBearerAuth()
-  @UseGuards(AuthGuard)
+  @UseGuards(OptionalAuthGuard)
   @Serialize(GetBookReviewsResponseDto)
   @Get('books/:id')
   async getBookReviews(
@@ -102,14 +104,14 @@ export class ReviewsController {
   }
 
   @ApiOperation({
-    summary: 'Get all reviews of a blog',
+    summary: 'Get all blog\'s reviews',
   })
   @ApiOkResponse({
     type: GetBlogReviewsResponseDto,
   })
   @ApiQueryPagination()
   @ApiBearerAuth()
-  @UseGuards(AuthGuard)
+  @UseGuards(OptionalAuthGuard)
   @Serialize(GetBlogReviewsResponseDto)
   @Get('blogs/:id')
   async getBlogReviews(
@@ -136,7 +138,7 @@ export class ReviewsController {
   })
   @ApiQueryPagination()
   @ApiBearerAuth()
-  @UseGuards(AuthGuard)
+  @UseGuards(OptionalAuthGuard)
   @Serialize(ReviewResponseDto)
   @Get('replies/:id')
   async getAllReviewReplies(
@@ -189,5 +191,48 @@ export class ReviewsController {
   ) {
     const { id: userId } = req.user ?? {};
     return this.reviewsService.delete(id, userId!);
+  }
+
+  @ApiOperation({
+    summary: 'React to a review',
+  })
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard)
+  @Post('reactions')
+  async reactToReview(
+    @Body() body: ReactToReviewDto,
+    @Req() req: Request,
+  ) {
+    const { id: userId } = req.user ?? {};
+    return this.reviewsService.reactToReview(userId!, body);
+  }
+
+  @ApiOperation({
+    summary: 'Change a reaction by review id',
+  })
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard)
+  @Patch('reactions/:id')
+  async changeReaction(
+    @Param('id') id: string,
+    @Body() body: ChangeReactionDto,
+    @Req() req: Request,
+  ) {
+    const { id: userId } = req.user ?? {};
+    return this.reviewsService.changeReaction(userId!, id, body.reaction);
+  }
+
+  @ApiOperation({
+    summary: 'Delete a reaction by review id',
+  })
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard)
+  @Delete('reactions/:id')
+  async deleteReaction(
+    @Param('id') id: string,
+    @Req() req: Request,
+  ) {
+    const { id: userId } = req.user ?? {};
+    return this.reviewsService.deleteReaction(id, userId!);
   }
 }

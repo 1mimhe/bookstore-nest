@@ -66,7 +66,7 @@ export class Review extends BaseEntity {
   userReaction?: ReactionsEnum;
 
   @Column({ default: 0 })
-  likesCount: number;
+  likeCount: number;
 
   @Column({ default: 0 })
   dislikeCount: number;

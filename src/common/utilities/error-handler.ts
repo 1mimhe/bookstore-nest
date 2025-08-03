@@ -8,6 +8,9 @@ export const dbErrorHandler = (error) => {
   if (error.code === DBErrors.Conflict) {
     if (error.message.includes('COLLECTION_BOOK_UNIQUE'))
       throw new ConflictException(ConflictMessages.CollectionBook);
+    if (error.message.includes('REVIEW_REACTION_INDEX')) {
+      throw new ConflictException(ConflictMessages.Reaction);
+    }
     throw new ConflictException(ConflictMessages.Slug);
   }
 

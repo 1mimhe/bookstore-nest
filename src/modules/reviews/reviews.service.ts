@@ -4,10 +4,10 @@ import { Review, ReviewableType } from './entities/review.entity';
 import { DataSource, DeepPartial, EntityManager, EntityNotFoundError, In, Repository } from 'typeorm';
 import { CreateReviewDto } from './dtos/create-review.dto';
 import { dbErrorHandler } from 'src/common/utilities/error-handler';
-import { ReviewReaction } from './entities/review-reaction.entity';
-import { NotFoundError } from 'rxjs';
+import { ReactionsEnum, ReviewReaction } from './entities/review-reaction.entity';
 import { AuthMessages, NotFoundMessages } from 'src/common/enums/error.messages';
 import { UpdateReviewDto } from './dtos/update-review.dto';
+import { ReactToReviewDto } from './dtos/react-review.dto';
 
 @Injectable()
 export class ReviewsService {
@@ -123,8 +123,12 @@ export class ReviewsService {
     return replies;
   }
 
-  async getById(id: string) {
-    return this.reviewRepo.findOneOrFail({
+  private async getById(
+    id: string,
+    manager?: EntityManager
+  ) {
+    const repository = manager ? manager.getRepository(Review) : this.reviewRepo;
+    return repository.findOneOrFail({
       where: { id }
     }).catch((error: Error) => {
       if (error instanceof EntityNotFoundError) {
@@ -155,13 +159,17 @@ export class ReviewsService {
   }
 
   async delete(id: string, userId: string) {
-    const review = await this.getById(id);
+    return this.dataSource.transaction(async manager => {
+      const review = await this.getById(id, manager);
+  
+      if (review.userId !== userId) {
+        throw new ForbiddenException(AuthMessages.AccessDenied);
+      }
+  
+      await this.incrementRepliesCount(review.parentReviewId, -1, manager);
 
-    if (review.userId !== userId) {
-      throw new ForbiddenException(AuthMessages.AccessDenied);
-    }
-
-    return this.reviewRepo.softRemove(review);
+      return manager.softRemove(Review, review);
+    });
   }
 
   private async addUserReaction(reviews: Review[], userId: string): Promise<void> {
@@ -181,11 +189,99 @@ export class ReviewsService {
   }
 
   private incrementRepliesCount(
-    parentId: string,
+    parentId?: string,
     increment = 1,
     manager?: EntityManager
   ) {
+    if (!parentId) return;
     const repository = manager ? manager.getRepository(Review) : this.reviewRepo;
-    return repository.increment({ id: parentId }, 'repliesCount',increment);
+    return repository.increment({ id: parentId }, 'repliesCount', increment);
+  }
+
+  async reactToReview(
+    userId: string,
+    {
+      reviewId,
+      reaction
+    }: ReactToReviewDto
+  ) {
+    return this.dataSource.transaction(async manager => {
+      const reviewReaction = manager.create(ReviewReaction, {
+        userId,
+        reviewId,
+        reaction,
+      });
+
+      await this.incrementReactionsCount(reviewId, reaction, 1, manager);
+
+      return manager.save(ReviewReaction, reviewReaction).catch(error => {
+        dbErrorHandler(error);
+        throw error;
+      });
+    });
+  }
+
+  private async getReaction(
+    reviewId: string,
+    userId: string,
+    manager?: EntityManager
+  ) {
+    const repository = manager ? manager.getRepository(ReviewReaction) : this.reviewReactionRepo;
+    return repository.findOne({
+      where: { reviewId, userId }
+    });
+  }
+
+  async changeReaction(
+    userId: string,
+    reviewId: string,
+    reaction: ReactionsEnum
+  ) {
+    return this.dataSource.transaction(async manager => {
+      const reviewReaction = await this.getReaction(reviewId, userId, manager);
+
+      if (!reviewReaction) {
+        throw new ForbiddenException(AuthMessages.AccessDenied);
+      }
+
+      if (reviewReaction.reaction === reaction) {
+        throw new BadRequestException(`Your reaction already is "${reaction}".`);
+      }
+
+      reviewReaction.reaction = reaction;
+
+      await this.incrementReactionsCount(reviewId, reviewReaction.reaction, -1, manager);
+      await this.incrementReactionsCount(reviewId, reaction, 1, manager);
+
+      return manager.save(ReviewReaction, reviewReaction);
+    });
+  }
+
+  async deleteReaction(
+    reviewId: string,
+    userId: string
+  ) {
+    return this.dataSource.transaction(async manager => {
+      const reaction = await this.getReaction(reviewId, userId, manager);
+
+      if (!reaction) {
+        throw new ForbiddenException(AuthMessages.AccessDenied);
+      }
+
+      await this.incrementReactionsCount(reviewId, reaction.reaction, -1, manager);
+
+      return manager.delete(ReviewReaction, reaction);
+    });
+  }
+
+  private incrementReactionsCount(
+    reviewId: string,
+    reaction: ReactionsEnum,
+    increment = 1,
+    manager?: EntityManager
+  ) {
+    const countColumn = `${reaction}Count`;
+    const repository = manager ? manager.getRepository(Review) : this.reviewRepo;
+    return repository.increment({ id: reviewId }, countColumn, increment);
   }
 }
