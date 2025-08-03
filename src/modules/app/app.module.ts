@@ -1,7 +1,7 @@
-import { MiddlewareConsumer, Module, ValidationPipe } from '@nestjs/common';
+import { ClassSerializerInterceptor, MiddlewareConsumer, Module, ValidationPipe } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { APP_PIPE } from '@nestjs/core';
+import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import * as session from 'express-session';
 import { CacheModule } from '@nestjs/cache-manager';
 import { createKeyv } from '@keyv/redis';
@@ -68,6 +68,10 @@ import { ReviewsModule } from '../reviews/reviews.module';
         whitelist: true,
       }),
     },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ClassSerializerInterceptor
+    }
   ],
 })
 export class AppModule {
