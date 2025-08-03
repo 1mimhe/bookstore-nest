@@ -5,7 +5,6 @@ import { DataSource, DeepPartial, EntityManager, EntityNotFoundError, In, Reposi
 import { CreateReviewDto } from './dtos/create-review.dto';
 import { dbErrorHandler } from 'src/common/utilities/error-handler';
 import { ReactionsEnum, ReviewReaction } from './entities/review-reaction.entity';
-import { NotFoundError } from 'rxjs';
 import { AuthMessages, NotFoundMessages } from 'src/common/enums/error.messages';
 import { UpdateReviewDto } from './dtos/update-review.dto';
 import { ReactToReviewDto } from './dtos/react-review.dto';

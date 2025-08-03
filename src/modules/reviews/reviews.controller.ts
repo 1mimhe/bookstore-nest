@@ -30,9 +30,9 @@ import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 import { UpdateReviewDto } from './dtos/update-review.dto';
 import { ReactToReviewDto } from './dtos/react-review.dto';
 import { ChangeReactionDto } from './dtos/change-reaction.dto';
+import { OptionalAuthGuard } from '../auth/guards/soft-auth.guard';
 
 @Controller('reviews')
-@UseInterceptors(ClassSerializerInterceptor) // Add this
 export class ReviewsController {
   constructor(private reviewsService: ReviewsService) {}
 
@@ -77,14 +77,14 @@ export class ReviewsController {
   }
 
   @ApiOperation({
-    summary: 'Get all reviews of a book',
+    summary: 'Get all book\'s reviews',
   })
   @ApiOkResponse({
     type: GetBookReviewsResponseDto,
   })
   @ApiQueryPagination()
   @ApiBearerAuth()
-  @UseGuards(AuthGuard)
+  @UseGuards(OptionalAuthGuard)
   @Serialize(GetBookReviewsResponseDto)
   @Get('books/:id')
   async getBookReviews(
@@ -104,14 +104,14 @@ export class ReviewsController {
   }
 
   @ApiOperation({
-    summary: 'Get all reviews of a blog',
+    summary: 'Get all blog\'s reviews',
   })
   @ApiOkResponse({
     type: GetBlogReviewsResponseDto,
   })
   @ApiQueryPagination()
   @ApiBearerAuth()
-  @UseGuards(AuthGuard)
+  @UseGuards(OptionalAuthGuard)
   @Serialize(GetBlogReviewsResponseDto)
   @Get('blogs/:id')
   async getBlogReviews(
@@ -138,7 +138,7 @@ export class ReviewsController {
   })
   @ApiQueryPagination()
   @ApiBearerAuth()
-  @UseGuards(AuthGuard)
+  @UseGuards(OptionalAuthGuard)
   @Serialize(ReviewResponseDto)
   @Get('replies/:id')
   async getAllReviewReplies(
