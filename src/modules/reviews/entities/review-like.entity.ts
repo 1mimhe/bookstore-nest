@@ -16,7 +16,7 @@ export enum ReactionsEnum {
 export class ReviewReaction extends BaseEntity {
   @Column('uuid')
   reviewId: string;
-  @ManyToOne(() => Review, review => review.likes, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Review, review => review.reactions, { onDelete: 'CASCADE' })
   @JoinColumn()
   review: Review;
 
