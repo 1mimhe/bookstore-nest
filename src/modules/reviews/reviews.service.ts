@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Review, ReviewableType } from './entities/review.entity';
-import { Repository } from 'typeorm';
+import { DeepPartial, Repository } from 'typeorm';
 import { CreateReviewDto } from './dtos/create-review.dto';
 
 @Injectable()
@@ -15,11 +15,22 @@ export class ReviewsService {
     reviewableId: string,
     reviewDto: CreateReviewDto
   ): Promise<Review | never> {
-    const review = this.reviewRepo.create({
+    const entityLike = {
       reviewableType,
-      reviewableId,
       ...reviewDto
-    });
+    } as DeepPartial<Review>;
+
+    switch (reviewableType) {
+      case ReviewableType.Book:
+        entityLike.bookId = reviewableId;
+        break;
+
+      case ReviewableType.Blog:
+        entityLike.blogId = reviewableId;
+        break;
+    }
+
+    const review = this.reviewRepo.create(entityLike);
     return this.reviewRepo.save(review);
   }
 }
