@@ -22,7 +22,8 @@ import { ApiQueryPagination } from 'src/common/decorators/query.decorators';
 import {
   GetBlogReviewsResponseDto,
   GetBookReviewsResponseDto,
-} from './entities/review-response.entity';
+  ReviewResponseDto,
+} from './dtos/review-response.dto';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 
 @Controller('reviews')
@@ -88,12 +89,12 @@ export class ReviewsController {
     @Req() req: Request,
   ) {
     const { id: userId } = req.user ?? {};
-    return this.reviewsService.getAllReviews(
-      userId,
+    return this.reviewsService.getAll(
       ReviewableType.Book,
       id,
       page,
       limit,
+      userId,
     );
   }
 
@@ -115,12 +116,38 @@ export class ReviewsController {
     @Req() req: Request,
   ) {
     const { id: userId } = req.user ?? {};
-    return this.reviewsService.getAllReviews(
-      userId,
+    return this.reviewsService.getAll(
       ReviewableType.Blog,
       id,
       page,
       limit,
+      userId,
+    );
+  }
+
+  @ApiOperation({
+    summary: 'Get all review\'s replies by its id',
+  })
+  @ApiOkResponse({
+    type: [ReviewResponseDto],
+  })
+  @ApiQueryPagination()
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard)
+  @Serialize(ReviewResponseDto)
+  @Get('replies/:id')
+  async getAllReviewReplies(
+    @Param('id') id: string,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
+    @Req() req: Request,
+  ) {
+    const { id: userId } = req.user ?? {};
+    return this.reviewsService.getAllReplies(
+      id,
+      page,
+      limit,
+      userId,
     );
   }
 }

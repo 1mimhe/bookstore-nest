@@ -1,4 +1,6 @@
 import { Expose, Type } from 'class-transformer';
+import { ReactionsEnum } from '../entities/review-reaction.entity';
+import { ApiProperty } from '@nestjs/swagger';
 
 class UserDto {
   @Expose()
@@ -42,6 +44,10 @@ export class ReviewResponseDto {
   
   @Expose()
   repliesCount: number;
+
+  @ApiProperty({ enum: ReactionsEnum })
+  @Expose()
+  userReaction: ReactionsEnum;
 
   @Expose()
   @Type(() => ReviewResponseDto)

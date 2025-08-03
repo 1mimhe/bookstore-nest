@@ -54,12 +54,12 @@ export class ReviewsService {
     });
   }
 
-  async getAllReviews(
-    userId: string | undefined,
+  async getAll(
     reviewableType: ReviewableType,
     reviewableId: string,
     page = 1,
-    limit = 10
+    limit = 10,
+    userId?: string,
   ) {
     const skip = (page - 1) * limit;
     const whereCondition = reviewableType === ReviewableType.Book 
@@ -73,7 +73,7 @@ export class ReviewsService {
       .leftJoinAndSelect('replies.user', 'repliesUser')
       .where(whereCondition)
       .andWhere('review.parentReviewId IS NULL')
-      .orderBy('review.createdAt', 'DESC')
+      .orderBy('review.createdAt', 'DESC') // TODO: Add more sorting
       .skip(skip)
       .take(limit);
 
@@ -94,8 +94,34 @@ export class ReviewsService {
     };
   }
 
-  private async addUserReaction(reviews: Review[], userId: string): Promise<Review[]> {
-    if (!reviews.length) return reviews;
+  async getAllReplies(
+    parentReviewId: string,
+    page = 1,
+    limit = 10,
+    userId?: string
+  ) {
+    const skip = (page - 1) * limit;
+
+    const replies = await this.reviewRepo.find({
+      where: { parentReviewId },
+      relations: {
+        replies: true
+      },
+      order: { createdAt: 'ASC' },
+      skip,
+      take: limit
+    });
+
+    // Add user's reaction status if authenticated
+    if (userId) {
+      await this.addUserReaction(replies, userId);
+    }
+
+    return replies;
+  }
+
+  private async addUserReaction(reviews: Review[], userId: string): Promise<void> {
+    if (!reviews.length) return;
 
     const reviewIds = reviews.map(r => r.id);
     const reactions = await this.reviewReactionRepo.find({
@@ -105,10 +131,9 @@ export class ReviewsService {
       }
     });
 
-    return reviews.map(review => ({
-      ...review,
-      userReaction: reactions.find(r => r.reviewId === review.id)?.reaction ?? null
-    }));
+    reviews.forEach(review => {
+      review.userReaction = reactions.find(r => r.reviewId === review.id)?.reaction;
+    });
   }
 
   private incrementRepliesCount(
