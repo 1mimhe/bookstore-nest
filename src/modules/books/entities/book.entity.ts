@@ -15,6 +15,7 @@ import { Author } from 'src/modules/authors/author.entity';
 import { BookImage } from './book-image.entity';
 import { Language } from 'src/modules/languages/language.entity';
 import { CollectionBook } from 'src/modules/collections/entities/collection-book.entity';
+import { Review } from 'src/modules/reviews/entities/review.entity';
 
 export enum Quartos {
   Vaziri = 'vaziri',
@@ -133,4 +134,7 @@ export class Book extends BaseEntity {
 
   @OneToMany(() => CollectionBook, (collectionBook) => collectionBook.book)
   collectionBooks: CollectionBook[];
+
+  @OneToMany(() => Review, (review) => review.book)
+  reviews: Review[];
 }

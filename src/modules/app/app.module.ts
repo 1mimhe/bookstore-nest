@@ -1,7 +1,7 @@
-import { MiddlewareConsumer, Module, ValidationPipe } from '@nestjs/common';
+import { ClassSerializerInterceptor, MiddlewareConsumer, Module, ValidationPipe } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { APP_PIPE } from '@nestjs/core';
+import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import * as session from 'express-session';
 import { CacheModule } from '@nestjs/cache-manager';
 import { createKeyv } from '@keyv/redis';
@@ -18,6 +18,7 @@ import { TagsModule } from '../tags/tags.module';
 import { LanguagesModule } from '../languages/languages.module';
 import { BlogsModule } from '../blogs/blogs.module';
 import { CollectionsModule } from '../collections/collections.module';
+import { ReviewsModule } from '../reviews/reviews.module';
 
 @Module({
   imports: [
@@ -57,7 +58,8 @@ import { CollectionsModule } from '../collections/collections.module';
     LanguagesModule,
     TagsModule,
     BlogsModule,
-    CollectionsModule
+    CollectionsModule,
+    ReviewsModule,
   ],
   providers: [
     {
@@ -66,6 +68,10 @@ import { CollectionsModule } from '../collections/collections.module';
         whitelist: true,
       }),
     },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ClassSerializerInterceptor
+    }
   ],
 })
 export class AppModule {

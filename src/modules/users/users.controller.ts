@@ -43,7 +43,7 @@ export class UsersController {
   @UseGuards(AuthGuard)
   @Serialize(UserResponseDto)
   @Get('whoami')
-  whoAmI(@Req() req: Request): UserResponseDto {
+  whoAmI(@Req() req: Request): Partial<UserResponseDto> {
     return req.user!;
   }
 

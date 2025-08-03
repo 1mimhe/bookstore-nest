@@ -1,4 +1,5 @@
 export enum AuthMessages {
+  Unauthorized = 'User is unauthorized.',
   InvalidCredentials = 'Invalid credentials.',
   AlreadyAuthorized = 'User is already authorized. Logout first or refresh token.',
   MissingAccessToken = 'Access token is required but was not provided. Please include a valid access token in the request headers.',
@@ -33,5 +34,7 @@ export enum NotFoundMessages {
   Character = 'Character not found.',
   Collection = 'Collection not found.',
   CollectionBook = 'CollectionBook not found.',
-  SomeCollectionBooks = 'Some collection book ids are not found within the category.'
+  SomeCollectionBooks = 'Some collection book ids are not found within the category.',
+  ParentReview = 'Parent review not found.',
+  Review = 'Review not found.'
 }
