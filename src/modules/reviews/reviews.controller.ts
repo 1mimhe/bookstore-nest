@@ -7,6 +7,7 @@ import {
   Get,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   Query,
   Req,
@@ -26,6 +27,7 @@ import {
   ReviewResponseDto,
 } from './dtos/review-response.dto';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
+import { UpdateReviewDto } from './dtos/update-review.dto';
 
 @Controller('reviews')
 @UseInterceptors(ClassSerializerInterceptor) // Add this
@@ -150,6 +152,26 @@ export class ReviewsController {
       limit,
       userId,
     );
+  }
+
+  @ApiOperation({
+    summary: 'Update a review by its id',
+  })
+  @ApiOkResponse({
+    type: [ReviewResponseDto],
+  })
+  @ApiQueryPagination()
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard)
+  @Serialize(ReviewResponseDto)
+  @Patch(':id')
+  async updateReview(
+    @Param('id') id: string,
+    @Body() body: UpdateReviewDto,
+    @Req() req: Request,
+  ) {
+    const { id: userId } = req.user ?? {};
+    return this.reviewsService.update(id, userId!, body);
   }
 
   @ApiOperation({

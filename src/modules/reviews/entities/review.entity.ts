@@ -79,4 +79,9 @@ export class Review extends BaseEntity {
   
   @Column({ default: 0 })
   tomatoCount: number;
+
+  @Column('boolean', {
+    default: false
+  })
+  isEdited: boolean;
 }

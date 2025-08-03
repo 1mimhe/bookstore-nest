@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Review, ReviewableType } from './entities/review.entity';
 import { DataSource, DeepPartial, EntityManager, EntityNotFoundError, In, Repository } from 'typeorm';
@@ -7,6 +7,7 @@ import { dbErrorHandler } from 'src/common/utilities/error-handler';
 import { ReviewReaction } from './entities/review-reaction.entity';
 import { NotFoundError } from 'rxjs';
 import { AuthMessages, NotFoundMessages } from 'src/common/enums/error.messages';
+import { UpdateReviewDto } from './dtos/update-review.dto';
 
 @Injectable()
 export class ReviewsService {
@@ -131,6 +132,26 @@ export class ReviewsService {
       }
       throw error;
     });
+  }
+
+  async update(
+    id: string,
+    userId: string,
+    reviewDto: UpdateReviewDto
+  ): Promise<Review | never> {
+    const review = await this.getById(id);
+
+    if (review.userId !== userId) {
+      throw new ForbiddenException(AuthMessages.AccessDenied);
+    }
+
+    if (review.isEdited) {
+      throw new BadRequestException('Review is already edited before.');
+    }
+
+    Object.assign(review, reviewDto);
+    review.isEdited = true;
+    return this.reviewRepo.save(review);
   }
 
   async delete(id: string, userId: string) {

@@ -54,6 +54,9 @@ export class ReviewResponseDto {
   replies: ReviewResponseDto[];
 
   @Expose()
+  idEdited: boolean;
+
+  @Expose()
   createdAt: Date;
   
   @Expose()
