@@ -8,6 +8,7 @@ import { ReactionsEnum, ReviewReaction } from './entities/review-reaction.entity
 import { NotFoundError } from 'rxjs';
 import { AuthMessages, NotFoundMessages } from 'src/common/enums/error.messages';
 import { UpdateReviewDto } from './dtos/update-review.dto';
+import { ReactToReviewDto } from './dtos/react-review.dto';
 
 @Injectable()
 export class ReviewsService {
@@ -195,6 +196,40 @@ export class ReviewsService {
   ) {
     if (!parentId) return;
     const repository = manager ? manager.getRepository(Review) : this.reviewRepo;
-    return repository.increment({ id: parentId }, 'repliesCount',increment);
+    return repository.increment({ id: parentId }, 'repliesCount', increment);
+  }
+
+  async reactToReview(
+    userId: string,
+    {
+      reviewId,
+      reaction
+    }: ReactToReviewDto
+  ) {
+    return this.dataSource.transaction(async manager => {
+      const reviewReaction = manager.create(ReviewReaction, {
+        userId,
+        reviewId,
+        reaction,
+      });
+
+      await this.incrementReactionsCount(reviewId, reaction, 1, manager);
+
+      return manager.save(ReviewReaction, reviewReaction).catch(error => {
+        dbErrorHandler(error);
+        throw error;
+      });
+    });
+  }
+
+  private incrementReactionsCount(
+    reviewId: string,
+    reaction: ReactionsEnum,
+    increment = 1,
+    manager?: EntityManager
+  ) {
+    const countColumn = `${reaction}Count`;
+    const repository = manager ? manager.getRepository(Review) : this.reviewRepo;
+    return repository.increment({ id: reviewId }, countColumn, increment);
   }
 }

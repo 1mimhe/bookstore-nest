@@ -12,7 +12,7 @@ export enum ReactionsEnum {
 }
 
 @Entity('review_reactions')
-@Index(['review', 'user'], { unique: true })
+@Index('REVIEW_REACTION_INDEX', ['review', 'user'], { unique: true })
 export class ReviewReaction extends BaseEntity {
   @Column('uuid')
   reviewId: string;
