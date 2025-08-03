@@ -28,7 +28,7 @@ export class ReviewResponseDto {
   rate: number;
   
   @Expose()
-  likesCount: number;
+  likeCount: number;
   
   @Expose()
   dislikeCount: number;

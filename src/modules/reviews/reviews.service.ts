@@ -233,6 +233,31 @@ export class ReviewsService {
     });
   }
 
+  async changeReaction(
+    userId: string,
+    reviewId: string,
+    reaction: ReactionsEnum
+  ) {
+    return this.dataSource.transaction(async manager => {
+      const reviewReaction = await this.getReaction(reviewId, userId, manager);
+
+      if (!reviewReaction) {
+        throw new ForbiddenException(AuthMessages.AccessDenied);
+      }
+
+      if (reviewReaction.reaction === reaction) {
+        throw new BadRequestException(`Your reaction already is "${reaction}".`);
+      }
+
+      reviewReaction.reaction = reaction;
+
+      await this.incrementReactionsCount(reviewId, reviewReaction.reaction, -1, manager);
+      await this.incrementReactionsCount(reviewId, reaction, 1, manager);
+
+      return manager.save(ReviewReaction, reviewReaction);
+    });
+  }
+
   async deleteReaction(
     reviewId: string,
     userId: string

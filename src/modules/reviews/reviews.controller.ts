@@ -29,6 +29,7 @@ import {
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 import { UpdateReviewDto } from './dtos/update-review.dto';
 import { ReactToReviewDto } from './dtos/react-review.dto';
+import { ChangeReactionDto } from './dtos/change-reaction.dto';
 
 @Controller('reviews')
 @UseInterceptors(ClassSerializerInterceptor) // Add this
@@ -204,6 +205,21 @@ export class ReviewsController {
   ) {
     const { id: userId } = req.user ?? {};
     return this.reviewsService.reactToReview(userId!, body);
+  }
+
+  @ApiOperation({
+    summary: 'Change a reaction by review id',
+  })
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard)
+  @Patch('reactions/:id')
+  async changeReaction(
+    @Param('id') id: string,
+    @Body() body: ChangeReactionDto,
+    @Req() req: Request,
+  ) {
+    const { id: userId } = req.user ?? {};
+    return this.reviewsService.changeReaction(userId!, id, body.reaction);
   }
 
   @ApiOperation({
