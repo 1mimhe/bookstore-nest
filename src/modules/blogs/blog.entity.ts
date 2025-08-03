@@ -1,9 +1,10 @@
 import { BaseEntity } from 'src/common/entities/base.entity';
-import { Column, Entity, Index, JoinColumn, ManyToMany, ManyToOne } from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToMany, ManyToOne, OneToMany } from 'typeorm';
 import { Publisher } from '../publishers/publisher.entity';
 import { Author } from '../authors/author.entity';
 import { Title } from '../books/entities/title.entity';
 import { Tag } from '../tags/tag.entity';
+import { Review } from '../reviews/entities/review.entity';
 
 @Entity('blogs')
 @Index('BLOG_TITLE_INDEX', ['titleId'])
@@ -70,4 +71,7 @@ export class Blog extends BaseEntity {
 
   @ManyToMany(() => Tag, (tag) => tag.blogs)
   tags: Tag[];
+
+  @OneToMany(() => Review, (review) => review.book)
+  reviews: Review[];
 }

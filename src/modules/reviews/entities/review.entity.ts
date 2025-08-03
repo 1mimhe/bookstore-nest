@@ -2,13 +2,15 @@ import { BaseEntity } from 'src/common/entities/base.entity';
 import { User } from 'src/modules/users/entities/user.entity';
 import { Column, Entity, Index, ManyToOne, OneToMany } from 'typeorm';
 import { ReviewReaction } from './review-like.entity';
+import { Book } from 'src/modules/books/entities/book.entity';
+import { Blog } from 'src/modules/blogs/blog.entity';
 
 export enum ReviewableType {
   Book = 'book',
   Blog = 'blog'
 }
 
-@Entity('review')
+@Entity('reviews')
 @Index(['user', 'review'])
 export class Review extends BaseEntity {
   @Column('text')
@@ -23,8 +25,15 @@ export class Review extends BaseEntity {
   })
   reviewableType: ReviewableType;
 
-  @Column()
-  reviewableId: string; // bookId or blogId
+  @Column('uuid')
+  bookId: string;
+  @ManyToOne(() => Book, (book) => book.reviews)
+  book: Book;
+
+  @Column('uuid')
+  blogId: string;
+  @ManyToOne(() => Blog, (blog) => blog.reviews)
+  blog: Blog;
 
   @ManyToOne(() => User, user => user.reviews, { eager: true })
   user: User;
@@ -43,4 +52,6 @@ export class Review extends BaseEntity {
 
   @Column({ default: 0 })
   repliesCount: number;
+
+  
 }
