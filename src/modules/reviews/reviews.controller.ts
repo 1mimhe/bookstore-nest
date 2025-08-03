@@ -160,7 +160,6 @@ export class ReviewsController {
   @ApiOkResponse({
     type: [ReviewResponseDto],
   })
-  @ApiQueryPagination()
   @ApiBearerAuth()
   @UseGuards(AuthGuard)
   @Serialize(ReviewResponseDto)
@@ -180,7 +179,6 @@ export class ReviewsController {
   @ApiOkResponse({
     type: [ReviewResponseDto],
   })
-  @ApiQueryPagination()
   @ApiBearerAuth()
   @UseGuards(AuthGuard)
   @Serialize(ReviewResponseDto)
