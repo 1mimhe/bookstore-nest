@@ -35,5 +35,6 @@ export enum NotFoundMessages {
   Collection = 'Collection not found.',
   CollectionBook = 'CollectionBook not found.',
   SomeCollectionBooks = 'Some collection book ids are not found within the category.',
-  ParentReview = 'Parent review not found.'
+  ParentReview = 'Parent review not found.',
+  Review = 'Review not found.'
 }

@@ -54,7 +54,7 @@ export class Review extends BaseEntity {
   @ManyToOne(() => Review, review => review.replies, { nullable: true })
   parentReview?: Review;
 
-  @OneToMany(() => Review, review => review.parentReview)
+  @OneToMany(() => Review, review => review.parentReview, { onDelete: 'CASCADE' })
   replies: Review[];
 
   @Column({ default: 0 })

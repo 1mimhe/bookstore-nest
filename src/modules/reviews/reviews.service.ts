@@ -1,10 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Review, ReviewableType } from './entities/review.entity';
-import { DataSource, DeepPartial, EntityManager, In, Repository } from 'typeorm';
+import { DataSource, DeepPartial, EntityManager, EntityNotFoundError, In, Repository } from 'typeorm';
 import { CreateReviewDto } from './dtos/create-review.dto';
 import { dbErrorHandler } from 'src/common/utilities/error-handler';
 import { ReviewReaction } from './entities/review-reaction.entity';
+import { NotFoundError } from 'rxjs';
+import { AuthMessages, NotFoundMessages } from 'src/common/enums/error.messages';
 
 @Injectable()
 export class ReviewsService {
@@ -118,6 +120,27 @@ export class ReviewsService {
     }
 
     return replies;
+  }
+
+  async getById(id: string) {
+    return this.reviewRepo.findOneOrFail({
+      where: { id }
+    }).catch((error: Error) => {
+      if (error instanceof EntityNotFoundError) {
+        throw new NotFoundException(NotFoundMessages.Review);
+      }
+      throw error;
+    });
+  }
+
+  async delete(id: string, userId: string) {
+    const review = await this.getById(id);
+
+    if (review.userId !== userId) {
+      throw new ForbiddenException(AuthMessages.AccessDenied);
+    }
+
+    return this.reviewRepo.softRemove(review);
   }
 
   private async addUserReaction(reviews: Review[], userId: string): Promise<void> {

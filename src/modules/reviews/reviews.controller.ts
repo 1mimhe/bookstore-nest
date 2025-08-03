@@ -3,6 +3,7 @@ import {
   ClassSerializerInterceptor,
   Controller,
   DefaultValuePipe,
+  Delete,
   Get,
   Param,
   ParseIntPipe,
@@ -149,5 +150,24 @@ export class ReviewsController {
       limit,
       userId,
     );
+  }
+
+  @ApiOperation({
+    summary: 'Delete a review by its id',
+  })
+  @ApiOkResponse({
+    type: [ReviewResponseDto],
+  })
+  @ApiQueryPagination()
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard)
+  @Serialize(ReviewResponseDto)
+  @Delete(':id')
+  async deleteReview(
+    @Param('id') id: string,
+    @Req() req: Request,
+  ) {
+    const { id: userId } = req.user ?? {};
+    return this.reviewsService.delete(id, userId!);
   }
 }
