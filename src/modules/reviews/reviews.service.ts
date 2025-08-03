@@ -124,7 +124,7 @@ export class ReviewsService {
     return replies;
   }
 
-  async getById(
+  private async getById(
     id: string,
     manager?: EntityManager
   ) {
@@ -219,6 +219,34 @@ export class ReviewsService {
         dbErrorHandler(error);
         throw error;
       });
+    });
+  }
+
+  private async getReaction(
+    reviewId: string,
+    userId: string,
+    manager?: EntityManager
+  ) {
+    const repository = manager ? manager.getRepository(ReviewReaction) : this.reviewReactionRepo;
+    return repository.findOne({
+      where: { reviewId, userId }
+    });
+  }
+
+  async deleteReaction(
+    reviewId: string,
+    userId: string
+  ) {
+    return this.dataSource.transaction(async manager => {
+      const reaction = await this.getReaction(reviewId, userId, manager);
+
+      if (!reaction) {
+        throw new ForbiddenException(AuthMessages.AccessDenied);
+      }
+
+      await this.incrementReactionsCount(reviewId, reaction.reaction, -1, manager);
+
+      return manager.delete(ReviewReaction, reaction);
     });
   }
 

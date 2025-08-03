@@ -205,4 +205,18 @@ export class ReviewsController {
     const { id: userId } = req.user ?? {};
     return this.reviewsService.reactToReview(userId!, body);
   }
+
+  @ApiOperation({
+    summary: 'Delete a reaction by review id',
+  })
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard)
+  @Delete('reactions/:id')
+  async deleteReaction(
+    @Param('id') id: string,
+    @Req() req: Request,
+  ) {
+    const { id: userId } = req.user ?? {};
+    return this.reviewsService.deleteReaction(id, userId!);
+  }
 }
