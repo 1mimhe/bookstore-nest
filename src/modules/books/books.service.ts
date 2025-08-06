@@ -206,4 +206,8 @@ export class BooksService {
       throw error;
     });
   }
+
+  async unbookmark(userId: string, bookId: string) {
+    return this.bookmarkRepo.delete({ userId, bookId });
+  }
 }

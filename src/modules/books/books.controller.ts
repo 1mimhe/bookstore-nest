@@ -325,10 +325,26 @@ export class BooksController {
   @UseGuards(AuthGuard)
   @Post('bookmark')
   async bookmark
-  (@Body() body: BookmarkDto,
-  @Req() req: Request
-) {
+  (
+    @Body() body: BookmarkDto,
+    @Req() req: Request
+  ) {
     const userId = req.user?.id;
     return this.booksService.bookmark(userId!, body);
+  }
+
+  @ApiOperation({
+    summary: 'Delete a bookmark (unbookmark) by bookId',
+  })
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard)
+  @Delete('bookmark/:id')
+  async unbookmark
+  (
+    @Param('id', ParseUUIDPipe) bookId: string,
+    @Req() req: Request
+  ) {
+    const userId = req.user?.id;
+    return this.booksService.unbookmark(userId!, bookId);
   }
 }
