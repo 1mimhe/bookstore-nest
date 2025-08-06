@@ -1,6 +1,6 @@
 import { BaseEntity } from 'src/common/entities/base.entity';
 import { User } from 'src/modules/users/entities/user.entity';
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, Unique } from 'typeorm';
 import { Book } from './book.entity';
 
 export enum BookmarkTypes {
@@ -10,6 +10,7 @@ export enum BookmarkTypes {
 }
 
 @Entity('bookmarks')
+@Unique('BOOKMARK_UNIQUE', ['user', 'book', 'type'])
 export class Bookmark extends BaseEntity {
   @Column('uuid')
   userId: string;

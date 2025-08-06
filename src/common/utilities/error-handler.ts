@@ -11,6 +11,9 @@ export const dbErrorHandler = (error) => {
     if (error.message.includes('REVIEW_REACTION_INDEX')) {
       throw new ConflictException(ConflictMessages.Reaction);
     }
+    if (error.message.includes('BOOKMARK_UNIQUE')) {
+      throw new ConflictException(ConflictMessages.Bookmark);
+    }
     throw new ConflictException(ConflictMessages.Slug);
   }
 

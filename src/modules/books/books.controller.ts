@@ -18,6 +18,7 @@ import {
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
+  ApiBearerAuth,
   ApiConflictResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -320,6 +321,7 @@ export class BooksController {
   @ApiOperation({
     summary: 'Bookmark a book',
   })
+  @ApiBearerAuth()
   @UseGuards(AuthGuard)
   @Post('bookmark')
   async bookmark
