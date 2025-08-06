@@ -10,12 +10,14 @@ import { NotFoundMessages } from 'src/common/enums/error.messages';
 import { UpdateUserDto } from './dtos/update-user.dto';
 import { AuthService } from '../auth/auth.service';
 import { Contact } from './entities/contact.entity';
+import { Bookmark, BookmarkTypes } from '../books/entities/bookmark.entity';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User) private userRepo: Repository<User>,
     @InjectRepository(Address) private addressRepo: Repository<Address>,
+    @InjectRepository(Bookmark) private bookmarkRepo: Repository<Bookmark>,
     private dataSource: DataSource,
     private authService: AuthService
   ) {}
@@ -178,5 +180,29 @@ export class UsersService {
   async deleteAddress(id: string): Promise<Address | never> {
     const address = await this.getAddressById(id);
     return this.addressRepo.remove(address);
+  }
+
+  async getAllBookmarks(
+    userId: string,
+    type: BookmarkTypes = BookmarkTypes.Library,
+    page = 1,
+    limit = 10
+  ) {
+    const skip = (page - 1) * limit;
+    const [books, count] = await this.bookmarkRepo.findAndCount({
+      where: {
+        userId
+      },
+      relations: {
+        book: true
+      },
+      skip,
+      take: limit
+    });
+
+    return {
+      count,
+      books
+    };
   }
 }
