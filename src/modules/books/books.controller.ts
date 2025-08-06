@@ -13,9 +13,12 @@ import {
   Patch,
   Post,
   Query,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
+  ApiBearerAuth,
   ApiConflictResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -37,6 +40,9 @@ import { UpdateTitleDto } from './dtos/update-title.dto';
 import { CreateCharacterDto } from './dtos/create-character.dto';
 import { UpdateCharacterDto } from './dtos/update-character.dto';
 import { CharacterCompactResponseDto, CharacterResponseDto } from './dtos/character-response.dto';
+import { AuthGuard } from '../auth/guards/auth.guard';
+import { BookmarkDto } from './dtos/bookmark.dto';
+import { Request } from 'express';
 
 @Controller('books')
 export class BooksController {
@@ -310,5 +316,35 @@ export class BooksController {
     @Body() body: UpdateCharacterDto
   ): Promise<CharacterCompactResponseDto> {
     return this.titlesService.updateCharacter(id, body);
+  }
+
+  @ApiOperation({
+    summary: 'Bookmark a book',
+  })
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard)
+  @Post('bookmark')
+  async bookmark
+  (
+    @Body() body: BookmarkDto,
+    @Req() req: Request
+  ) {
+    const userId = req.user?.id;
+    return this.booksService.bookmark(userId!, body);
+  }
+
+  @ApiOperation({
+    summary: 'Delete a bookmark (unbookmark) by bookId',
+  })
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard)
+  @Delete('bookmark/:id')
+  async unbookmark
+  (
+    @Param('id', ParseUUIDPipe) bookId: string,
+    @Req() req: Request
+  ) {
+    const userId = req.user?.id;
+    return this.booksService.unbookmark(userId!, bookId);
   }
 }

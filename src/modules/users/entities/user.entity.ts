@@ -13,6 +13,8 @@ import { Publisher } from 'src/modules/publishers/publisher.entity';
 import { Address } from './address.entity';
 import { ReviewReaction } from 'src/modules/reviews/entities/review-reaction.entity';
 import { Review } from 'src/modules/reviews/entities/review.entity';
+import { Book } from 'src/modules/books/entities/book.entity';
+import { Bookmark } from 'src/modules/books/entities/bookmark.entity';
 
 export enum Genders {
   Male = 'male',
@@ -69,4 +71,7 @@ export class User extends BaseEntity {
 
   @OneToMany(() => ReviewReaction, (reviewReaction) => reviewReaction.user)
   reviewReactions: ReviewReaction[];
+
+  @OneToMany(() => Bookmark, (bookmark) => bookmark.user)
+  bookmarks: Bookmark[];
 }

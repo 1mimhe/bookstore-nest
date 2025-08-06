@@ -16,6 +16,7 @@ import { BookImage } from './book-image.entity';
 import { Language } from 'src/modules/languages/language.entity';
 import { CollectionBook } from 'src/modules/collections/entities/collection-book.entity';
 import { Review } from 'src/modules/reviews/entities/review.entity';
+import { Bookmark } from './bookmark.entity';
 
 export enum Quartos {
   Vaziri = 'vaziri',
@@ -137,4 +138,10 @@ export class Book extends BaseEntity {
 
   @OneToMany(() => Review, (review) => review.book)
   reviews: Review[];
+
+  @Column('int', { default: 0 })
+  bookmarkCount: number;
+
+  @OneToMany(() => Bookmark, (bookmark) => bookmark.book)
+  bookmarks: Bookmark[];
 }

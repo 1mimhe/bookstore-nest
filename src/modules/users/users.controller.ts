@@ -1,16 +1,19 @@
 import {
   Body,
   Controller,
+  DefaultValuePipe,
   Delete,
   Get,
   HttpCode,
   HttpStatus,
   Param,
+  ParseEnumPipe,
+  ParseIntPipe,
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
   Req,
-  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -28,6 +31,9 @@ import { CreateAddressDto } from './dtos/create-address.dto';
 import { UsersService } from './users.service';
 import { UpdateAddressDto } from './dtos/update-address.dto';
 import { UpdateUserDto } from './dtos/update-user.dto';
+import { ApiQueryPagination } from 'src/common/decorators/query.decorators';
+import { BookmarkTypes } from '../books/entities/bookmark.entity';
+import { BookmarkDto } from './dtos/bookmark.dto';
 
 @Controller('users')
 export class UsersController {
@@ -105,5 +111,26 @@ export class UsersController {
   @Delete('addresses/:id')
   deleteAddress(@Param('id', ParseUUIDPipe) id: string) {
     return this.usersService.deleteAddress(id);
+  }
+
+  @ApiOperation({
+    summary: 'Get all user bookmarks by its type',
+  })
+  @ApiOkResponse({
+    type: BookmarkDto
+  })
+  @ApiQueryPagination()
+  @ApiBearerAuth()
+  @Serialize(BookmarkDto)
+  @UseGuards(AuthGuard)
+  @Get('bookmarks/:type')
+  async getAllBookmarks(
+    @Param('type', new ParseEnumPipe(BookmarkTypes)) type: BookmarkTypes,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
+    @Req() req: Request
+  ) {
+    const id = req.user?.id;
+    return this.usersService.getAllBookmarks(id!, type, page, limit);
   }
 }

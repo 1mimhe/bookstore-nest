@@ -16,12 +16,16 @@ import { Author } from '../authors/author.entity';
 import { UpdateBookDto } from './dtos/update-book.dto';
 import { BookImage } from './entities/book-image.entity';
 import { Language } from '../languages/language.entity';
+import { Bookmark, BookmarkTypes } from './entities/bookmark.entity';
+import { BookmarkDto } from './dtos/bookmark.dto';
+import { dbErrorHandler } from 'src/common/utilities/error-handler';
 
 @Injectable()
 export class BooksService {
   constructor(
     @InjectRepository(Book) private bookRepo: Repository<Book>,
     @InjectRepository(BookImage) private bookImageRepo: Repository<BookImage>,
+    @InjectRepository(Bookmark) private bookmarkRepo: Repository<Bookmark>,
     private dataSource: DataSource,
   ) {}
 
@@ -190,5 +194,20 @@ export class BooksService {
         throw error;
       });
     return this.bookImageRepo.softRemove(bookImage);
+  }
+
+  async bookmark(userId: string, bookmarkDto: BookmarkDto) {
+    const bookmark = this.bookmarkRepo.create({
+      userId,
+      ...bookmarkDto
+    });
+    return this.bookmarkRepo.save(bookmark).catch(error => {
+      dbErrorHandler(error);
+      throw error;
+    });
+  }
+
+  async unbookmark(userId: string, bookId: string) {
+    return this.bookmarkRepo.delete({ userId, bookId });
   }
 }
