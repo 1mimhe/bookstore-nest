@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module } from '@nestjs/common';
 import { BooksController } from './books.controller';
 import { LanguagesService } from '../languages/languages.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -12,6 +12,10 @@ import { Language } from '../languages/language.entity';
 import { Quote } from './entities/quote.entity';
 import { Feature } from './entities/feature.entity';
 import { Character } from './entities/characters.entity';
+import { Bookmark } from './entities/bookmark.entity';
+import { CurrentUserMiddleware } from 'src/common/middlewares/current-user.middleware';
+import { AuthModule } from '../auth/auth.module';
+import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
@@ -23,8 +27,11 @@ import { Character } from './entities/characters.entity';
       BookImage,
       Quote,
       Feature,
-      Character
-    ])
+      Character,
+      Bookmark
+    ]),
+    AuthModule,
+    UsersModule,
   ],
   controllers: [BooksController],
   providers: [LanguagesService, TitlesService, BooksService],
@@ -33,4 +40,10 @@ import { Character } from './entities/characters.entity';
     BooksService
   ]
 })
-export class BooksModule {}
+export class BooksModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(CurrentUserMiddleware)
+      .forRoutes('books/bookmark');
+  }
+}

@@ -7,10 +7,16 @@ import { CurrentUserMiddleware } from 'src/common/middlewares/current-user.middl
 import { AuthModule } from '../auth/auth.module';
 import { Address } from './entities/address.entity';
 import { ReviewReaction } from '../reviews/entities/review-reaction.entity';
+import { Bookmark } from '../books/entities/bookmark.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, Address, ReviewReaction]),
+    TypeOrmModule.forFeature([
+      User,
+      Address,
+      ReviewReaction,
+      Bookmark
+    ]),
     AuthModule
   ],
   providers: [UsersService],
