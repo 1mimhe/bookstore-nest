@@ -160,9 +160,9 @@ export class StaffAction extends BaseEntity {
   })
   status: StaffActionStatus;
 
-  @Column('text')
+  @Column('text', { nullable: true })
   description?: string;
 
-  @Column('jsonb')
+  @Column('jsonb', { nullable: true })
   metadata?: Object;
 }
