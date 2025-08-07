@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { StaffController } from './staff.controller';
-import { StaffService } from './staff.service';
+import { StaffController } from './staffs.controller';
+import { StaffService } from './staffs.service';
 
 @Module({
   controllers: [StaffController],
