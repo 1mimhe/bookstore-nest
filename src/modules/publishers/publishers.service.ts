@@ -12,6 +12,7 @@ import { DBErrors } from 'src/common/enums/db.errors';
 import { AuthService } from '../auth/auth.service';
 import { BooksService } from '../books/books.service';
 import { Book } from '../books/entities/book.entity';
+import { dbErrorHandler } from 'src/common/utilities/error-handler';
 
 @Injectable()
 export class PublishersService {
@@ -21,9 +22,15 @@ export class PublishersService {
     private booksService: BooksService
   ) {}
 
-  async signup(publisherDto: SignupPublisherDto): Promise<Publisher | never> {
-    const { publisherName, slug, description, logoUrl, ...userDto } = publisherDto;
-    
+  async signup(
+    {
+      publisherName,
+      slug,
+      description,
+      logoUrl,
+      ...userDto
+    }: SignupPublisherDto
+  ): Promise<Publisher | never> {
     return this.authService.signup(
       userDto,
       [Roles.Publisher],
@@ -36,12 +43,10 @@ export class PublishersService {
           description,
           logoUrl
         });
-        return manager.save(publisher).catch((error) => {
-          if (error.code === DBErrors.Conflict) {
-            throw new ConflictException(ConflictMessages.PublisherName);
-          }
+        return manager.save(Publisher, publisher).catch((error) => {
+          dbErrorHandler(error);
           throw error;
-        });;
+        });
       }
     );
   }

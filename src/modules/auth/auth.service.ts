@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { DataSource, EntityManager, FindOptionsWhere, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { CreateUserDto } from './dto/sign-up.dto';
+import { SignupUserDto } from './dto/sign-up.dto';
 import { pbkdf2, randomBytes } from 'crypto';
 import { SigninDto } from './dto/sign-in.dto';
 import { AuthMessages } from 'src/common/enums/error.messages';
@@ -14,8 +14,9 @@ import { User } from '../users/entities/user.entity';
 import { Roles } from '../users/entities/role.entity';
 import { TokenService } from './token.service';
 import { ConflictDto } from 'src/common/dtos/error.dtos';
+import { Staff } from '../staffs/entities/staff.entity';
 
-type AdditionalEntity = Publisher;
+type AdditionalEntity = Publisher | Staff;
 
 @Injectable()
 export class AuthService {
@@ -26,18 +27,18 @@ export class AuthService {
   ) {}
 
   async signup(
-    userDto: CreateUserDto,
+    userDto: SignupUserDto,
     roles?: Roles[]
   ): Promise<User>;
 
   async signup<T extends AdditionalEntity>(
-    userDto: CreateUserDto,
+    userDto: SignupUserDto,
     roles: Roles[],
     additionalEntityCallback: (user: User, manager: EntityManager) => Promise<T>
   ): Promise<T>;
 
   async signup<T extends AdditionalEntity>(
-    userDto: CreateUserDto, 
+    userDto: SignupUserDto, 
     roles: Roles[] = [Roles.Customer],
     additionalEntityCallback?: (user: User, manager: EntityManager) => Promise<T>
   ): Promise<User | T> {

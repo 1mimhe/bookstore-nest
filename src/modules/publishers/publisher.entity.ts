@@ -6,7 +6,7 @@ import { Blog } from '../blogs/blog.entity';
 
 @Entity('publishers')
 @Index(['slug'], { unique: true })
-@Unique(['publisherName'])
+@Unique('PUBLISHER_NAME_UNIQUE', ['publisherName'])
 export class Publisher extends BaseEntity {
   @Column()
   publisherName: string;

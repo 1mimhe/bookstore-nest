@@ -19,6 +19,7 @@ import { LanguagesModule } from '../languages/languages.module';
 import { BlogsModule } from '../blogs/blogs.module';
 import { CollectionsModule } from '../collections/collections.module';
 import { ReviewsModule } from '../reviews/reviews.module';
+import { StaffModule } from '../staffs/staffs.module';
 
 @Module({
   imports: [
@@ -60,6 +61,7 @@ import { ReviewsModule } from '../reviews/reviews.module';
     BlogsModule,
     CollectionsModule,
     ReviewsModule,
+    StaffModule,
   ],
   providers: [
     {

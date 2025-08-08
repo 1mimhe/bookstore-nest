@@ -17,7 +17,8 @@ export enum ConflictMessages {
   Tag = 'Tag or its slug already exists.',
   CollectionBook = 'This book already exists at this collection.',
   Reaction = 'You already react to this review.',
-  Bookmark = 'This bookmark is already exists.'
+  Bookmark = 'This bookmark is already exists.',
+  NationalId = 'National id is already exists.'
 }
 
 export enum NotFoundMessages {
@@ -38,5 +39,6 @@ export enum NotFoundMessages {
   CollectionBook = 'CollectionBook not found.',
   SomeCollectionBooks = 'Some collection book ids are not found within the category.',
   ParentReview = 'Parent review not found.',
-  Review = 'Review not found.'
+  Review = 'Review not found.',
+  Staff = 'Staff not found.'
 }
