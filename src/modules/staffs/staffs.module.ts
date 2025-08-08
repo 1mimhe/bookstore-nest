@@ -4,7 +4,6 @@ import { StaffsService } from './staffs.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Staff } from './entities/staff.entity';
 import { StaffAction } from './entities/staff-action.entity';
-import { StaffSession } from './entities/staff-session.entity';
 import { AuthModule } from '../auth/auth.module';
 
 @Module({
@@ -12,7 +11,6 @@ import { AuthModule } from '../auth/auth.module';
     TypeOrmModule.forFeature([
       Staff,
       StaffAction,
-      StaffSession
     ]),
     AuthModule
   ],

@@ -9,7 +9,6 @@ import { Address } from './entities/address.entity';
 import { ReviewReaction } from '../reviews/entities/review-reaction.entity';
 import { Bookmark } from '../books/entities/bookmark.entity';
 import { Staff } from '../staffs/entities/staff.entity';
-import { StaffSession } from '../staffs/entities/staff-session.entity';
 import { StaffAction } from '../staffs/entities/staff-action.entity';
 
 @Module({
@@ -21,7 +20,6 @@ import { StaffAction } from '../staffs/entities/staff-action.entity';
       Bookmark,
       Staff,
       StaffAction,
-      StaffSession
     ]),
     AuthModule
   ],

@@ -2,7 +2,6 @@ import { BaseEntity } from 'src/common/entities/base.entity';
 import { User } from 'src/modules/users/entities/user.entity';
 import { Column, Entity, Index, JoinColumn, OneToMany, OneToOne, Unique } from 'typeorm';
 import { StaffAction } from './staff-action.entity';
-import { StaffSession } from './staff-session.entity';
 
 @Entity('staffs')
 @Index(['user'], { unique: true })
@@ -28,7 +27,4 @@ export class Staff extends BaseEntity {
 
   @OneToMany(() => StaffAction, (action) => action.staff)
   actions: StaffAction[];
-
-  @OneToMany(() => StaffSession, (session) => session.staff)
-  sessions: StaffSession[];
 }
