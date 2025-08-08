@@ -33,7 +33,7 @@ import { AccessTokenDto } from './dtos/access-token.dto';
 import { Cookies } from 'src/common/decorators/cookies.decorator';
 import { ConflictMessages } from 'src/common/enums/error.messages';
 import { UserResponseDto } from '../users/dtos/user-response.dto';
-import { TokenService } from './token.service';
+import { TokenService } from '../token/token.service';
 
 @Controller('auth')
 export class AuthController {
@@ -141,7 +141,11 @@ export class AuthController {
     @Session() session: SessionData,
     @Res({ passthrough: true }) res: Response
   ) {
-    const { accessToken, refreshToken, expirationTime } = this.tokenService.refreshTokens(oldRefreshToken, session);
+    const {
+      accessToken,
+      refreshToken,
+      expirationTime
+    } = this.tokenService.refreshTokens(oldRefreshToken, session);
 
     session.refreshToken = refreshToken;
     res.cookie(CookieNames.RefreshToken, refreshToken, {

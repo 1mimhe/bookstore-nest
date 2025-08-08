@@ -10,6 +10,7 @@ import { ReviewReaction } from '../reviews/entities/review-reaction.entity';
 import { Bookmark } from '../books/entities/bookmark.entity';
 import { Staff } from '../staffs/entities/staff.entity';
 import { StaffAction } from '../staffs/entities/staff-action.entity';
+import { TokenModule } from '../token/token.module';
 
 @Module({
   imports: [
@@ -21,7 +22,8 @@ import { StaffAction } from '../staffs/entities/staff-action.entity';
       Staff,
       StaffAction,
     ]),
-    AuthModule
+    AuthModule,
+    TokenModule,
   ],
   providers: [UsersService],
   controllers: [UsersController],

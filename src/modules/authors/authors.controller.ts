@@ -37,7 +37,7 @@ import {
 } from './dtos/author-response.dto';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 import { AuthGuard } from '../auth/guards/auth.guard';
-import { RolesGuard } from '../auth/guards/roles.gaurd';
+import { RolesGuard } from '../auth/guards/roles.guard';
 import { RequiredRoles } from 'src/common/decorators/roles.decorator';
 import { RolesEnum } from '../users/entities/role.entity';
 
