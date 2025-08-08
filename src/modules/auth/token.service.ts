@@ -62,8 +62,12 @@ export class TokenService {
       ? new Date(session.cookie.expires).getTime() - Date.now()
       : 0;
    
-    const { sub, username } = this.verifyToken(oldRefreshToken, 'refresh');
-    const payload = { sub, username };
+    const { sub, username, roles } = this.verifyToken(oldRefreshToken, 'refresh');
+    const payload = {
+      sub,
+      username,
+      roles
+    };
     const newRefreshToken = this.generateRefreshToken(payload, Math.trunc(expirationTime / 1000));
     const newAccessToken = this.generateAccessToken(payload);
 

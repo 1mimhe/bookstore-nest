@@ -85,7 +85,11 @@ export class AuthService {
         { contact: { phoneNumber: identifier } },
       ],
       select: ['id', 'username', 'hashedPassword'],
-      relations: ['contact'],
+      relations: {
+        contact: true,
+        roles: true,
+        staff: true
+      }
     });
 
     if (!user) {
@@ -103,6 +107,7 @@ export class AuthService {
     const payload = {
       sub: user.id,
       username: user.username,
+      roles: user.roles.map(r => r.role)
     };
     const refreshToken = this.tokenService['generateRefreshToken'](payload);
     const accessToken = this.tokenService['generateAccessToken'](payload);
