@@ -90,9 +90,11 @@ export class AuthController {
       throw new BadRequestException(AuthMessages.AlreadyAuthorized);
     }
 
-    const { accessToken, refreshToken, userId } = await this.authService.signin(body);
+    const { accessToken, refreshToken, userId, roles } = await this.authService.signin(body);
+
     session.userId = userId;
     session.refreshToken = refreshToken;
+    session.roles = roles;
 
     res.cookie(CookieNames.RefreshToken, refreshToken, {
       httpOnly: true,

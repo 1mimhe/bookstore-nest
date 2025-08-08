@@ -104,10 +104,11 @@ export class AuthService {
       throw new BadRequestException(AuthMessages.InvalidCredentials);
     }
 
+    const roles = user.roles.map(r => r.role);
     const payload = {
       sub: user.id,
       username: user.username,
-      roles: user.roles.map(r => r.role)
+      roles
     };
     const refreshToken = this.tokenService['generateRefreshToken'](payload);
     const accessToken = this.tokenService['generateAccessToken'](payload);
@@ -116,6 +117,7 @@ export class AuthService {
       refreshToken,
       accessToken,
       userId: user.id,
+      roles
     };
   }
 
