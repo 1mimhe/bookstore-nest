@@ -19,9 +19,10 @@ async function bootstrap() {
       in: 'header',
     })
     .addTag('Auth', 'Authentication operations')
-    .addTag('User', 'User profile management')
+    .addTag('User', 'User profile management (For authorized users)')
     .addTag('Author', 'Manage authors and translators (Admin/Staff: full access; All users: read-only)')
-    .addTag('Publisher', 'Publisher management (Admin: signup; Publishers: edit own info and publish; All users: read-only)')
+    .addTag('Publisher', 'Publisher management (Admin: signup; Publishers: full access (except signup); All users: read-only)')
+    .addTag('Book', 'Book, title, and character management (Admin/Staff: alternative access; All users: read-only)')
     .addTag('Language', 'Language management (For Admin)')
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
