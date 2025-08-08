@@ -31,6 +31,7 @@ import { UpdateReviewDto } from './dtos/update-review.dto';
 import { ReactToReviewDto } from './dtos/react-review.dto';
 import { ChangeReactionDto } from './dtos/change-reaction.dto';
 import { SoftAuthGuard } from '../auth/guards/soft-auth.guard';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 
 @Controller('reviews')
 export class ReviewsController {
@@ -44,12 +45,11 @@ export class ReviewsController {
   @Post('books')
   async createBookReview(
     @Body() body: CreateBookReviewDto,
-    @Req() req: Request,
+    @CurrentUser('id') userId: string
   ) {
-    const { id } = req.user ?? {};
     const { bookId, ...reviewDto } = body;
     return this.reviewsService.create(
-      id!,
+      userId,
       ReviewableType.Book,
       bookId,
       reviewDto,
@@ -64,12 +64,11 @@ export class ReviewsController {
   @Post('blogs')
   async createBlogReview(
     @Body() body: CreateBookReviewDto,
-    @Req() req: Request,
+    @CurrentUser('id') userId: string
   ) {
-    const { id } = req.user ?? {};
     const { bookId, ...reviewDto } = body;
     return this.reviewsService.create(
-      id!,
+      userId,
       ReviewableType.Book,
       bookId,
       reviewDto,
@@ -91,9 +90,8 @@ export class ReviewsController {
     @Param('id') id: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
-    @Req() req: Request,
+    @CurrentUser('id') userId: string
   ) {
-    const { id: userId } = req.user ?? {};
     return this.reviewsService.getAll(
       ReviewableType.Book,
       id,
@@ -118,9 +116,8 @@ export class ReviewsController {
     @Param('id') id: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
-    @Req() req: Request,
+    @CurrentUser('id') userId: string
   ) {
-    const { id: userId } = req.user ?? {};
     return this.reviewsService.getAll(
       ReviewableType.Blog,
       id,
@@ -145,9 +142,8 @@ export class ReviewsController {
     @Param('id') id: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
-    @Req() req: Request,
+    @CurrentUser('id') userId: string
   ) {
-    const { id: userId } = req.user ?? {};
     return this.reviewsService.getAllReplies(
       id,
       page,
@@ -169,9 +165,8 @@ export class ReviewsController {
   async updateReview(
     @Param('id') id: string,
     @Body() body: UpdateReviewDto,
-    @Req() req: Request,
+    @CurrentUser('id') userId: string
   ) {
-    const { id: userId } = req.user ?? {};
     return this.reviewsService.update(id, userId!, body);
   }
 
@@ -187,9 +182,8 @@ export class ReviewsController {
   @Delete(':id')
   async deleteReview(
     @Param('id') id: string,
-    @Req() req: Request,
+    @CurrentUser('id') userId: string
   ) {
-    const { id: userId } = req.user ?? {};
     return this.reviewsService.delete(id, userId!);
   }
 
@@ -201,9 +195,8 @@ export class ReviewsController {
   @Post('reactions')
   async reactToReview(
     @Body() body: ReactToReviewDto,
-    @Req() req: Request,
+    @CurrentUser('id') userId: string
   ) {
-    const { id: userId } = req.user ?? {};
     return this.reviewsService.reactToReview(userId!, body);
   }
 
@@ -216,9 +209,8 @@ export class ReviewsController {
   async changeReaction(
     @Param('id') id: string,
     @Body() body: ChangeReactionDto,
-    @Req() req: Request,
+    @CurrentUser('id') userId: string
   ) {
-    const { id: userId } = req.user ?? {};
     return this.reviewsService.changeReaction(userId!, id, body.reaction);
   }
 
@@ -230,9 +222,8 @@ export class ReviewsController {
   @Delete('reactions/:id')
   async deleteReaction(
     @Param('id') id: string,
-    @Req() req: Request,
+    @CurrentUser('id') userId: string
   ) {
-    const { id: userId } = req.user ?? {};
     return this.reviewsService.deleteReaction(id, userId!);
   }
 }

@@ -43,6 +43,7 @@ import { CharacterCompactResponseDto, CharacterResponseDto } from './dtos/charac
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { BookmarkDto } from './dtos/bookmark.dto';
 import { Request } from 'express';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 
 @Controller('books')
 export class BooksController {
@@ -327,9 +328,8 @@ export class BooksController {
   async bookmark
   (
     @Body() body: BookmarkDto,
-    @Req() req: Request
+    @CurrentUser('id') userId: string
   ) {
-    const userId = req.user?.id;
     return this.booksService.bookmark(userId!, body);
   }
 
@@ -342,9 +342,8 @@ export class BooksController {
   async unbookmark
   (
     @Param('id', ParseUUIDPipe) bookId: string,
-    @Req() req: Request
+    @CurrentUser('id') userId: string
   ) {
-    const userId = req.user?.id;
     return this.booksService.unbookmark(userId!, bookId);
   }
 }
