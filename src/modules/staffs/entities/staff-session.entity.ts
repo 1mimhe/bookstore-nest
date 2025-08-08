@@ -13,6 +13,6 @@ export class StaffSession extends BaseEntity {
   @Column({ nullable: true })
   logoutAt?: Date;
 
-  @Column({ default: Date.now() })
+  @Column({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
   lastActivityAt: Date;
 }

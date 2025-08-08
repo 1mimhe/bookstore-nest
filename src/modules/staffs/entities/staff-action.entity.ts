@@ -163,6 +163,6 @@ export class StaffAction extends BaseEntity {
   @Column('text', { nullable: true })
   description?: string;
 
-  @Column('jsonb', { nullable: true })
+  @Column('json', { nullable: true })
   metadata?: Object;
 }

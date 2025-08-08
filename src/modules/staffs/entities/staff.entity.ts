@@ -1,17 +1,21 @@
 import { BaseEntity } from 'src/common/entities/base.entity';
 import { User } from 'src/modules/users/entities/user.entity';
-import { Column, Entity, Index, JoinColumn, OneToMany, OneToOne } from 'typeorm';
+import { Column, Entity, Index, JoinColumn, OneToMany, OneToOne, Unique } from 'typeorm';
 import { StaffAction } from './staff-action.entity';
 import { StaffSession } from './staff-session.entity';
 
 @Entity('staffs')
-@Index(['user'], )
+@Index(['user'], { unique: true })
+@Unique('NATIONAL_ID_UNIQUE', ['nationalId'])
 export class Staff extends BaseEntity {
   @Column('uuid')
   userId: string;
   @OneToOne(() => User, (user) => user.staff)
   @JoinColumn()
   user: User;
+
+  @Column()
+  nationalId: string;
 
   @Column()
   employeeId: string;
