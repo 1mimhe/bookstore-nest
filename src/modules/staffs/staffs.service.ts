@@ -4,7 +4,7 @@ import { Staff } from './entities/staff.entity';
 import { EntityManager, Repository } from 'typeorm';
 import { AuthService } from '../auth/auth.service';
 import { SignupStaffDto } from './dtos/signup-staff.dto';
-import { Roles } from '../users/entities/role.entity';
+import { RolesEnum } from '../users/entities/role.entity';
 import { User } from '../users/entities/user.entity';
 import { dbErrorHandler } from 'src/common/utilities/error-handler';
 import { generateNumberId } from 'src/common/utilities/generate-id';

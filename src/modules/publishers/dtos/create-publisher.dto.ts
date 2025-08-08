@@ -1,7 +1,7 @@
 import { Transform } from 'class-transformer';
 import { IsNotEmpty, IsOptional, IsString, IsUrl } from 'class-validator';
 import { makeUnique } from 'src/common/utilities/make-unique';
-import { SignupUserDto } from 'src/modules/auth/dto/sign-up.dto';
+import { SignupUserDto } from 'src/modules/auth/dtos/sign-up.dto';
 
 export class SignupPublisherDto extends SignupUserDto {
   @IsNotEmpty()
