@@ -117,6 +117,7 @@ export class AuthService {
       refreshToken,
       accessToken,
       userId: user.id,
+      staffId: user.staff?.id,
       roles
     };
   }

@@ -90,9 +90,13 @@ export class AuthController {
       throw new BadRequestException(AuthMessages.AlreadyAuthorized);
     }
 
-    const { accessToken, refreshToken, userId, roles } = await this.authService.signin(body);
+    const {
+      accessToken, refreshToken,
+      userId, staffId, roles
+    } = await this.authService.signin(body);
 
     session.userId = userId;
+    session.staffId = staffId;
     session.refreshToken = refreshToken;
     session.roles = roles;
 
