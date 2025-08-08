@@ -13,19 +13,18 @@ import {
   Patch,
   Post,
   Query,
-  Req,
   UseGuards,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOkResponse,
   ApiOperation,
+  ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { AuthMessages } from 'src/common/enums/error.messages';
 import { UserResponseDto } from './dtos/user-response.dto';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
-import { Request } from 'express';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { CreateAddressDto } from './dtos/create-address.dto';
 import { UsersService } from './users.service';
@@ -37,6 +36,8 @@ import { BookmarkDto } from './dtos/bookmark.dto';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 
 @Controller('users')
+@ApiTags('User')
+@UseGuards(AuthGuard)
 export class UsersController {
   constructor(private usersService: UsersService) {}
 
@@ -47,7 +48,6 @@ export class UsersController {
     description: AuthMessages.MissingAccessToken,
   })
   @ApiBearerAuth()
-  @UseGuards(AuthGuard)
   @Serialize(UserResponseDto)
   @Get('whoami')
   whoAmI(@CurrentUser() user: UserResponseDto): UserResponseDto {
@@ -58,7 +58,6 @@ export class UsersController {
     summary: 'Update authorized user',
   })
   @ApiBearerAuth()
-  @UseGuards(AuthGuard)
   @Patch()
   updateUser(
     @Body() body: UpdateUserDto,
@@ -71,7 +70,6 @@ export class UsersController {
     summary: 'Create a address for user',
   })
   @ApiBearerAuth()
-  @UseGuards(AuthGuard)
   @HttpCode(HttpStatus.CREATED)
   @Post('addresses')
   createAddress(
@@ -85,7 +83,6 @@ export class UsersController {
     summary: 'Retrieves all user addresses',
   })
   @ApiBearerAuth()
-  @UseGuards(AuthGuard)
   @Get('addresses')
   getAllUserAddresses(@CurrentUser('id') userId: string) {
     return this.usersService.getAllUserAddresses(userId);
@@ -95,7 +92,6 @@ export class UsersController {
     summary: 'Update a address by its id',
   })
   @ApiBearerAuth()
-  @UseGuards(AuthGuard)
   @Patch('addresses/:id')
   updateAddress(
     @Param('id', ParseUUIDPipe) id: string,
@@ -108,7 +104,6 @@ export class UsersController {
     summary: 'Delete a address by its id',
   })
   @ApiBearerAuth()
-  @UseGuards(AuthGuard)
   @Delete('addresses/:id')
   deleteAddress(@Param('id', ParseUUIDPipe) id: string) {
     return this.usersService.deleteAddress(id);
@@ -123,7 +118,6 @@ export class UsersController {
   @ApiQueryPagination()
   @ApiBearerAuth()
   @Serialize(BookmarkDto)
-  @UseGuards(AuthGuard)
   @Get('bookmarks/:type')
   async getAllBookmarks(
     @Param('type', new ParseEnumPipe(BookmarkTypes)) type: BookmarkTypes,
