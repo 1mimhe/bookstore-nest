@@ -9,7 +9,7 @@ import {
   Res,
   Session,
 } from '@nestjs/common';
-import { CreateUserDto } from './dto/sign-up.dto';
+import { SignupUserDto } from './dto/sign-up.dto';
 import { AuthService } from './auth.service';
 import {
   ApiBadRequestResponse,
@@ -60,7 +60,7 @@ export class AuthController {
   })
   @Serialize(UserResponseDto)
   @Post('signup')
-  signup(@Body() body: CreateUserDto) {
+  signup(@Body() body: SignupUserDto) {
     return this.authService.signup(body);
   }
 

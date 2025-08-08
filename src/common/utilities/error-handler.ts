@@ -14,6 +14,12 @@ export const dbErrorHandler = (error) => {
     if (error.message.includes('BOOKMARK_UNIQUE')) {
       throw new ConflictException(ConflictMessages.Bookmark);
     }
+    if (error.message.includes('PUBLISHER_NAME_UNIQUE')) {
+      throw new ConflictException(ConflictMessages.PublisherName);
+    }
+    if (error.message.includes('NATIONAL_ID_UNIQUE')) {
+      throw new ConflictException(ConflictMessages.NationalId);
+    }
     throw new ConflictException(ConflictMessages.Slug);
   }
 

@@ -11,7 +11,7 @@ import {
 import { Genders } from '../../users/entities/user.entity';
 import { Transform } from 'class-transformer';
 
-export class CreateUserDto {
+export class SignupUserDto {
   @Transform(({ value }) => value?.toLowerCase())
   @IsNotEmpty()
   @IsAlphanumeric()

@@ -11,9 +11,9 @@ import { BaseEntity } from 'src/common/entities/base.entity';
 export enum Roles {
   Customer = 'customer',
   Admin = 'admin',
-  ContentManager = 'content-manager',
-  InventoryManager = 'inventory-manager',
-  OrderManager = 'order-manager',
+  ContentManager = 'content_manager',
+  InventoryManager = 'inventory_manager',
+  OrderManager = 'order_manager',
   Publisher = 'publisher',
 }
 

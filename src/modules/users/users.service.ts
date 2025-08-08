@@ -191,7 +191,8 @@ export class UsersService {
     const skip = (page - 1) * limit;
     const [books, count] = await this.bookmarkRepo.findAndCount({
       where: {
-        userId
+        userId,
+        type
       },
       relations: {
         book: true
