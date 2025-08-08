@@ -1,6 +1,5 @@
 import {
   Body,
-  ClassSerializerInterceptor,
   Controller,
   DefaultValuePipe,
   Delete,
@@ -10,16 +9,13 @@ import {
   Patch,
   Post,
   Query,
-  Req,
   UseGuards,
-  UseInterceptors,
 } from '@nestjs/common';
 import { ReviewsService } from './reviews.service';
 import { CreateBookReviewDto } from './dtos/create-review.dto';
 import { ReviewableType } from './entities/review.entity';
-import { ApiBearerAuth, ApiOkResponse, ApiOperation } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '../auth/guards/auth.guard';
-import { Request } from 'express';
 import { ApiQueryPagination } from 'src/common/decorators/query.decorators';
 import {
   GetBlogReviewsResponseDto,
@@ -34,6 +30,7 @@ import { SoftAuthGuard } from '../auth/guards/soft-auth.guard';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 
 @Controller('reviews')
+@ApiTags('Review')
 export class ReviewsController {
   constructor(private reviewsService: ReviewsService) {}
 
