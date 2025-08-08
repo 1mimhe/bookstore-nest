@@ -1,5 +1,10 @@
-import { JwtPayload as JwtP  } from "jsonwebtoken";
+import 'jsonwebtoken';
+import { RolesEnum } from 'src/modules/users/entities/role.entity';
 
-export interface JwtPayload extends JwtP {
-  username: string
+declare module 'jsonwebtoken' {
+  interface JwtPayload {
+    sub?: string;
+    username: string;
+    roles: RolesEnum[];
+  }
 }

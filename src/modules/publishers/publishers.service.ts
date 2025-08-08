@@ -2,7 +2,7 @@ import { BadRequestException, ConflictException, Injectable, NotFoundException }
 import { InjectRepository } from '@nestjs/typeorm';
 import { Publisher } from './publisher.entity';
 import { EntityManager, EntityNotFoundError, FindOptionsWhere, Repository } from 'typeorm';
-import { Roles } from '../users/entities/role.entity';
+import { RolesEnum } from '../users/entities/role.entity';
 import { User } from '../users/entities/user.entity';
 import { SignupPublisherDto } from './dtos/create-publisher.dto';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
@@ -33,7 +33,7 @@ export class PublishersService {
   ): Promise<Publisher | never> {
     return this.authService.signup(
       userDto,
-      [Roles.Publisher],
+      [RolesEnum.Publisher],
       async (user: User, manager: EntityManager) => {
         const publisher = manager.create(Publisher, {
           userId: user.id,

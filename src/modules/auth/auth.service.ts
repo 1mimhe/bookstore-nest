@@ -5,16 +5,16 @@ import {
 } from '@nestjs/common';
 import { DataSource, EntityManager, FindOptionsWhere, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { SignupUserDto } from './dto/sign-up.dto';
+import { SignupUserDto } from './dtos/sign-up.dto';
 import { pbkdf2, randomBytes } from 'crypto';
-import { SigninDto } from './dto/sign-in.dto';
+import { SigninDto } from './dtos/sign-in.dto';
 import { AuthMessages } from 'src/common/enums/error.messages';
 import { Publisher } from '../publishers/publisher.entity';
 import { User } from '../users/entities/user.entity';
-import { Roles } from '../users/entities/role.entity';
-import { TokenService } from './token.service';
+import { RolesEnum } from '../users/entities/role.entity';
 import { ConflictDto } from 'src/common/dtos/error.dtos';
 import { Staff } from '../staffs/entities/staff.entity';
+import { TokenService } from '../token/token.service';
 
 type AdditionalEntity = Publisher | Staff;
 
@@ -28,18 +28,18 @@ export class AuthService {
 
   async signup(
     userDto: SignupUserDto,
-    roles?: Roles[]
+    roles?: RolesEnum[]
   ): Promise<User>;
 
   async signup<T extends AdditionalEntity>(
     userDto: SignupUserDto,
-    roles: Roles[],
+    roles: RolesEnum[],
     additionalEntityCallback: (user: User, manager: EntityManager) => Promise<T>
   ): Promise<T>;
 
   async signup<T extends AdditionalEntity>(
     userDto: SignupUserDto, 
-    roles: Roles[] = [Roles.Customer],
+    roles: RolesEnum[] = [RolesEnum.Customer],
     additionalEntityCallback?: (user: User, manager: EntityManager) => Promise<T>
   ): Promise<User | T> {
     const { password, email, phoneNumber, ...userData } = userDto;
@@ -85,7 +85,11 @@ export class AuthService {
         { contact: { phoneNumber: identifier } },
       ],
       select: ['id', 'username', 'hashedPassword'],
-      relations: ['contact'],
+      relations: {
+        contact: true,
+        roles: true,
+        staff: true
+      }
     });
 
     if (!user) {
@@ -100,9 +104,11 @@ export class AuthService {
       throw new BadRequestException(AuthMessages.InvalidCredentials);
     }
 
+    const roles = user.roles.map(r => r.role);
     const payload = {
       sub: user.id,
       username: user.username,
+      roles
     };
     const refreshToken = this.tokenService['generateRefreshToken'](payload);
     const accessToken = this.tokenService['generateAccessToken'](payload);
@@ -111,6 +117,8 @@ export class AuthService {
       refreshToken,
       accessToken,
       userId: user.id,
+      staffId: user.staff?.id,
+      roles
     };
   }
 
@@ -200,5 +208,23 @@ export class AuthService {
         resolve(isCorrectPassword);
       });
     });
+  }
+
+  async createTestAdmin(
+    overrides: Partial<SignupUserDto> = {}
+  ): Promise<User> {
+    const defaultAdminData: SignupUserDto = {
+      username: 'admin',
+      password: 'AdminPass123!',
+      firstName: 'Admin',
+      email: 'admin@test.com',
+      phoneNumber: '+989123456789',
+      ...overrides,
+    };
+
+    return this.signup(
+      defaultAdminData,
+      [RolesEnum.Admin]
+    ) as Promise<User>;
   }
 }

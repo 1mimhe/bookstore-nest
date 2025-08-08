@@ -7,7 +7,7 @@ import {
 import { Request } from 'express';
 import { AuthMessages } from 'src/common/enums/error.messages';
 import { HeaderNames } from 'src/common/enums/header.names';
-import { TokenService } from '../token.service';
+import { TokenService } from 'src/modules/token/token.service';
 
 @Injectable()
 export class AuthGuard implements CanActivate {

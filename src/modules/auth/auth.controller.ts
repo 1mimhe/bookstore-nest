@@ -9,7 +9,7 @@ import {
   Res,
   Session,
 } from '@nestjs/common';
-import { SignupUserDto } from './dto/sign-up.dto';
+import { SignupUserDto } from './dtos/sign-up.dto';
 import { AuthService } from './auth.service';
 import {
   ApiBadRequestResponse,
@@ -22,18 +22,19 @@ import {
   ConflictResponseDto,
   ValidationErrorResponseDto,
 } from 'src/common/dtos/error.dtos';
-import { SigninDto } from './dto/sign-in.dto';
+import { SigninDto } from './dtos/sign-in.dto';
 import { AuthMessages } from 'src/common/enums/error.messages';
 import { Response } from 'express';
 import { CookieNames } from 'src/common/enums/cookie.names';
 import { ConfigService } from '@nestjs/config';
 import { SessionData } from 'express-session';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
-import { AccessTokenDto } from '../auth/dto/access-token.dto';
+import { AccessTokenDto } from './dtos/access-token.dto';
 import { Cookies } from 'src/common/decorators/cookies.decorator';
 import { ConflictMessages } from 'src/common/enums/error.messages';
 import { UserResponseDto } from '../users/dtos/user-response.dto';
-import { TokenService } from './token.service';
+import { TokenService } from '../token/token.service';
+import { SigninTestDto } from './dtos/sign-up-test.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -90,9 +91,15 @@ export class AuthController {
       throw new BadRequestException(AuthMessages.AlreadyAuthorized);
     }
 
-    const { accessToken, refreshToken, userId } = await this.authService.signin(body);
+    const {
+      accessToken, refreshToken,
+      userId, staffId, roles
+    } = await this.authService.signin(body);
+
     session.userId = userId;
+    session.staffId = staffId;
     session.refreshToken = refreshToken;
+    session.roles = roles;
 
     res.cookie(CookieNames.RefreshToken, refreshToken, {
       httpOnly: true,
@@ -135,7 +142,11 @@ export class AuthController {
     @Session() session: SessionData,
     @Res({ passthrough: true }) res: Response
   ) {
-    const { accessToken, refreshToken, expirationTime } = this.tokenService.refreshTokens(oldRefreshToken, session);
+    const {
+      accessToken,
+      refreshToken,
+      expirationTime
+    } = this.tokenService.refreshTokens(oldRefreshToken, session);
 
     session.refreshToken = refreshToken;
     res.cookie(CookieNames.RefreshToken, refreshToken, {
@@ -148,5 +159,13 @@ export class AuthController {
     return {
       accessToken
     };
+  }
+
+  @ApiOperation({
+    summary: 'Just for test.'
+  })
+  @Post('signup-test-admin')
+  async createTestAdmin(@Body() overrides: SigninTestDto) {
+    return this.authService.createTestAdmin(overrides);
   }
 }

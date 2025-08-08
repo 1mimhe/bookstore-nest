@@ -1,15 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ArrayMinSize, ArrayNotEmpty, IsEnum, IsNotEmpty, IsNumberString } from 'class-validator';
-import { SignupUserDto } from 'src/modules/auth/dto/sign-up.dto';
-import { Roles } from 'src/modules/users/entities/role.entity';
+import { SignupUserDto } from 'src/modules/auth/dtos/sign-up.dto';
+import { RolesEnum } from 'src/modules/users/entities/role.entity';
 
-type StaffRoleType = Roles.ContentManager | 
-  Roles.InventoryManager | Roles.OrderManager;
+type StaffRoleType = RolesEnum.ContentManager | 
+  RolesEnum.InventoryManager | RolesEnum.OrderManager;
 
 export enum StaffRoles {
-  ContentManager = Roles.ContentManager,
-  InventoryManager = Roles.InventoryManager,
-  OrderManager = Roles.OrderManager
+  ContentManager = RolesEnum.ContentManager,
+  InventoryManager = RolesEnum.InventoryManager,
+  OrderManager = RolesEnum.OrderManager
 }
 
 export class SignupStaffDto extends SignupUserDto {

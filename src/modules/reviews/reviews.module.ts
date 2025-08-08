@@ -6,12 +6,12 @@ import { Review } from './entities/review.entity';
 import { ReviewReaction } from './entities/review-reaction.entity';
 import { CurrentUserMiddleware } from 'src/common/middlewares/current-user.middleware';
 import { UsersModule } from '../users/users.module';
-import { AuthModule } from '../auth/auth.module';
+import { TokenModule } from '../token/token.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Review, ReviewReaction]),
-    AuthModule,
+    TokenModule,
     UsersModule,
   ],
   controllers: [ReviewsController],

@@ -8,7 +8,7 @@ import {
 import { User } from './user.entity';
 import { BaseEntity } from 'src/common/entities/base.entity';
 
-export enum Roles {
+export enum RolesEnum {
   Customer = 'customer',
   Admin = 'admin',
   ContentManager = 'content_manager',
@@ -22,9 +22,9 @@ export enum Roles {
 export class Role extends BaseEntity {
   @Column({
     type: 'enum',
-    enum: Roles,
+    enum: RolesEnum,
   })
-  role: Roles;
+  role: RolesEnum;
 
   @Column('uuid')
   userId: string;

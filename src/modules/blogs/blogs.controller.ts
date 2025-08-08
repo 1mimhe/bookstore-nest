@@ -1,14 +1,42 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { BlogsService } from './blogs.service';
 import { CreateBlogDto } from './dtos/create-blog.dto';
-import { ApiBadRequestResponse, ApiConflictResponse, ApiNotFoundResponse, ApiOperation } from '@nestjs/swagger';
+import {
+  ApiBadRequestResponse,
+  ApiConflictResponse,
+  ApiNotFoundResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { ValidationErrorResponseDto } from 'src/common/dtos/error.dtos';
-import { ConflictMessages, NotFoundMessages } from 'src/common/enums/error.messages';
+import {
+  ConflictMessages,
+  NotFoundMessages,
+} from 'src/common/enums/error.messages';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
-import { BlogCompactResponseDto, BlogResponseDto } from './dtos/blog-response.dto';
+import {
+  BlogCompactResponseDto,
+  BlogResponseDto,
+} from './dtos/blog-response.dto';
 import { UpdateBlogDto } from './dtos/update-blog.dto';
+import { RequiredRoles } from 'src/common/decorators/roles.decorator';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { AuthGuard } from '../auth/guards/auth.guard';
+import { RolesEnum } from '../users/entities/role.entity';
 
 @Controller('blogs')
+@ApiTags('Blog')
 export class BlogsController {
   constructor(private blogsService: BlogsService) {}
 
@@ -31,10 +59,12 @@ export class BlogsController {
     description: ConflictMessages.Slug,
   })
   @Serialize(BlogCompactResponseDto)
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequiredRoles(RolesEnum.Admin, RolesEnum.ContentManager, RolesEnum.Publisher)
   @HttpCode(HttpStatus.CREATED)
   @Post()
   async createBlog(
-    @Body() body: CreateBlogDto
+    @Body() body: CreateBlogDto,
   ): Promise<BlogCompactResponseDto> {
     return this.blogsService.create(body);
   }
@@ -47,7 +77,9 @@ export class BlogsController {
   })
   @Serialize(BlogResponseDto)
   @Get('id/:id')
-  async getBlogById(@Param('id', ParseUUIDPipe) id: string): Promise<BlogResponseDto> {
+  async getBlogById(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<BlogResponseDto> {
     return this.blogsService.get({ id });
   }
 
@@ -82,10 +114,12 @@ export class BlogsController {
     description: ConflictMessages.Slug,
   })
   @Serialize(BlogCompactResponseDto)
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequiredRoles(RolesEnum.Admin, RolesEnum.ContentManager)
   @Patch(':id')
   async updateBlog(
-    @Param('id', ParseUUIDPipe) id: string, 
-    @Body() body: UpdateBlogDto
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: UpdateBlogDto,
   ): Promise<BlogCompactResponseDto> {
     return this.blogsService.update(id, body);
   }

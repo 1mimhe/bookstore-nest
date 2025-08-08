@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 import { HeaderNames } from 'src/common/enums/header.names';
-import { TokenService } from '../token.service';
+import { TokenService } from 'src/modules/token/token.service';
 
 @Injectable()
 export class SoftAuthGuard implements CanActivate {

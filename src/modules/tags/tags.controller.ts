@@ -12,17 +12,23 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { TagsService } from './tags.service';
 import { CreateTagDto } from './dtos/create-tag.dto';
-import { ApiOperation, ApiQuery } from '@nestjs/swagger';
+import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { TagType } from './tag.entity';
 import { UpdateTagDto } from './dtos/update-tag.dto';
 import { ApiQueryPagination } from 'src/common/decorators/query.decorators';
 import { TagCompactResponseDto, TagResponseDto } from './dtos/tag-response.dto';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
+import { RolesEnum } from '../users/entities/role.entity';
+import { RequiredRoles } from 'src/common/decorators/roles.decorator';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { AuthGuard } from '../auth/guards/auth.guard';
 
 @Controller('tags')
+@ApiTags('Tag')
 export class TagsController {
   constructor(private tagsService: TagsService) {}
 
@@ -41,6 +47,11 @@ export class TagsController {
       - system_tags => e.g. Festival Sales, Recommended Books, Bestsellers, New Releases, Signed Editions, etc.\n
     `,
   })
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequiredRoles(
+    RolesEnum.Admin,
+    RolesEnum.ContentManager,
+  )
   @HttpCode(HttpStatus.CREATED)
   @Post()
   async createTag(@Body() body: CreateTagDto): Promise<TagCompactResponseDto> {
@@ -57,6 +68,11 @@ export class TagsController {
     description: 'The type of tags to retrieve (optional).',
   })
   @Serialize(TagCompactResponseDto)
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequiredRoles(
+    RolesEnum.Admin,
+    RolesEnum.ContentManager,
+  )
   @Get()
   async getAllTags(
     @Query('type', new ParseEnumPipe(TagType, { optional: true }))
@@ -70,6 +86,11 @@ export class TagsController {
   })
   @ApiQueryPagination()
   @Serialize(TagResponseDto)
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequiredRoles(
+    RolesEnum.Admin,
+    RolesEnum.ContentManager,
+  )
   @Get(':slug')
   async getTagByName(
     @Param('slug') slug: string,
@@ -83,6 +104,11 @@ export class TagsController {
     summary: 'Update a tag by id',
   })
   @Serialize(TagResponseDto)
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequiredRoles(
+    RolesEnum.Admin,
+    RolesEnum.ContentManager,
+  )
   @Patch(':id')
   async updateTag(
     @Param('id', ParseUUIDPipe) id: string,

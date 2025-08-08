@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Staff } from './entities/staff.entity';
 import { StaffAction } from './entities/staff-action.entity';
 import { AuthModule } from '../auth/auth.module';
+import { TokenModule } from '../token/token.module';
 
 @Module({
   imports: [
@@ -12,7 +13,8 @@ import { AuthModule } from '../auth/auth.module';
       Staff,
       StaffAction,
     ]),
-    AuthModule
+    AuthModule,
+    TokenModule
   ],
   controllers: [StaffsController],
   providers: [StaffsService],

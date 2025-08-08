@@ -13,7 +13,6 @@ import {
   Patch,
   Post,
   Query,
-  Req,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -23,6 +22,7 @@ import {
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiTags,
 } from '@nestjs/swagger';
 import { ConflictMessages } from 'src/common/enums/error.messages';
 import { TitlesService } from './titles.service';
@@ -42,9 +42,13 @@ import { UpdateCharacterDto } from './dtos/update-character.dto';
 import { CharacterCompactResponseDto, CharacterResponseDto } from './dtos/character-response.dto';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { BookmarkDto } from './dtos/bookmark.dto';
-import { Request } from 'express';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { RequiredRoles } from 'src/common/decorators/roles.decorator';
+import { RolesEnum } from '../users/entities/role.entity';
 
 @Controller('books')
+@ApiTags('Book')
 export class BooksController {
   constructor(
     private titlesService: TitlesService,
@@ -52,7 +56,7 @@ export class BooksController {
   ) {}
 
   @ApiOperation({
-    summary: 'Create a title',
+    summary: 'Create a title (For Admin, ContentManager, InventoryManager)',
   })
   @ApiBadRequestResponse({
     type: ValidationErrorResponseDto,
@@ -64,6 +68,12 @@ export class BooksController {
     description: ConflictMessages.Slug,
   })
   @Serialize(TitleCompactResponseDto)
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequiredRoles(
+    RolesEnum.Admin,
+    RolesEnum.ContentManager,
+    RolesEnum.InventoryManager
+  )
   @HttpCode(HttpStatus.CREATED)
   @Post('titles')
   async createTitle(
@@ -124,7 +134,7 @@ export class BooksController {
   }
 
   @ApiOperation({
-    summary: 'Update a title',
+    summary: 'Update a title (For Admin and ContentManager)',
     description: 'It override authors, features and quotes; tags and characters will be merged if included.',
   })
   @ApiBadRequestResponse({
@@ -140,6 +150,11 @@ export class BooksController {
     description: ConflictMessages.Slug,
   })
   @Serialize(TitleCompactResponseDto)
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequiredRoles(
+    RolesEnum.Admin,
+    RolesEnum.ContentManager,
+  )
   @Patch('titles/:id')
   async updateTitle(
     @Param('id', ParseUUIDPipe) id: string,
@@ -149,9 +164,14 @@ export class BooksController {
   }
 
   @ApiOperation({
-    summary: 'Delete a tag from a title',
+    summary: 'Delete a tag from a title (For Admin and ContentManager)',
     description: 'Doesn\'t retrieve anything at all.'
   })
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequiredRoles(
+    RolesEnum.Admin,
+    RolesEnum.ContentManager,
+  )
   @Delete('titles/:titleId/tags/:tagId')
   async deleteTagFromTitle(
     @Param('titleId', ParseUUIDPipe) titleId: string,
@@ -161,9 +181,14 @@ export class BooksController {
   }
 
   @ApiOperation({
-    summary: 'Delete a character from a title',
+    summary: 'Delete a character from a title (For Admin and ContentManager)',
     description: 'Doesn\'t retrieve anything at all.'
   })
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequiredRoles(
+    RolesEnum.Admin,
+    RolesEnum.ContentManager,
+  )
   @Delete('titles/:titleId/characters/:characterId')
   async deleteCharacterFromTitle(
     @Param('titleId', ParseUUIDPipe) titleId: string,
@@ -173,7 +198,7 @@ export class BooksController {
   }
 
   @ApiOperation({
-    summary: 'Create a book',
+    summary: 'Create a book (For Admin, ContentManager and InventoryManager)',
   })
   @ApiBadRequestResponse({
     type: ValidationErrorResponseDto,
@@ -194,6 +219,12 @@ export class BooksController {
     description: ConflictMessages.ISBN,
   })
   @Serialize(BookResponseDto)
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequiredRoles(
+    RolesEnum.Admin,
+    RolesEnum.ContentManager,
+    RolesEnum.InventoryManager,
+  )
   @HttpCode(HttpStatus.CREATED)
   @Post()
   async createBook(
@@ -203,7 +234,7 @@ export class BooksController {
   }
 
   @ApiOperation({
-    summary: 'Update a book',
+    summary: 'Update a book (For Admin, ContentManager and InventoryManager)',
     description: 'It override translators and merge book images if included.',
   })
   @ApiBadRequestResponse({
@@ -225,6 +256,12 @@ export class BooksController {
     description: ConflictMessages.ISBN,
   })
   @Serialize(BookResponseDto)
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequiredRoles(
+    RolesEnum.Admin,
+    RolesEnum.ContentManager,
+    RolesEnum.InventoryManager,
+  )
   @Patch(':id')
   async updateBook(
     @Param('id', ParseUUIDPipe) id: string,
@@ -234,12 +271,17 @@ export class BooksController {
   }
 
   @ApiOperation({
-    summary: 'Delete a book image by id',
+    summary: 'Delete a book image by id (For Admin and ContentManager)',
   })
   @ApiNotFoundResponse({
     description: NotFoundMessages.BookImage,
   })
   @Serialize(ImageResponseDto)
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequiredRoles(
+    RolesEnum.Admin,
+    RolesEnum.ContentManager,
+  )
   @Delete('images/:id')
   async deleteBookImage(
     @Param('id', ParseUUIDPipe) id: string
@@ -248,13 +290,18 @@ export class BooksController {
   }
 
   @ApiOperation({
-    summary: 'Create a book character',
+    summary: 'Create a book character (For Admin and ContentManager)',
   })
   @ApiBadRequestResponse({
     type: ValidationErrorResponseDto,
   })
   @HttpCode(HttpStatus.CREATED)
   @Serialize(CharacterCompactResponseDto)
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequiredRoles(
+    RolesEnum.Admin,
+    RolesEnum.ContentManager,
+  )
   @Post('characters')
   async createBookCharacter(
     @Body() body: CreateCharacterDto
@@ -301,7 +348,7 @@ export class BooksController {
   }
 
   @ApiOperation({
-    summary: 'Update a character by its id',
+    summary: 'Update a character by its id (For Admin and ContentManager)',
   })
   @ApiBadRequestResponse({
     type: ValidationErrorResponseDto,
@@ -309,6 +356,11 @@ export class BooksController {
   @ApiNotFoundResponse({
     description: NotFoundMessages.Character
   })
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequiredRoles(
+    RolesEnum.Admin,
+    RolesEnum.ContentManager,
+  )
   @Serialize(CharacterCompactResponseDto)
   @Patch('characters/:id')
   async updateBookCharacter(
@@ -319,7 +371,7 @@ export class BooksController {
   }
 
   @ApiOperation({
-    summary: 'Bookmark a book',
+    summary: 'Bookmark a book (For all authorized users)',
   })
   @ApiBearerAuth()
   @UseGuards(AuthGuard)
@@ -327,14 +379,13 @@ export class BooksController {
   async bookmark
   (
     @Body() body: BookmarkDto,
-    @Req() req: Request
+    @CurrentUser('id') userId: string
   ) {
-    const userId = req.user?.id;
     return this.booksService.bookmark(userId!, body);
   }
 
   @ApiOperation({
-    summary: 'Delete a bookmark (unbookmark) by bookId',
+    summary: 'Delete a bookmark (unbookmark) by bookId (For all authorized users)',
   })
   @ApiBearerAuth()
   @UseGuards(AuthGuard)
@@ -342,9 +393,8 @@ export class BooksController {
   async unbookmark
   (
     @Param('id', ParseUUIDPipe) bookId: string,
-    @Req() req: Request
+    @CurrentUser('id') userId: string
   ) {
-    const userId = req.user?.id;
     return this.booksService.unbookmark(userId!, bookId);
   }
 }

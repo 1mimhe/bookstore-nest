@@ -4,9 +4,16 @@ import { BlogsService } from './blogs.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Blog } from './blog.entity';
 import { Review } from '../reviews/entities/review.entity';
+import { TokenModule } from '../token/token.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Blog, Review])],
+  imports: [
+    TypeOrmModule.forFeature([
+      Blog,
+      Review
+    ]),
+    TokenModule,
+  ],
   controllers: [BlogsController],
   providers: [BlogsService]
 })

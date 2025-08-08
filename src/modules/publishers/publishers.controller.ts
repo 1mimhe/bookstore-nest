@@ -10,6 +10,7 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { PublishersService } from './publishers.service';
 import {
@@ -18,6 +19,7 @@ import {
   ApiNotFoundResponse,
   ApiOperation,
   ApiQuery,
+  ApiTags,
 } from '@nestjs/swagger';
 import { SignupPublisherDto } from './dtos/create-publisher.dto';
 import {
@@ -30,8 +32,13 @@ import { UpdatePublisherDto } from './dtos/update-publisher.dto';
 import { ConflictMessages } from 'src/common/enums/error.messages';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
 import { ApiQueryComplete, ApiQueryPagination } from 'src/common/decorators/query.decorators';
+import { AuthGuard } from '../auth/guards/auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { RequiredRoles } from 'src/common/decorators/roles.decorator';
+import { RolesEnum } from '../users/entities/role.entity';
 
 @Controller('publishers')
+@ApiTags('Publisher')
 export class PublishersController {
   constructor(private publishersService: PublishersService) {}
 
@@ -53,6 +60,8 @@ export class PublishersController {
     type: ValidationErrorResponseDto,
   })
   @Serialize(CreatePublisherResponseDto)
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequiredRoles(RolesEnum.Admin, RolesEnum.ContentManager)
   @Post('signup')
   async signup(
     @Body() body: SignupPublisherDto
@@ -135,6 +144,12 @@ export class PublishersController {
     description: NotFoundMessages.Publisher
   })
   @Serialize(PublisherCompactResponseDto)
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequiredRoles(
+    RolesEnum.Admin,
+    RolesEnum.ContentManager,
+    RolesEnum.Publisher
+  )
   @Patch(':id')
   async updatePublisher(
     @Param('id', ParseUUIDPipe) id: string,

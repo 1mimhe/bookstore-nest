@@ -16,6 +16,7 @@ import { Bookmark } from './entities/bookmark.entity';
 import { CurrentUserMiddleware } from 'src/common/middlewares/current-user.middleware';
 import { AuthModule } from '../auth/auth.module';
 import { UsersModule } from '../users/users.module';
+import { TokenModule } from '../token/token.module';
 
 @Module({
   imports: [
@@ -30,8 +31,8 @@ import { UsersModule } from '../users/users.module';
       Character,
       Bookmark
     ]),
-    AuthModule,
     UsersModule,
+    TokenModule,
   ],
   controllers: [BooksController],
   providers: [LanguagesService, TitlesService, BooksService],
