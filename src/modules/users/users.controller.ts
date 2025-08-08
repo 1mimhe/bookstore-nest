@@ -32,7 +32,7 @@ import { UpdateAddressDto } from './dtos/update-address.dto';
 import { UpdateUserDto } from './dtos/update-user.dto';
 import { ApiQueryPagination } from 'src/common/decorators/query.decorators';
 import { BookmarkTypes } from '../books/entities/bookmark.entity';
-import { BookmarkDto } from './dtos/bookmark.dto';
+import { BookmarksDto } from './dtos/bookmark.dto';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 
 @Controller('users')
@@ -113,11 +113,11 @@ export class UsersController {
     summary: 'Get all user bookmarks by its type',
   })
   @ApiOkResponse({
-    type: BookmarkDto
+    type: BookmarksDto
   })
   @ApiQueryPagination()
   @ApiBearerAuth()
-  @Serialize(BookmarkDto)
+  @Serialize(BookmarksDto)
   @Get('bookmarks/:type')
   async getAllBookmarks(
     @Param('type', new ParseEnumPipe(BookmarkTypes)) type: BookmarkTypes,
