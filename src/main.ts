@@ -18,6 +18,7 @@ async function bootstrap() {
       description: 'Enter JWT access token',
       in: 'header',
     })
+    .addTag('Author', 'Manage authors and translators (Admin/Staff: full access; All users: read-only)')
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, documentFactory);

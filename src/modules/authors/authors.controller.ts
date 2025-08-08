@@ -13,14 +13,15 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { CreateAuthorDto } from './dtos/create-author.dto';
-import { Author } from './author.entity';
 import { AuthorsService } from './authors.service';
 import {
   ApiConflictResponse,
   ApiNotFoundResponse,
   ApiOperation,
+  ApiTags,
 } from '@nestjs/swagger';
 import { UpdateAuthorDto } from './dtos/update-author.dto';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
@@ -35,8 +36,13 @@ import {
   AuthorResponseDto,
 } from './dtos/author-response.dto';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
+import { AuthGuard } from '../auth/guards/auth.guard';
+import { RolesGuard } from '../auth/guards/roles.gaurd';
+import { RequiredRoles } from 'src/common/decorators/roles.decorator';
+import { RolesEnum } from '../users/entities/role.entity';
 
 @Controller('authors')
+@ApiTags('Author')
 export class AuthorsController {
   constructor(private authorsService: AuthorsService) {}
 
@@ -49,6 +55,8 @@ export class AuthorsController {
     description: ConflictMessages.Slug,
   })
   @Serialize(AuthorResponseDto)
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequiredRoles(RolesEnum.Admin, RolesEnum.ContentManager)
   @HttpCode(HttpStatus.CREATED)
   @Post()
   async createAuthor(
@@ -120,6 +128,8 @@ export class AuthorsController {
     description: NotFoundMessages.Author,
   })
   @Serialize(AuthorCompactResponseDto)
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequiredRoles(RolesEnum.Admin, RolesEnum.ContentManager)
   @Patch(':id')
   async updateAuthor(
     @Param('id', ParseUUIDPipe) id: string,
@@ -135,6 +145,8 @@ export class AuthorsController {
     description: NotFoundMessages.Author,
   })
   @Serialize(AuthorCompactResponseDto)
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequiredRoles(RolesEnum.Admin, RolesEnum.ContentManager)
   @Delete(':id')
   async deleteAuthor(
     @Param('id', ParseUUIDPipe) id: string
