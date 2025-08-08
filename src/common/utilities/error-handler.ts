@@ -39,6 +39,9 @@ export const dbErrorHandler = (error) => {
     if (error.message.includes('parentReviewId')) {
       throw new NotFoundException(NotFoundMessages.ParentReview);
     }
+    if (error.message.includes('staffId')) {
+      throw new NotFoundException(NotFoundMessages.Staff);
+    }
   }
 
   throw error;
