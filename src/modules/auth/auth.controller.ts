@@ -34,6 +34,7 @@ import { Cookies } from 'src/common/decorators/cookies.decorator';
 import { ConflictMessages } from 'src/common/enums/error.messages';
 import { UserResponseDto } from '../users/dtos/user-response.dto';
 import { TokenService } from '../token/token.service';
+import { SigninTestDto } from './dtos/sign-up-test.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -164,7 +165,7 @@ export class AuthController {
     summary: 'Just for test.'
   })
   @Post('signup-test-admin')
-  async createTestAdmin(@Body() overrides: Partial<SignupUserDto> = {}) {
+  async createTestAdmin(@Body() overrides: SigninTestDto) {
     return this.authService.createTestAdmin(overrides);
   }
 }
