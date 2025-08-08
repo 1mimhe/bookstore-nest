@@ -159,4 +159,12 @@ export class AuthController {
       accessToken
     };
   }
+
+  @ApiOperation({
+    summary: 'Just for test.'
+  })
+  @Post('signup-test-admin')
+  async createTestAdmin(@Body() overrides: Partial<SignupUserDto> = {}) {
+    return this.authService.createTestAdmin(overrides);
+  }
 }

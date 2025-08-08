@@ -209,4 +209,22 @@ export class AuthService {
       });
     });
   }
+
+  async createTestAdmin(
+    overrides: Partial<SignupUserDto> = {}
+  ): Promise<User> {
+    const defaultAdminData: SignupUserDto = {
+      username: 'admin',
+      password: 'AdminPass123!',
+      firstName: 'Admin',
+      email: 'admin@test.com',
+      phoneNumber: '+989123456789',
+      ...overrides,
+    };
+
+    return this.signup(
+      defaultAdminData,
+      [RolesEnum.Admin]
+    ) as Promise<User>;
+  }
 }
