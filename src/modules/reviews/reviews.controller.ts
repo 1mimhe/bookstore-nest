@@ -30,7 +30,7 @@ import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 import { UpdateReviewDto } from './dtos/update-review.dto';
 import { ReactToReviewDto } from './dtos/react-review.dto';
 import { ChangeReactionDto } from './dtos/change-reaction.dto';
-import { OptionalAuthGuard } from '../auth/guards/soft-auth.guard';
+import { SoftAuthGuard } from '../auth/guards/soft-auth.guard';
 
 @Controller('reviews')
 export class ReviewsController {
@@ -84,7 +84,7 @@ export class ReviewsController {
   })
   @ApiQueryPagination()
   @ApiBearerAuth()
-  @UseGuards(OptionalAuthGuard)
+  @UseGuards(SoftAuthGuard)
   @Serialize(GetBookReviewsResponseDto)
   @Get('books/:id')
   async getBookReviews(
@@ -111,7 +111,7 @@ export class ReviewsController {
   })
   @ApiQueryPagination()
   @ApiBearerAuth()
-  @UseGuards(OptionalAuthGuard)
+  @UseGuards(SoftAuthGuard)
   @Serialize(GetBlogReviewsResponseDto)
   @Get('blogs/:id')
   async getBlogReviews(
@@ -138,7 +138,7 @@ export class ReviewsController {
   })
   @ApiQueryPagination()
   @ApiBearerAuth()
-  @UseGuards(OptionalAuthGuard)
+  @UseGuards(SoftAuthGuard)
   @Serialize(ReviewResponseDto)
   @Get('replies/:id')
   async getAllReviewReplies(

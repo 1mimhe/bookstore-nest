@@ -8,7 +8,7 @@ import { HeaderNames } from 'src/common/enums/header.names';
 import { TokenService } from '../token.service';
 
 @Injectable()
-export class OptionalAuthGuard implements CanActivate {
+export class SoftAuthGuard implements CanActivate {
   constructor(private tokenService: TokenService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
