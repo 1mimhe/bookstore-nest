@@ -26,6 +26,7 @@ async function bootstrap() {
     .addTag('Language', 'Language management (For Admin)')
     .addTag('Tag', 'Tag management (Admin, Content Manager: full access; All users: read-only)')
     .addTag('Blog', 'Blog management (Admin, Content Manager: full access; Publisher: create blog; All users: read-only)')
+    .addTag('Collection', 'Collection management (Admin, Content Manager: full access; All users: read-only)')
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, documentFactory);
