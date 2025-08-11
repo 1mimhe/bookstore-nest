@@ -29,12 +29,6 @@ export class ReviewsService {
       content
     }: CreateReviewDto
   ): Promise<Review | never> {
-    const entityLike = {
-      userId,
-      reviewableType,
-      parentReviewId,
-      content
-    } as DeepPartial<Review>;
     return this.dataSource.transaction(async manager => {
       const entityLike: DeepPartial<Review> = {
         userId,
