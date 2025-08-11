@@ -371,6 +371,7 @@ export class BooksController {
   @ApiNotFoundResponse({
     description: NotFoundMessages.Character
   })
+  @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
   @RequiredRoles(
     RolesEnum.Admin,
@@ -380,9 +381,10 @@ export class BooksController {
   @Patch('characters/:id')
   async updateBookCharacter(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: UpdateCharacterDto
+    @Body() body: UpdateCharacterDto,
+    @Session() session: SessionData
   ): Promise<CharacterCompactResponseDto> {
-    return this.titlesService.updateCharacter(id, body);
+    return this.titlesService.updateCharacter(id, body, session.staffId);
   }
 
   @ApiOperation({
