@@ -183,11 +183,18 @@ export class ReviewsService {
     return this.dataSource.transaction(async manager => {
       const review = await this.getById(id, manager);
   
+      // Check user access
       if (review.userId !== userId) {
         throw new ForbiddenException(AuthMessages.AccessDenied);
       }
   
-      await this.incrementRepliesCount(review.parentReviewId, -1, manager);
+      if (review.reviewableType === ReviewableType.Book) {
+        await this.booksService.updateRate(review.bookId!, review.rate, -1, manager);
+      }
+
+      if (review.parentReviewId) {
+        await this.incrementRepliesCount(review.parentReviewId, -1, manager);
+      }
 
       return manager.softRemove(Review, review);
     });
