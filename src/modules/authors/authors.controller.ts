@@ -157,8 +157,9 @@ export class AuthorsController {
   @RequiredRoles(RolesEnum.Admin, RolesEnum.ContentManager)
   @Delete(':id')
   async deleteAuthor(
-    @Param('id', ParseUUIDPipe) id: string
+    @Param('id', ParseUUIDPipe) id: string,
+    @Session() session: SessionData
   ): Promise<AuthorCompactResponseDto> {
-    return this.authorsService.delete(id);
+    return this.authorsService.delete(id, session.staffId);
   }
 }

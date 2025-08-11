@@ -145,8 +145,27 @@ export class AuthorsService {
     });
   }
 
-  async delete(id: string): Promise<Author | never> {
-    const profile = await this.getById(id);
-    return this.authorRepo.softRemove(profile);
+  async delete(
+    id: string,
+    staffId?: string
+  ): Promise<Author | never> {
+    return this.dataSource.transaction(async manager => {
+      const author = await this.getById(id, manager);
+      const result = await manager.softRemove(Author, author);
+
+      if (staffId) {
+        await this.staffsService.createAction(
+          {
+          staffId,
+          type: StaffActionTypes.AuthorDeleted,
+          entityId: result.id,
+          entityType: EntityTypes.Author
+          },
+          manager
+        );
+      }
+
+      return result;
+    });
   }
 }
