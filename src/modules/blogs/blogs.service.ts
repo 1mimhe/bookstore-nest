@@ -98,7 +98,11 @@ export class BlogsService {
 
   async update(
     id: string,
-    { tags, ...blogDto }: UpdateBlogDto
+    {
+      tags,
+      ...blogDto
+    }: UpdateBlogDto,
+    staffId?: string
   ): Promise<Blog | never> {
     return this.dataSource.transaction(async (manager) => {
       const existingBlog = await manager.findOne(Blog, {
@@ -124,10 +128,24 @@ export class BlogsService {
       ) as Blog;
       updatedBlog.tags = [...(existingBlog.tags || []), ...(newTags || [])];
 
-      return manager.save(Blog, updatedBlog).catch((error) => {
-        dbErrorHandler(error);
-        throw error;
-      });
+      const dbBlog = await manager.save(Blog, updatedBlog);
+
+      if (staffId) {
+        await this.staffsService.createAction(
+          {
+          staffId,
+          type: StaffActionTypes.BlogUpdated,
+          entityId: dbBlog.id,
+          entityType: EntityTypes.Blog
+          },
+          manager
+        );
+      }
+
+      return dbBlog;
+    }).catch((error) => {
+      dbErrorHandler(error);
+      throw error;
     });     
   }
 }

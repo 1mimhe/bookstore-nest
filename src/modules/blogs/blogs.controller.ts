@@ -119,6 +119,7 @@ export class BlogsController {
   @ApiConflictResponse({
     description: ConflictMessages.Slug,
   })
+  @ApiBearerAuth()
   @Serialize(BlogCompactResponseDto)
   @UseGuards(AuthGuard, RolesGuard)
   @RequiredRoles(RolesEnum.Admin, RolesEnum.ContentManager)
@@ -126,7 +127,8 @@ export class BlogsController {
   async updateBlog(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: UpdateBlogDto,
+    @Session() session: SessionData
   ): Promise<BlogCompactResponseDto> {
-    return this.blogsService.update(id, body);
+    return this.blogsService.update(id, body, session.staffId);
   }
 }
