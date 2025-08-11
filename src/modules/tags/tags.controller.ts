@@ -109,6 +109,7 @@ export class TagsController {
   @ApiOperation({
     summary: 'Update a tag by id',
   })
+  @ApiBearerAuth()
   @Serialize(TagResponseDto)
   @UseGuards(AuthGuard, RolesGuard)
   @RequiredRoles(
@@ -119,7 +120,8 @@ export class TagsController {
   async updateTag(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: UpdateTagDto,
+    @Session() session: SessionData
   ): Promise<TagResponseDto> {
-    return this.tagsService.update(id, body);
+    return this.tagsService.update(id, body, session.staffId);
   }
 }
