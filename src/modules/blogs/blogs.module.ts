@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Blog } from './blog.entity';
 import { Review } from '../reviews/entities/review.entity';
 import { TokenModule } from '../token/token.module';
+import { StaffModule } from '../staffs/staffs.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { TokenModule } from '../token/token.module';
       Review
     ]),
     TokenModule,
+    StaffModule
   ],
   controllers: [BlogsController],
   providers: [BlogsService]
