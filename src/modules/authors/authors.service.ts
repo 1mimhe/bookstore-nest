@@ -35,10 +35,10 @@ export class AuthorsService {
       if (staffId) {
         await this.staffsService.createAction(
           {
-          staffId,
-          type: StaffActionTypes.AuthorCreated,
-          entityId: dbAuthor.id,
-          entityType: EntityTypes.Author
+            staffId,
+            type: StaffActionTypes.AuthorCreated,
+            entityId: dbAuthor.id,
+            entityType: EntityTypes.Author
           },
           manager
         );
@@ -129,10 +129,10 @@ export class AuthorsService {
       if (staffId) {
         await this.staffsService.createAction(
           {
-          staffId,
-          type: StaffActionTypes.AuthorUpdated,
-          entityId: dbAuthor.id,
-          entityType: EntityTypes.Author
+            staffId,
+            type: StaffActionTypes.AuthorUpdated,
+            entityId: dbAuthor.id,
+            entityType: EntityTypes.Author
           },
           manager
         );
@@ -156,10 +156,10 @@ export class AuthorsService {
       if (staffId) {
         await this.staffsService.createAction(
           {
-          staffId,
-          type: StaffActionTypes.AuthorDeleted,
-          entityId: result.id,
-          entityType: EntityTypes.Author
+            staffId,
+            type: StaffActionTypes.AuthorDeleted,
+            entityId: result.id,
+            entityType: EntityTypes.Author
           },
           manager
         );

@@ -19,6 +19,9 @@ import { Feature } from './entities/feature.entity';
 import { Character } from './entities/characters.entity';
 import { CreateCharacterDto } from './dtos/create-character.dto';
 import { UpdateCharacterDto } from './dtos/update-character.dto';
+import { dbErrorHandler } from 'src/common/utilities/error-handler';
+import { StaffsService } from '../staffs/staffs.service';
+import { EntityTypes, StaffActionTypes } from '../staffs/entities/staff-action.entity';
 
 @Injectable()
 export class TitlesService {
@@ -26,16 +29,20 @@ export class TitlesService {
     @InjectRepository(Title) private titleRepo: Repository<Title>,
     @InjectRepository(Character) private characterRepo: Repository<Character>,
     private dataSource: DataSource,
+    private staffsService: StaffsService
   ) {}
 
-  async create({
-    authorIds,
-    tags,
-    features = [],
-    quotes = [],
-    characterIds,
-    ...titleDto
-  }: CreateTitleDto): Promise<Title | never> {
+  async create(
+    {
+      authorIds,
+      tags,
+      features = [],
+      quotes = [],
+      characterIds,
+      ...titleDto
+    }: CreateTitleDto,
+    staffId?: string
+  ): Promise<Title | never> {
     return this.dataSource.transaction(async (manager) => {
       const authors = await manager.findBy(Author, {
         id: In(authorIds),
@@ -68,12 +75,24 @@ export class TitlesService {
         characters,
       });
 
-      return manager.save(Title, title).catch((error) => {
-        if (error.code === DBErrors.Conflict) {
-          throw new ConflictException(ConflictMessages.Slug);
-        }
-        throw error;
-      });
+      const dbTitle = await manager.save(Title, title);
+
+      if (staffId) {
+        await this.staffsService.createAction(
+          {
+            staffId,
+            type: StaffActionTypes.TitleCreated,
+            entityId: dbTitle.id,
+            entityType: EntityTypes.Title
+          },
+          manager
+        );
+      }
+
+      return dbTitle;
+    }).catch((error) => {
+      dbErrorHandler(error);
+      throw error;
     });
   }
 

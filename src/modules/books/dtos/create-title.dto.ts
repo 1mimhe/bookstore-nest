@@ -43,6 +43,7 @@ export class CreateTitleDto {
   @IsAlphanumeric(undefined, { each: true })
   quotes: string[];
 
+  @IsOptional()
   @IsArray()
   @ArrayMinSize(1)
   @IsUUID('4', { each: true })

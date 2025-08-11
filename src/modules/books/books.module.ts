@@ -14,9 +14,9 @@ import { Feature } from './entities/feature.entity';
 import { Character } from './entities/characters.entity';
 import { Bookmark } from './entities/bookmark.entity';
 import { CurrentUserMiddleware } from 'src/common/middlewares/current-user.middleware';
-import { AuthModule } from '../auth/auth.module';
 import { UsersModule } from '../users/users.module';
 import { TokenModule } from '../token/token.module';
+import { StaffModule } from '../staffs/staffs.module';
 
 @Module({
   imports: [
@@ -33,6 +33,7 @@ import { TokenModule } from '../token/token.module';
     ]),
     UsersModule,
     TokenModule,
+    StaffModule
   ],
   controllers: [BooksController],
   providers: [LanguagesService, TitlesService, BooksService],

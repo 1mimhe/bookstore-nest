@@ -13,6 +13,7 @@ import {
   Patch,
   Post,
   Query,
+  Session,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -46,6 +47,7 @@ import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { RequiredRoles } from 'src/common/decorators/roles.decorator';
 import { RolesEnum } from '../users/entities/role.entity';
+import { SessionData } from 'express-session';
 
 @Controller('books')
 @ApiTags('Book')
@@ -67,6 +69,7 @@ export class BooksController {
   @ApiConflictResponse({
     description: ConflictMessages.Slug,
   })
+  @ApiBearerAuth()
   @Serialize(TitleCompactResponseDto)
   @UseGuards(AuthGuard, RolesGuard)
   @RequiredRoles(
@@ -77,9 +80,10 @@ export class BooksController {
   @HttpCode(HttpStatus.CREATED)
   @Post('titles')
   async createTitle(
-    @Body() body: CreateTitleDto
+    @Body() body: CreateTitleDto,
+    @Session() session: SessionData
   ): Promise<TitleCompactResponseDto> {
-    return this.titlesService.create(body);
+    return this.titlesService.create(body, session.staffId);
   }
 
   @ApiOperation({
