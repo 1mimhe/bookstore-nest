@@ -238,7 +238,7 @@ export class BooksService {
   async updateRate(
     bookId: string,
     rate: number,
-    count: -1 | 1,
+    count: -1 | 0 | 1,
     manager: EntityManager
   ) {
     if (!Number.isInteger(rate) || rate < 1 || rate > 5) {

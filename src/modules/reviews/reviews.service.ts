@@ -151,19 +151,32 @@ export class ReviewsService {
     userId: string,
     reviewDto: UpdateReviewDto
   ): Promise<Review | never> {
-    const review = await this.getById(id);
+    return this.dataSource.transaction(async (manager: EntityManager) => {
+      const review = await this.getById(id, manager);
 
-    if (review.userId !== userId) {
-      throw new ForbiddenException(AuthMessages.AccessDenied);
-    }
+      // Check user access
+      if (review.userId !== userId) {
+        throw new ForbiddenException(AuthMessages.AccessDenied);
+      }
 
-    if (review.isEdited) {
-      throw new BadRequestException('Review is already edited before.');
-    }
+      // Check if review was already edited
+      if (review.isEdited) {
+        throw new BadRequestException('Review has already been edited.');
+      }
 
-    Object.assign(review, reviewDto);
-    review.isEdited = true;
-    return this.reviewRepo.save(review);
+      if (review.reviewableType === ReviewableType.Book && reviewDto.rate && reviewDto.rate !== review.rate) {
+        const rateDiff = reviewDto.rate - (review.rate ?? 0);
+        await this.booksService.updateRate(review.bookId!, rateDiff, 0, manager);
+      }
+
+      Object.assign(review, reviewDto);
+      review.isEdited = true;
+
+      return manager.save(Review, review);
+    }).catch(error => {
+      dbErrorHandler(error);
+      throw error;
+    });
   }
 
   async delete(id: string, userId: string) {
