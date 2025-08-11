@@ -110,6 +110,7 @@ export class CollectionsController {
   @ApiOperation({
     summary: 'Add a book to a collection',
   })
+  @ApiBearerAuth()
   @Serialize(CollectionBookCompactResponseDto)
   @UseGuards(AuthGuard, RolesGuard)
   @RequiredRoles(RolesEnum.Admin, RolesEnum.ContentManager)
@@ -118,8 +119,9 @@ export class CollectionsController {
   async createCollectionBook(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: CreateCollectionBookDto,
+    @Session() session: SessionData
   ): Promise<CollectionBookCompactResponseDto> {
-    return this.collectionsService.createCollectionBook(id, body);
+    return this.collectionsService.createCollectionBook(id, body, session.staffId);
   }
 
   @ApiOperation({

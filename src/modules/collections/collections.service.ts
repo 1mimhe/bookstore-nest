@@ -88,7 +88,8 @@ export class CollectionsService {
 
   async createCollectionBook(
     collectionId: string,
-    cbDto: CreateCollectionBookDto
+    cbDto: CreateCollectionBookDto,
+    staffId?: string
   ): Promise<CollectionBook | never> {
     return this.dataSource.transaction(async manager => {
       const result = await manager
@@ -104,7 +105,21 @@ export class CollectionsService {
         ...cbDto,
         order: maxOrder
       });
-      return manager.save(CollectionBook, cb);
+      const dbCB = await manager.save(CollectionBook, cb);
+
+      if (staffId) {
+        await this.staffsService.createAction(
+          {
+          staffId,
+          type: StaffActionTypes.CollectionUpdated,
+          entityId: dbCB.id,
+          entityType: EntityTypes.Collection
+          },
+          manager
+        );
+      }
+
+      return dbCB;
     }).catch((error: Error) => {
       dbErrorHandler(error);
       throw error;
