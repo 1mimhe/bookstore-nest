@@ -128,6 +128,7 @@ export class CollectionsController {
     summary: 'Update a collection book by its id',
     description: 'Id is a collection book id, not book id.',
   })
+  @ApiBearerAuth()
   @Serialize(CollectionBookCompactResponseDto)
   @UseGuards(AuthGuard, RolesGuard)
   @RequiredRoles(RolesEnum.Admin, RolesEnum.ContentManager)
@@ -142,6 +143,7 @@ export class CollectionsController {
   @ApiOperation({
     summary: 'Reorder collection books',
   })
+  @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
   @RequiredRoles(RolesEnum.Admin, RolesEnum.ContentManager)
   @Patch(':id/books/reorder')
@@ -156,6 +158,7 @@ export class CollectionsController {
     summary: 'Delete a book from a collection',
     description: 'Id is a collection book id, not book id.',
   })
+  @ApiBearerAuth()
   @Serialize(CollectionBookCompactResponseDto)
   @UseGuards(AuthGuard, RolesGuard)
   @RequiredRoles(RolesEnum.Admin, RolesEnum.ContentManager)
