@@ -8,18 +8,43 @@ import { CreateCollectionBookDto } from './dtos/create-collection-book.dto';
 import { dbErrorHandler } from 'src/common/utilities/error-handler';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
 import { UpdateCollectionBookDto } from './dtos/update-collection-book.dto';
+import { StaffsService } from '../staffs/staffs.service';
+import { EntityTypes, StaffActionTypes } from '../staffs/entities/staff-action.entity';
 
 @Injectable()
 export class CollectionsService {
   constructor(
     @InjectRepository(Collection) private collectionRepo: Repository<Collection>,
     @InjectRepository(CollectionBook) private collectionBookRepo: Repository<CollectionBook>,
-    private dataSource: DataSource
+    private dataSource: DataSource,
+    private staffsService: StaffsService
   ) {}
 
-  async create(collectionRepo: CreateCollectionDto): Promise<Collection | never> {
-    const collection =  this.collectionRepo.create(collectionRepo);
-    return this.collectionRepo.save(collection);
+  async create(
+    collectionRepo: CreateCollectionDto,
+    staffId?: string
+  ): Promise<Collection | never> {
+    return this.dataSource.transaction(async manager => {
+      const collection =  manager.create(Collection, collectionRepo);
+      const dbCollection = await manager.save(Collection, collection);
+
+      if (staffId) {
+        await this.staffsService.createAction(
+          {
+          staffId,
+          type: StaffActionTypes.CollectionCreated,
+          entityId: dbCollection.id,
+          entityType: EntityTypes.Collection
+          },
+          manager
+        );
+      }
+
+      return dbCollection;
+    }).catch(error => {
+      dbErrorHandler(error);
+      throw error;
+    });
   }
 
   async getAll(page = 1, limit = 10): Promise<Collection[]> {

@@ -13,10 +13,11 @@ import {
   Patch,
   Post,
   Query,
+  Session,
   UseGuards,
 } from '@nestjs/common';
 import { CollectionsService } from './collections.service';
-import { ApiNotFoundResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiNotFoundResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateCollectionDto } from './dtos/create-collection.dto';
 import { CreateCollectionBookDto } from './dtos/create-collection-book.dto';
 import { UpdateCollectionBookDto } from './dtos/update-collection-book.dto';
@@ -36,6 +37,7 @@ import { AuthGuard } from '../auth/guards/auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { RequiredRoles } from 'src/common/decorators/roles.decorator';
 import { RolesEnum } from '../users/entities/role.entity';
+import { SessionData } from 'express-session';
 
 @Controller('collections')
 @ApiTags('Collection')
@@ -45,6 +47,7 @@ export class CollectionsController {
   @ApiOperation({
     summary: 'Create an empty collection',
   })
+  @ApiBearerAuth()
   @Serialize(CollectionCompactResponseDto)
   @UseGuards(AuthGuard, RolesGuard)
   @RequiredRoles(RolesEnum.Admin, RolesEnum.ContentManager)
@@ -52,8 +55,9 @@ export class CollectionsController {
   @Post()
   async createCollection(
     @Body() body: CreateCollectionDto,
+    @Session() session: SessionData
   ): Promise<CollectionCompactResponseDto> {
-    return this.collectionsService.create(body);
+    return this.collectionsService.create(body, session.staffId);
   }
 
   @ApiOperation({
