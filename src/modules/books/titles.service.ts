@@ -243,9 +243,28 @@ export class TitlesService {
       .remove(characterId);
   }
 
-  async createCharacter(characterDto: CreateCharacterDto): Promise<Character | never> {
-    const character = this.characterRepo.create(characterDto);
-    return this.characterRepo.save(character);
+  async createCharacter(
+    characterDto: CreateCharacterDto,
+    staffId?: string
+  ): Promise<Character | never> {
+    return this.dataSource.transaction(async manager => {
+      const character = manager.create(Character, characterDto);
+      const dbCharacter = await manager.save(Character, character);
+
+      if (staffId) {
+        await this.staffsService.createAction(
+          {
+            staffId,
+            type: StaffActionTypes.CharacterCreated,
+            entityId: dbCharacter.id,
+            entityType: EntityTypes.Character
+          },
+          manager
+        );
+      }
+
+      return dbCharacter;
+    });
   }
 
   async getCharacter(

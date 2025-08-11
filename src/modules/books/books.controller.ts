@@ -288,6 +288,7 @@ export class BooksController {
   @ApiNotFoundResponse({
     description: NotFoundMessages.BookImage,
   })
+  @ApiBearerAuth()
   @Serialize(ImageResponseDto)
   @UseGuards(AuthGuard, RolesGuard)
   @RequiredRoles(
@@ -307,18 +308,20 @@ export class BooksController {
   @ApiBadRequestResponse({
     type: ValidationErrorResponseDto,
   })
-  @HttpCode(HttpStatus.CREATED)
+  @ApiBearerAuth()
   @Serialize(CharacterCompactResponseDto)
   @UseGuards(AuthGuard, RolesGuard)
   @RequiredRoles(
     RolesEnum.Admin,
     RolesEnum.ContentManager,
   )
+  @HttpCode(HttpStatus.CREATED)
   @Post('characters')
   async createBookCharacter(
-    @Body() body: CreateCharacterDto
+    @Body() body: CreateCharacterDto,
+    @Session() session: SessionData
   ): Promise<CharacterCompactResponseDto> {
-    return this.titlesService.createCharacter(body);
+    return this.titlesService.createCharacter(body, session.staffId);
   }
 
   @ApiOperation({
