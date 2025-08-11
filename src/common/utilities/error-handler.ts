@@ -23,6 +23,9 @@ export const dbErrorHandler = (error) => {
     if (error.message.includes('NATIONAL_ID_UNIQUE')) {
       throw new ConflictException(ConflictMessages.NationalId);
     }
+    if (error.message.includes('TAG_NAME')) {
+      throw new ConflictException(ConflictMessages.Tag);
+    }
     throw new ConflictException(ConflictMessages.Slug);
   }
 
