@@ -1,11 +1,12 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Book } from './entities/book.entity';
-import { DataSource, EntityNotFoundError, In, Repository } from 'typeorm';
+import { DataSource, EntityManager, EntityNotFoundError, In, Repository } from 'typeorm';
 import { CreateBookDto } from './dtos/create-book.dto';
 import { Title } from './entities/title.entity';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
@@ -232,5 +233,48 @@ export class BooksService {
 
   async unbookmark(userId: string, bookId: string) {
     return this.bookmarkRepo.delete({ userId, bookId });
+  }
+
+  async updateRate(
+    bookId: string,
+    rate: number,
+    count: -1 | 1,
+    manager: EntityManager
+  ) {
+    if (!Number.isInteger(rate) || rate < 1 || rate > 5) {
+      throw new BadRequestException('Rate must be an integer between 1 and 5.');
+    }
+    if (count !== -1 && count !== 1) {
+      throw new BadRequestException('Count must be either 1 or -1.');
+    }
+
+    const book = await manager.findOneOrFail(Book, {
+      where: { id: bookId }
+    }).catch(error => {
+      if (error instanceof EntityNotFoundError) {
+        throw new NotFoundException(NotFoundMessages.Book);
+      }
+      throw error;
+    });
+
+    if (book.rateCount + count < 0) {
+      throw new BadRequestException('Cannot reduce rate count below 0.');
+    }
+
+    // Calculate new rate
+    const newSum = book.rate * book.rateCount + rate * count;
+    const newRateCount = book.rateCount + count;
+    const newRate = newRateCount > 0 ? Number((newSum / newRateCount).toFixed(2)) : 0;
+
+    // Update book properties
+    book.rate = newRate;
+    book.rateCount = newRateCount;
+
+    const updatedBook = await manager.save(Book, book);
+    
+    return {
+      newRate: updatedBook.rate,
+      newRateCount: updatedBook.rateCount
+    };
   }
 }
