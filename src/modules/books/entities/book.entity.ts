@@ -136,6 +136,12 @@ export class Book extends BaseEntity {
   @OneToMany(() => CollectionBook, (collectionBook) => collectionBook.book)
   collectionBooks: CollectionBook[];
 
+  @Column('float', { default: 0 })
+  rate: number;
+
+  @Column('int', { default: 0 })
+  rateCount: number;
+
   @OneToMany(() => Review, (review) => review.book)
   reviews: Review[];
 

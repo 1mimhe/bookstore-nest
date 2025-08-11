@@ -12,6 +12,12 @@ export class BookResponseDto {
   anotherName?: string;
 
   @Expose()
+  rate: number;
+  
+  @Expose()
+  rateCount: number;
+
+  @Expose()
   ISBN?: string;
 
   @Expose()
