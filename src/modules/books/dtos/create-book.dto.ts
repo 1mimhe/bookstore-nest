@@ -33,7 +33,7 @@ export class CreateBookDto {
 
   @IsNotEmpty()
   @IsUUID()
-  languageId: string;
+  languageCode: string;
 
   @IsOptional()
   @IsArray()

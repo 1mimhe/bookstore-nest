@@ -7,7 +7,7 @@ import {
 } from '@nestjs/swagger';
 import { ValidationErrorResponseDto } from 'src/common/dtos/error.dtos';
 import { ConflictMessages } from 'src/common/enums/error.messages';
-import { CreateLanguageDto } from '../books/dtos/create-language.dto';
+import { CreateLanguageDto } from './create-language.dto';
 import { LanguagesService } from './languages.service';
 
 @Controller('languages')

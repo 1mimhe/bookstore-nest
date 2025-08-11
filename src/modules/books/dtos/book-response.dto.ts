@@ -1,4 +1,5 @@
-import { Expose, Type } from 'class-transformer';
+import { Exclude, Expose, Transform, Type } from 'class-transformer';
+import { Language } from 'src/modules/languages/language.entity';
 
 export class BookResponseDto {
   @Expose()
@@ -49,8 +50,12 @@ export class BookResponseDto {
   @Expose()
   publisherId: string;
 
-  @Expose()
+  @Exclude()
   languageId: string;
+
+  @Transform(({ obj }) => obj.language?.persianName)
+  @Expose()
+  language: string | Language;
 
   @Expose()
   @Type(() => ImageResponseDto)

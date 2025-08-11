@@ -36,7 +36,7 @@ export class BooksService {
     {
       titleId,
       publisherId,
-      languageId,
+      languageCode,
       translatorIds,
       ...bookDto
     }: CreateBookDto,
@@ -46,7 +46,7 @@ export class BooksService {
       const [title, publisher, language, translators] = await Promise.all([
         manager.findOne(Title, { where: { id: titleId } }),
         manager.findOne(Publisher, { where: { id: publisherId } }),
-        manager.findOne(Language, { where: { id: languageId } }),
+        manager.findOne(Language, { where: { code: languageCode } }),
         translatorIds
           ? manager.findBy(Author, { id: In(translatorIds) })
           : Promise.resolve(undefined),
@@ -137,7 +137,7 @@ export class BooksService {
     {
       titleId,
       publisherId,
-      languageId,
+      languageCode,
       translatorIds,
       images,
       ...bookDto
@@ -157,7 +157,7 @@ export class BooksService {
       const [title, publisher, language, translators] = await Promise.all([
         titleId ? manager.findOne(Title, { where: { id: titleId } }) : existingBook.title,
         publisherId ? manager.findOne(Publisher, { where: { id: publisherId } }) : existingBook.publisher,
-        languageId ? manager.findOne(Language, { where: { id: languageId } }) : existingBook.language,
+        languageCode ? manager.findOne(Language, { where: { code: languageCode } }) : existingBook.language,
         translatorIds ? manager.findBy(Author, { id: In(translatorIds) }) : existingBook.translators
       ]);
 
