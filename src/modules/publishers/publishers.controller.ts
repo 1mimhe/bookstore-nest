@@ -15,6 +15,7 @@ import {
 import { PublishersService } from './publishers.service';
 import {
   ApiBadRequestResponse,
+  ApiBearerAuth,
   ApiConflictResponse,
   ApiNotFoundResponse,
   ApiOperation,
@@ -59,6 +60,7 @@ export class PublishersController {
   @ApiBadRequestResponse({
     type: ValidationErrorResponseDto,
   })
+  @ApiBearerAuth()
   @Serialize(CreatePublisherResponseDto)
   @UseGuards(AuthGuard, RolesGuard)
   @RequiredRoles(RolesEnum.Admin, RolesEnum.ContentManager)

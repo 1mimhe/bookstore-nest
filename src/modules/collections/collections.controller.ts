@@ -66,7 +66,7 @@ export class CollectionsController {
   @ApiQueryPagination()
   @Serialize(CollectionCompactResponseDto)
   @Get()
-  async getAllCollection(
+  async getAllCollections(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
   ): Promise<CollectionCompactResponseDto[]> {
@@ -100,11 +100,25 @@ export class CollectionsController {
   @Serialize(CollectionResponseDto)
   @Get('slug/:slug')
   async getCollectionBySlug(
-    @Param('slug', ParseUUIDPipe) slug: string,
+    @Param('slug') slug: string,
     @Query('complete', new ParseBoolPipe({ optional: true }))
     complete?: boolean,
   ): Promise<CollectionResponseDto> {
     return this.collectionsService.get({ slug }, complete);
+  }
+
+  @ApiOperation({
+    summary: 'Retrieves collections that the title included',
+  })
+  @ApiQueryPagination()
+  @Serialize(CollectionCompactResponseDto)
+  @Get('title/:id')
+  async getCollectionsByTitleId(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
+  ): Promise<CollectionCompactResponseDto[]> {
+    return this.collectionsService.getCollectionsByTitleId(id, page, limit);
   }
 
   @ApiOperation({

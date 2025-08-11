@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -8,14 +7,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Title } from './entities/title.entity';
 import { DataSource, EntityManager, EntityNotFoundError, FindOptionsWhere, In, Repository } from 'typeorm';
 import { CreateTitleDto } from './dtos/create-title.dto';
-import { DBErrors } from 'src/common/enums/db.errors';
-import { ConflictMessages } from 'src/common/enums/error.messages';
 import { Author } from '../authors/author.entity';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
 import { UpdateTitleDto } from './dtos/update-title.dto';
 import { Tag } from '../tags/tag.entity';
-import { Quote } from './entities/quote.entity';
-import { Feature } from './entities/feature.entity';
 import { Character } from './entities/characters.entity';
 import { CreateCharacterDto } from './dtos/create-character.dto';
 import { UpdateCharacterDto } from './dtos/update-character.dto';
@@ -69,8 +64,8 @@ export class TitlesService {
       const title = manager.create(Title, {
         ...titleDto,
         authors,
-        features: features.map((feature => ({ feature }))),
-        quotes: quotes.map((quote => ({ quote }))),
+        features,
+        quotes,
         tags: dbTags,
         characters,
       });
@@ -138,16 +133,6 @@ export class TitlesService {
         authors = foundAuthors;
       }
 
-      if (features) {
-        await manager.delete(Feature, { titleId: existingTitle.id });
-        existingTitle.features = [];
-      }
-
-      if (quotes) {
-        await manager.delete(Quote, { titleId: existingTitle.id });
-        existingTitle.quotes = [];
-      }
-
       let newTags: Tag[] | undefined;
       if (tags && tags.length > 0) {
         newTags = await manager.findBy(Tag, {
@@ -160,8 +145,8 @@ export class TitlesService {
         existingTitle,
         {
           ...titleDto,
-          features: features?.map((feature) => ({ feature })),
-          quotes: quotes?.map((quote) => ({ quote }))
+          features: features ?? existingTitle.features,
+          quotes: quotes ?? existingTitle.quotes
         }
       ) as Title;
 

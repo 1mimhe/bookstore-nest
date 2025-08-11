@@ -51,7 +51,7 @@ export class CollectionsService {
     const skip = (page - 1) * limit;
     return this.collectionRepo.find({
       skip, take: limit
-    })
+    });
   }
 
   async get(
@@ -134,6 +134,25 @@ export class CollectionsService {
         throw new NotFoundException(NotFoundMessages.CollectionBook);
       }
       throw error;
+    });
+  }
+
+  async getCollectionsByTitleId(
+    titleId: string,
+    page = 1,
+    limit = 10
+  ): Promise<Collection[]> {
+    const skip = (page - 1) * limit;
+    return this.collectionRepo.find({
+      where: {
+        collectionBooks: {
+          book: {
+            titleId
+          }
+        }
+      },
+      skip,
+      take: limit,
     });
   }
 

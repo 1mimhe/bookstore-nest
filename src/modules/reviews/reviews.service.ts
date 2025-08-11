@@ -8,13 +8,15 @@ import { ReactionsEnum, ReviewReaction } from './entities/review-reaction.entity
 import { AuthMessages, NotFoundMessages } from 'src/common/enums/error.messages';
 import { UpdateReviewDto } from './dtos/update-review.dto';
 import { ReactToReviewDto } from './dtos/react-review.dto';
+import { BooksService } from '../books/books.service';
 
 @Injectable()
 export class ReviewsService {
   constructor(
     @InjectRepository(Review) private reviewRepo: Repository<Review>,
     @InjectRepository(ReviewReaction) private reviewReactionRepo: Repository<ReviewReaction>,
-    private dataSource: DataSource
+    private dataSource: DataSource,
+    private booksService: BooksService
   ) {}
 
   async create(
@@ -23,37 +25,37 @@ export class ReviewsService {
     reviewableId: string,
     {
       parentReviewId,
-      ...reviewDto
+      rate,
+      content
     }: CreateReviewDto
   ): Promise<Review | never> {
-    const entityLike = {
-      userId,
-      reviewableType,
-      parentReviewId,
-      ...reviewDto
-    } as DeepPartial<Review>;
-
-    switch (reviewableType) {
-      case ReviewableType.Book:
-        entityLike.bookId = reviewableId;
-        break;
-
-      case ReviewableType.Blog:
-        entityLike.blogId = reviewableId;
-        break;
-    }
-
     return this.dataSource.transaction(async manager => {
-      const review = manager.create(Review, entityLike);
+      const entityLike: DeepPartial<Review> = {
+        userId,
+        reviewableType,
+        ...(reviewableType === ReviewableType.Book && { bookId: reviewableId }),
+        ...(reviewableType === ReviewableType.Blog && { blogId: reviewableId }),
+        parentReviewId,
+        rate,
+        content
+      };
 
+      // Update book rating
+      if (reviewableType === ReviewableType.Book && rate) {
+        await this.booksService.updateRate(reviewableId, rate, 1, manager);
+      }
+      
+      const review = manager.create(Review, entityLike);
+      const dbReview = await manager.save(Review, review);
+      
       if (parentReviewId) {
         await this.incrementRepliesCount(parentReviewId, 1, manager);
       }
 
-      return manager.save(Review, review).catch(error => {
-        dbErrorHandler(error);
-        throw error;
-      });
+      return dbReview;
+    }).catch(error => {
+      dbErrorHandler(error);
+      throw error;
     });
   }
 
@@ -72,6 +74,7 @@ export class ReviewsService {
     const queryBuilder = this.reviewRepo
       .createQueryBuilder('review')
       .leftJoinAndSelect('review.user', 'user')
+      .leftJoinAndSelect('replies.book', 'book')
       .leftJoinAndSelect('review.replies', 'replies')
       .leftJoinAndSelect('replies.user', 'repliesUser')
       .where(whereCondition)
@@ -143,30 +146,50 @@ export class ReviewsService {
     userId: string,
     reviewDto: UpdateReviewDto
   ): Promise<Review | never> {
-    const review = await this.getById(id);
+    return this.dataSource.transaction(async (manager: EntityManager) => {
+      const review = await this.getById(id, manager);
 
-    if (review.userId !== userId) {
-      throw new ForbiddenException(AuthMessages.AccessDenied);
-    }
+      // Check user access
+      if (review.userId !== userId) {
+        throw new ForbiddenException(AuthMessages.AccessDenied);
+      }
 
-    if (review.isEdited) {
-      throw new BadRequestException('Review is already edited before.');
-    }
+      // Check if review was already edited
+      if (review.isEdited) {
+        throw new BadRequestException('Review has already been edited.');
+      }
 
-    Object.assign(review, reviewDto);
-    review.isEdited = true;
-    return this.reviewRepo.save(review);
+      if (review.reviewableType === ReviewableType.Book && reviewDto.rate && reviewDto.rate !== review.rate) {
+        const rateDiff = reviewDto.rate - (review.rate ?? 0);
+        await this.booksService.updateRate(review.bookId!, rateDiff, 0, manager);
+      }
+
+      Object.assign(review, reviewDto);
+      review.isEdited = true;
+
+      return manager.save(Review, review);
+    }).catch(error => {
+      dbErrorHandler(error);
+      throw error;
+    });
   }
 
   async delete(id: string, userId: string) {
     return this.dataSource.transaction(async manager => {
       const review = await this.getById(id, manager);
   
+      // Check user access
       if (review.userId !== userId) {
         throw new ForbiddenException(AuthMessages.AccessDenied);
       }
   
-      await this.incrementRepliesCount(review.parentReviewId, -1, manager);
+      if (review.reviewableType === ReviewableType.Book) {
+        await this.booksService.updateRate(review.bookId!, review.rate, -1, manager);
+      }
+
+      if (review.parentReviewId) {
+        await this.incrementRepliesCount(review.parentReviewId, -1, manager);
+      }
 
       return manager.softRemove(Review, review);
     });
