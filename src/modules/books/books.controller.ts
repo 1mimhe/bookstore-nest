@@ -173,6 +173,7 @@ export class BooksController {
     summary: 'Delete a tag from a title (For Admin and ContentManager)',
     description: 'Doesn\'t retrieve anything at all.'
   })
+  @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
   @RequiredRoles(
     RolesEnum.Admin,
@@ -190,6 +191,7 @@ export class BooksController {
     summary: 'Delete a character from a title (For Admin and ContentManager)',
     description: 'Doesn\'t retrieve anything at all.'
   })
+  @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
   @RequiredRoles(
     RolesEnum.Admin,
@@ -224,6 +226,7 @@ export class BooksController {
   @ApiConflictResponse({
     description: ConflictMessages.ISBN,
   })
+  @ApiBearerAuth()
   @Serialize(BookResponseDto)
   @UseGuards(AuthGuard, RolesGuard)
   @RequiredRoles(
@@ -234,9 +237,10 @@ export class BooksController {
   @HttpCode(HttpStatus.CREATED)
   @Post()
   async createBook(
-    @Body() body: CreateBookDto
+    @Body() body: CreateBookDto,
+    @Session() session: SessionData
   ): Promise<BookResponseDto> {
-    return this.booksService.create(body);
+    return this.booksService.create(body, session.staffId);
   }
 
   @ApiOperation({

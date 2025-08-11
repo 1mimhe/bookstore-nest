@@ -6,6 +6,9 @@ export const dbErrorHandler = (error) => {
   if (process.env.NODE_ENV === 'development') console.error(error);
 
   if (error.code === DBErrors.Conflict) {
+    if (error.message.includes('ISBN_UNIQUE')) {
+      throw new ConflictException(ConflictMessages.ISBN);
+    }
     if (error.message.includes('COLLECTION_BOOK_UNIQUE'))
       throw new ConflictException(ConflictMessages.CollectionBook);
     if (error.message.includes('REVIEW_REACTION_INDEX')) {
