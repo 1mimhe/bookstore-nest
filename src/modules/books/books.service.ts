@@ -142,6 +142,7 @@ export class BooksService {
       images,
       ...bookDto
     }: UpdateBookDto,
+    staffId?: string
   ): Promise<Book | never> {
     return this.dataSource.transaction(async (manager) => {
       const existingBook = await manager.findOne(Book, {
@@ -185,16 +186,24 @@ export class BooksService {
       updatedBook.translators = translators;
       updatedBook.images = [...(existingBook.images || []), ...(newImages || [])];
 
-      return manager.save(Book, updatedBook).catch((error) => {
-        if (error.code === DBErrors.Conflict) {
-          const sqlMessage = error.driverError.sqlMessage as string;
+      const dbBook = await manager.save(Book, updatedBook);
 
-          if (sqlMessage.includes('ISBN_UNIQUE')) {
-            throw new ConflictException(ConflictMessages.ISBN);
-          }
-        }
-        throw error;
-      });
+      if (staffId) {
+        await this.staffsService.createAction(
+          {
+            staffId,
+            type: StaffActionTypes.BookUpdated,
+            entityId: dbBook.id,
+            entityType: EntityTypes.Book
+          },
+          manager
+        );
+      }
+
+      return dbBook;
+    }).catch((error) => {
+      dbErrorHandler(error);
+      throw error;
     });
   }
 

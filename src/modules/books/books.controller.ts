@@ -265,6 +265,7 @@ export class BooksController {
   @ApiConflictResponse({
     description: ConflictMessages.ISBN,
   })
+  @ApiBearerAuth()
   @Serialize(BookResponseDto)
   @UseGuards(AuthGuard, RolesGuard)
   @RequiredRoles(
@@ -276,8 +277,9 @@ export class BooksController {
   async updateBook(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: UpdateBookDto,
+    @Session() session: SessionData
   ): Promise<BookResponseDto> {
-    return this.booksService.update(id, body);
+    return this.booksService.update(id, body, session.staffId);
   }
 
   @ApiOperation({
