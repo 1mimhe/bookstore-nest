@@ -17,7 +17,7 @@ export class CreateAuthorDto {
 
   @IsOptional()
   @IsUrl()
-  picUrl: string;
+  picUrl?: string;
 
   @IsOptional()
   @Transform(({ obj, value }) => {

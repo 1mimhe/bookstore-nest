@@ -1,7 +1,7 @@
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { StaffsService } from './staffs.service';
 import { SignupStaffDto, StaffRoles } from './dtos/signup-staff.dto';
-import { ApiBadRequestResponse, ApiConflictResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBadRequestResponse, ApiBearerAuth, ApiConflictResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ConflictResponseDto, ValidationErrorResponseDto } from 'src/common/dtos/error.dtos';
 import { ConflictMessages } from 'src/common/enums/error.messages';
 import { AuthGuard } from '../auth/guards/auth.guard';
@@ -30,6 +30,7 @@ export class StaffsController {
   @ApiConflictResponse({
     description: ConflictMessages.NationalId
   })
+  @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
   @RequiredRoles(RolesEnum.Admin)
   @Post('signup')

@@ -13,11 +13,13 @@ import {
   Patch,
   Post,
   Query,
+  Session,
   UseGuards,
 } from '@nestjs/common';
 import { CreateAuthorDto } from './dtos/create-author.dto';
 import { AuthorsService } from './authors.service';
 import {
+  ApiBearerAuth,
   ApiConflictResponse,
   ApiNotFoundResponse,
   ApiOperation,
@@ -40,6 +42,7 @@ import { AuthGuard } from '../auth/guards/auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { RequiredRoles } from 'src/common/decorators/roles.decorator';
 import { RolesEnum } from '../users/entities/role.entity';
+import { SessionData } from 'express-session';
 
 @Controller('authors')
 @ApiTags('Author')
@@ -54,6 +57,7 @@ export class AuthorsController {
   @ApiConflictResponse({
     description: ConflictMessages.Slug,
   })
+  @ApiBearerAuth()
   @Serialize(AuthorResponseDto)
   @UseGuards(AuthGuard, RolesGuard)
   @RequiredRoles(RolesEnum.Admin, RolesEnum.ContentManager)
@@ -61,8 +65,9 @@ export class AuthorsController {
   @Post()
   async createAuthor(
     @Body() body: CreateAuthorDto,
+    @Session() session: SessionData
   ): Promise<AuthorResponseDto> {
-    return this.authorsService.create(body);
+    return this.authorsService.create(body, session.staffId);
   }
 
   @ApiOperation({
@@ -127,6 +132,7 @@ export class AuthorsController {
   @ApiNotFoundResponse({
     description: NotFoundMessages.Author,
   })
+  @ApiBearerAuth()
   @Serialize(AuthorCompactResponseDto)
   @UseGuards(AuthGuard, RolesGuard)
   @RequiredRoles(RolesEnum.Admin, RolesEnum.ContentManager)
@@ -144,6 +150,7 @@ export class AuthorsController {
   @ApiNotFoundResponse({
     description: NotFoundMessages.Author,
   })
+  @ApiBearerAuth()
   @Serialize(AuthorCompactResponseDto)
   @UseGuards(AuthGuard, RolesGuard)
   @RequiredRoles(RolesEnum.Admin, RolesEnum.ContentManager)

@@ -5,12 +5,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Author } from './author.entity';
 import { BooksModule } from '../books/books.module';
 import { TokenModule } from '../token/token.module';
+import { StaffModule } from '../staffs/staffs.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Author]),
     BooksModule,
     TokenModule,
+    StaffModule,
   ],
   providers: [AuthorsService],
   controllers: [AuthorsController]
