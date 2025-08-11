@@ -140,8 +140,9 @@ export class AuthorsController {
   async updateAuthor(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: UpdateAuthorDto,
+    @Session() session: SessionData
   ): Promise<AuthorCompactResponseDto> {
-    return this.authorsService.update(id, body);
+    return this.authorsService.update(id, body, session.staffId);
   }
 
   @ApiOperation({

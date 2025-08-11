@@ -1,7 +1,7 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Author } from './author.entity';
-import { DataSource, EntityNotFoundError, FindOptionsWhere, Repository } from 'typeorm';
+import { DataSource, EntityManager, EntityNotFoundError, FindOptionsWhere, Repository } from 'typeorm';
 import { CreateAuthorDto } from './dtos/create-author.dto';
 import { ConflictMessages } from 'src/common/enums/error.messages';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
@@ -11,6 +11,7 @@ import { BooksService } from '../books/books.service';
 import { Book } from '../books/entities/book.entity';
 import { StaffsService } from '../staffs/staffs.service';
 import { EntityTypes, StaffActionTypes } from '../staffs/entities/staff-action.entity';
+import { dbErrorHandler } from 'src/common/utilities/error-handler';
 
 @Injectable()
 export class AuthorsService {
@@ -47,8 +48,12 @@ export class AuthorsService {
     });
   }
 
-  async getById(id: string): Promise<Author | never> {
-    return this.authorRepo.findOneOrFail({
+  async getById(
+    id: string,
+    manager?: EntityManager
+  ): Promise<Author | never> {
+    const repository = manager ? manager.getRepository(Author) : this.authorRepo;
+    return repository.findOneOrFail({
       where: { id }
     }).catch((error: Error) => {
       if (error instanceof EntityNotFoundError) {
@@ -111,13 +116,31 @@ export class AuthorsService {
     };
   }
 
-  async update(id: string, authorDto: UpdateAuthorDto): Promise<Author | never> {
-    const author = await this.getById(id);
-    Object.assign(author, authorDto);
-    return this.authorRepo.save(author).catch((error) => {
-      if (error.code === DBErrors.Conflict) {
-        throw new ConflictException(ConflictMessages.Slug);
+  async update(
+    id: string,
+    authorDto: UpdateAuthorDto,
+    staffId?: string
+  ): Promise<Author | never> {
+    return this.dataSource.transaction(async manager => {
+      const author = await this.getById(id, manager);
+      Object.assign(author, authorDto);
+      const dbAuthor = await manager.save(Author, author);
+
+      if (staffId) {
+        await this.staffsService.createAction(
+          {
+          staffId,
+          type: StaffActionTypes.AuthorUpdated,
+          entityId: dbAuthor.id,
+          entityType: EntityTypes.Author
+          },
+          manager
+        );
       }
+
+      return dbAuthor;
+    }).catch((error) => {
+      dbErrorHandler(error);
       throw error;
     });
   }
