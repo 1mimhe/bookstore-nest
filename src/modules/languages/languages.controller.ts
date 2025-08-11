@@ -25,7 +25,7 @@ export class LanguagesController {
     type: ConflictException,
     description: ConflictMessages.Language,
   })
-  @Post('languages')
+  @Post()
   async createLanguage(@Body() body: CreateLanguageDto) {
     return this.languagesService.create(body);
   }
@@ -33,7 +33,7 @@ export class LanguagesController {
   @ApiOperation({
     summary: 'Retrieves all languages',
   })
-  @Get('languages')
+  @Get()
   async getAllLanguages() {
     return this.languagesService.getAll();
   }

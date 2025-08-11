@@ -225,6 +225,6 @@ export class AuthService {
     return this.signup(
       defaultAdminData,
       [RolesEnum.Admin]
-    ) as Promise<User>;
+    );
   }
 }

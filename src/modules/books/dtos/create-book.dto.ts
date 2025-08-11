@@ -10,9 +10,9 @@ import {
   Max,
   IsArray,
   IsNotEmpty,
-  IsUrl,
   ArrayNotEmpty,
   ValidateNested,
+  IsAlpha,
 } from 'class-validator';
 import { Quartos, Covers } from '../entities/book.entity';
 import { CreateBookImageDto } from './book-image.dto';
@@ -32,7 +32,7 @@ export class CreateBookDto {
   publisherId: string;
 
   @IsNotEmpty()
-  @IsUUID()
+  @IsAlpha()
   languageCode: string;
 
   @IsOptional()
