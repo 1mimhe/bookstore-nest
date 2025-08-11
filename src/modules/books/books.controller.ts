@@ -13,6 +13,7 @@ import {
   Patch,
   Post,
   Query,
+  Session,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -46,6 +47,7 @@ import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { RequiredRoles } from 'src/common/decorators/roles.decorator';
 import { RolesEnum } from '../users/entities/role.entity';
+import { SessionData } from 'express-session';
 
 @Controller('books')
 @ApiTags('Book')
@@ -67,6 +69,7 @@ export class BooksController {
   @ApiConflictResponse({
     description: ConflictMessages.Slug,
   })
+  @ApiBearerAuth()
   @Serialize(TitleCompactResponseDto)
   @UseGuards(AuthGuard, RolesGuard)
   @RequiredRoles(
@@ -77,9 +80,10 @@ export class BooksController {
   @HttpCode(HttpStatus.CREATED)
   @Post('titles')
   async createTitle(
-    @Body() body: CreateTitleDto
+    @Body() body: CreateTitleDto,
+    @Session() session: SessionData
   ): Promise<TitleCompactResponseDto> {
-    return this.titlesService.create(body);
+    return this.titlesService.create(body, session.staffId);
   }
 
   @ApiOperation({
@@ -149,6 +153,7 @@ export class BooksController {
   @ApiConflictResponse({
     description: ConflictMessages.Slug,
   })
+  @ApiBearerAuth()
   @Serialize(TitleCompactResponseDto)
   @UseGuards(AuthGuard, RolesGuard)
   @RequiredRoles(
@@ -159,14 +164,16 @@ export class BooksController {
   async updateTitle(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: UpdateTitleDto,
+    @Session() session: SessionData
   ): Promise<TitleCompactResponseDto> {
-    return this.titlesService.update(id, body);
+    return this.titlesService.update(id, body, session.staffId);
   }
 
   @ApiOperation({
     summary: 'Delete a tag from a title (For Admin and ContentManager)',
     description: 'Doesn\'t retrieve anything at all.'
   })
+  @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
   @RequiredRoles(
     RolesEnum.Admin,
@@ -184,6 +191,7 @@ export class BooksController {
     summary: 'Delete a character from a title (For Admin and ContentManager)',
     description: 'Doesn\'t retrieve anything at all.'
   })
+  @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
   @RequiredRoles(
     RolesEnum.Admin,
@@ -218,6 +226,7 @@ export class BooksController {
   @ApiConflictResponse({
     description: ConflictMessages.ISBN,
   })
+  @ApiBearerAuth()
   @Serialize(BookResponseDto)
   @UseGuards(AuthGuard, RolesGuard)
   @RequiredRoles(
@@ -228,9 +237,10 @@ export class BooksController {
   @HttpCode(HttpStatus.CREATED)
   @Post()
   async createBook(
-    @Body() body: CreateBookDto
+    @Body() body: CreateBookDto,
+    @Session() session: SessionData
   ): Promise<BookResponseDto> {
-    return this.booksService.create(body);
+    return this.booksService.create(body, session.staffId);
   }
 
   @ApiOperation({
@@ -255,6 +265,7 @@ export class BooksController {
   @ApiConflictResponse({
     description: ConflictMessages.ISBN,
   })
+  @ApiBearerAuth()
   @Serialize(BookResponseDto)
   @UseGuards(AuthGuard, RolesGuard)
   @RequiredRoles(
@@ -266,8 +277,9 @@ export class BooksController {
   async updateBook(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: UpdateBookDto,
+    @Session() session: SessionData
   ): Promise<BookResponseDto> {
-    return this.booksService.update(id, body);
+    return this.booksService.update(id, body, session.staffId);
   }
 
   @ApiOperation({
@@ -276,6 +288,7 @@ export class BooksController {
   @ApiNotFoundResponse({
     description: NotFoundMessages.BookImage,
   })
+  @ApiBearerAuth()
   @Serialize(ImageResponseDto)
   @UseGuards(AuthGuard, RolesGuard)
   @RequiredRoles(
@@ -295,18 +308,20 @@ export class BooksController {
   @ApiBadRequestResponse({
     type: ValidationErrorResponseDto,
   })
-  @HttpCode(HttpStatus.CREATED)
+  @ApiBearerAuth()
   @Serialize(CharacterCompactResponseDto)
   @UseGuards(AuthGuard, RolesGuard)
   @RequiredRoles(
     RolesEnum.Admin,
     RolesEnum.ContentManager,
   )
+  @HttpCode(HttpStatus.CREATED)
   @Post('characters')
   async createBookCharacter(
-    @Body() body: CreateCharacterDto
+    @Body() body: CreateCharacterDto,
+    @Session() session: SessionData
   ): Promise<CharacterCompactResponseDto> {
-    return this.titlesService.createCharacter(body);
+    return this.titlesService.createCharacter(body, session.staffId);
   }
 
   @ApiOperation({
@@ -356,6 +371,7 @@ export class BooksController {
   @ApiNotFoundResponse({
     description: NotFoundMessages.Character
   })
+  @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
   @RequiredRoles(
     RolesEnum.Admin,
@@ -365,9 +381,10 @@ export class BooksController {
   @Patch('characters/:id')
   async updateBookCharacter(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: UpdateCharacterDto
+    @Body() body: UpdateCharacterDto,
+    @Session() session: SessionData
   ): Promise<CharacterCompactResponseDto> {
-    return this.titlesService.updateCharacter(id, body);
+    return this.titlesService.updateCharacter(id, body, session.staffId);
   }
 
   @ApiOperation({

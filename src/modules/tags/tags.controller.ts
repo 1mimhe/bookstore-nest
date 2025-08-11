@@ -12,11 +12,12 @@ import {
   Patch,
   Post,
   Query,
+  Session,
   UseGuards,
 } from '@nestjs/common';
 import { TagsService } from './tags.service';
 import { CreateTagDto } from './dtos/create-tag.dto';
-import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { TagType } from './tag.entity';
 import { UpdateTagDto } from './dtos/update-tag.dto';
 import { ApiQueryPagination } from 'src/common/decorators/query.decorators';
@@ -26,6 +27,7 @@ import { RolesEnum } from '../users/entities/role.entity';
 import { RequiredRoles } from 'src/common/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { AuthGuard } from '../auth/guards/auth.guard';
+import { SessionData } from 'express-session';
 
 @Controller('tags')
 @ApiTags('Tag')
@@ -47,6 +49,7 @@ export class TagsController {
       - system_tags => e.g. Festival Sales, Recommended Books, Bestsellers, New Releases, Signed Editions, etc.\n
     `,
   })
+  @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
   @RequiredRoles(
     RolesEnum.Admin,
@@ -54,8 +57,11 @@ export class TagsController {
   )
   @HttpCode(HttpStatus.CREATED)
   @Post()
-  async createTag(@Body() body: CreateTagDto): Promise<TagCompactResponseDto> {
-    return this.tagsService.create(body);
+  async createTag(
+    @Body() body: CreateTagDto,
+    @Session() session: SessionData
+  ): Promise<TagCompactResponseDto> {
+    return this.tagsService.create(body, session.staffId);
   }
 
   @ApiOperation({
@@ -103,6 +109,7 @@ export class TagsController {
   @ApiOperation({
     summary: 'Update a tag by id',
   })
+  @ApiBearerAuth()
   @Serialize(TagResponseDto)
   @UseGuards(AuthGuard, RolesGuard)
   @RequiredRoles(
@@ -113,7 +120,8 @@ export class TagsController {
   async updateTag(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: UpdateTagDto,
+    @Session() session: SessionData
   ): Promise<TagResponseDto> {
-    return this.tagsService.update(id, body);
+    return this.tagsService.update(id, body, session.staffId);
   }
 }

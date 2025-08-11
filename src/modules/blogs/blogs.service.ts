@@ -7,15 +7,24 @@ import { Tag } from '../tags/tag.entity';
 import { dbErrorHandler } from 'src/common/utilities/error-handler';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
 import { UpdateBlogDto } from './dtos/update-blog.dto';
+import { StaffsService } from '../staffs/staffs.service';
+import { EntityTypes, StaffActionTypes } from '../staffs/entities/staff-action.entity';
 
 @Injectable()
 export class BlogsService {
   constructor(
     @InjectRepository(Blog) private blogRepo: Repository<Blog>,
     private dataSource: DataSource,
+    private staffsService: StaffsService
   ) {}
 
-  async create({ tags, ...blogDto }: CreateBlogDto): Promise<Blog | never> {
+  async create(
+    {
+      tags,
+      ...blogDto
+    }: CreateBlogDto,
+    staffId?: string
+  ): Promise<Blog | never> {
     return this.dataSource.transaction(async (manager) => {
       let dbTags: Tag[] | undefined;
       if (tags && tags.length > 0) {
@@ -29,10 +38,24 @@ export class BlogsService {
         tags: dbTags
       });
 
-      return manager.save(Blog, blog).catch((error) => {
-        dbErrorHandler(error);
-        throw error;
-      });
+      const dbBlog = await manager.save(Blog, blog);
+
+      if (staffId) {
+        await this.staffsService.createAction(
+          {
+            staffId,
+            type: StaffActionTypes.BlogCreated,
+            entityId: dbBlog.id,
+            entityType: EntityTypes.Blog
+          },
+          manager
+        );
+      }
+
+      return dbBlog;
+    }).catch((error) => {
+      dbErrorHandler(error);
+      throw error;
     });
   }
 
@@ -75,7 +98,11 @@ export class BlogsService {
 
   async update(
     id: string,
-    { tags, ...blogDto }: UpdateBlogDto
+    {
+      tags,
+      ...blogDto
+    }: UpdateBlogDto,
+    staffId?: string
   ): Promise<Blog | never> {
     return this.dataSource.transaction(async (manager) => {
       const existingBlog = await manager.findOne(Blog, {
@@ -101,10 +128,24 @@ export class BlogsService {
       ) as Blog;
       updatedBlog.tags = [...(existingBlog.tags || []), ...(newTags || [])];
 
-      return manager.save(Blog, updatedBlog).catch((error) => {
-        dbErrorHandler(error);
-        throw error;
-      });
+      const dbBlog = await manager.save(Blog, updatedBlog);
+
+      if (staffId) {
+        await this.staffsService.createAction(
+          {
+          staffId,
+          type: StaffActionTypes.BlogUpdated,
+          entityId: dbBlog.id,
+          entityType: EntityTypes.Blog
+          },
+          manager
+        );
+      }
+
+      return dbBlog;
+    }).catch((error) => {
+      dbErrorHandler(error);
+      throw error;
     });     
   }
 }

@@ -8,12 +8,14 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Session,
   UseGuards,
 } from '@nestjs/common';
 import { BlogsService } from './blogs.service';
 import { CreateBlogDto } from './dtos/create-blog.dto';
 import {
   ApiBadRequestResponse,
+  ApiBearerAuth,
   ApiConflictResponse,
   ApiNotFoundResponse,
   ApiOperation,
@@ -34,6 +36,7 @@ import { RequiredRoles } from 'src/common/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { RolesEnum } from '../users/entities/role.entity';
+import { SessionData } from 'express-session';
 
 @Controller('blogs')
 @ApiTags('Blog')
@@ -58,15 +61,18 @@ export class BlogsController {
   @ApiConflictResponse({
     description: ConflictMessages.Slug,
   })
+  @ApiBearerAuth()
   @Serialize(BlogCompactResponseDto)
   @UseGuards(AuthGuard, RolesGuard)
   @RequiredRoles(RolesEnum.Admin, RolesEnum.ContentManager, RolesEnum.Publisher)
+  // TODO: Publisher with separate createBlog
   @HttpCode(HttpStatus.CREATED)
   @Post()
   async createBlog(
     @Body() body: CreateBlogDto,
+    @Session() session: SessionData
   ): Promise<BlogCompactResponseDto> {
-    return this.blogsService.create(body);
+    return this.blogsService.create(body, session.staffId);
   }
 
   @ApiOperation({
@@ -113,6 +119,7 @@ export class BlogsController {
   @ApiConflictResponse({
     description: ConflictMessages.Slug,
   })
+  @ApiBearerAuth()
   @Serialize(BlogCompactResponseDto)
   @UseGuards(AuthGuard, RolesGuard)
   @RequiredRoles(RolesEnum.Admin, RolesEnum.ContentManager)
@@ -120,7 +127,8 @@ export class BlogsController {
   async updateBlog(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: UpdateBlogDto,
+    @Session() session: SessionData
   ): Promise<BlogCompactResponseDto> {
-    return this.blogsService.update(id, body);
+    return this.blogsService.update(id, body, session.staffId);
   }
 }

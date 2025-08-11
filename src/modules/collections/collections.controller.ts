@@ -13,10 +13,11 @@ import {
   Patch,
   Post,
   Query,
+  Session,
   UseGuards,
 } from '@nestjs/common';
 import { CollectionsService } from './collections.service';
-import { ApiNotFoundResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiNotFoundResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateCollectionDto } from './dtos/create-collection.dto';
 import { CreateCollectionBookDto } from './dtos/create-collection-book.dto';
 import { UpdateCollectionBookDto } from './dtos/update-collection-book.dto';
@@ -36,6 +37,7 @@ import { AuthGuard } from '../auth/guards/auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { RequiredRoles } from 'src/common/decorators/roles.decorator';
 import { RolesEnum } from '../users/entities/role.entity';
+import { SessionData } from 'express-session';
 
 @Controller('collections')
 @ApiTags('Collection')
@@ -45,6 +47,7 @@ export class CollectionsController {
   @ApiOperation({
     summary: 'Create an empty collection',
   })
+  @ApiBearerAuth()
   @Serialize(CollectionCompactResponseDto)
   @UseGuards(AuthGuard, RolesGuard)
   @RequiredRoles(RolesEnum.Admin, RolesEnum.ContentManager)
@@ -52,8 +55,9 @@ export class CollectionsController {
   @Post()
   async createCollection(
     @Body() body: CreateCollectionDto,
+    @Session() session: SessionData
   ): Promise<CollectionCompactResponseDto> {
-    return this.collectionsService.create(body);
+    return this.collectionsService.create(body, session.staffId);
   }
 
   @ApiOperation({
@@ -106,6 +110,7 @@ export class CollectionsController {
   @ApiOperation({
     summary: 'Add a book to a collection',
   })
+  @ApiBearerAuth()
   @Serialize(CollectionBookCompactResponseDto)
   @UseGuards(AuthGuard, RolesGuard)
   @RequiredRoles(RolesEnum.Admin, RolesEnum.ContentManager)
@@ -114,14 +119,16 @@ export class CollectionsController {
   async createCollectionBook(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: CreateCollectionBookDto,
+    @Session() session: SessionData
   ): Promise<CollectionBookCompactResponseDto> {
-    return this.collectionsService.createCollectionBook(id, body);
+    return this.collectionsService.createCollectionBook(id, body, session.staffId);
   }
 
   @ApiOperation({
     summary: 'Update a collection book by its id',
     description: 'Id is a collection book id, not book id.',
   })
+  @ApiBearerAuth()
   @Serialize(CollectionBookCompactResponseDto)
   @UseGuards(AuthGuard, RolesGuard)
   @RequiredRoles(RolesEnum.Admin, RolesEnum.ContentManager)
@@ -136,6 +143,7 @@ export class CollectionsController {
   @ApiOperation({
     summary: 'Reorder collection books',
   })
+  @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
   @RequiredRoles(RolesEnum.Admin, RolesEnum.ContentManager)
   @Patch(':id/books/reorder')
@@ -150,6 +158,7 @@ export class CollectionsController {
     summary: 'Delete a book from a collection',
     description: 'Id is a collection book id, not book id.',
   })
+  @ApiBearerAuth()
   @Serialize(CollectionBookCompactResponseDto)
   @UseGuards(AuthGuard, RolesGuard)
   @RequiredRoles(RolesEnum.Admin, RolesEnum.ContentManager)

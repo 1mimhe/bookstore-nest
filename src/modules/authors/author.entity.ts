@@ -19,7 +19,7 @@ export class Author extends BaseEntity {
   @Column()
   slug: string;
 
-  @Column('text')
+  @Column('text', { nullable: true })
   picUrl?: string;
 
   @Column({

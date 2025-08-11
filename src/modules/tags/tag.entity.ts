@@ -13,7 +13,7 @@ export enum TagType {
 }
 
 @Entity('tags')
-@Unique(['name'])
+@Unique('TAG_NAME', ['name'])
 @Index(['slug'], { unique: true })
 export class Tag extends BaseEntity {
   @Column()

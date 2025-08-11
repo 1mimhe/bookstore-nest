@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Title } from './entities/title.entity';
-import { DataSource, EntityNotFoundError, FindOptionsWhere, In, Repository } from 'typeorm';
+import { DataSource, EntityManager, EntityNotFoundError, FindOptionsWhere, In, Repository } from 'typeorm';
 import { CreateTitleDto } from './dtos/create-title.dto';
 import { DBErrors } from 'src/common/enums/db.errors';
 import { ConflictMessages } from 'src/common/enums/error.messages';
@@ -19,6 +19,9 @@ import { Feature } from './entities/feature.entity';
 import { Character } from './entities/characters.entity';
 import { CreateCharacterDto } from './dtos/create-character.dto';
 import { UpdateCharacterDto } from './dtos/update-character.dto';
+import { dbErrorHandler } from 'src/common/utilities/error-handler';
+import { StaffsService } from '../staffs/staffs.service';
+import { EntityTypes, StaffActionTypes } from '../staffs/entities/staff-action.entity';
 
 @Injectable()
 export class TitlesService {
@@ -26,16 +29,20 @@ export class TitlesService {
     @InjectRepository(Title) private titleRepo: Repository<Title>,
     @InjectRepository(Character) private characterRepo: Repository<Character>,
     private dataSource: DataSource,
+    private staffsService: StaffsService
   ) {}
 
-  async create({
-    authorIds,
-    tags,
-    features = [],
-    quotes = [],
-    characterIds,
-    ...titleDto
-  }: CreateTitleDto): Promise<Title | never> {
+  async create(
+    {
+      authorIds,
+      tags,
+      features = [],
+      quotes = [],
+      characterIds,
+      ...titleDto
+    }: CreateTitleDto,
+    staffId?: string
+  ): Promise<Title | never> {
     return this.dataSource.transaction(async (manager) => {
       const authors = await manager.findBy(Author, {
         id: In(authorIds),
@@ -68,12 +75,24 @@ export class TitlesService {
         characters,
       });
 
-      return manager.save(Title, title).catch((error) => {
-        if (error.code === DBErrors.Conflict) {
-          throw new ConflictException(ConflictMessages.Slug);
-        }
-        throw error;
-      });
+      const dbTitle = await manager.save(Title, title);
+
+      if (staffId) {
+        await this.staffsService.createAction(
+          {
+            staffId,
+            type: StaffActionTypes.TitleCreated,
+            entityId: dbTitle.id,
+            entityType: EntityTypes.Title
+          },
+          manager
+        );
+      }
+
+      return dbTitle;
+    }).catch((error) => {
+      dbErrorHandler(error);
+      throw error;
     });
   }
 
@@ -87,6 +106,7 @@ export class TitlesService {
       characterIds,
       ...titleDto
     }: UpdateTitleDto,
+    staffId?: string
   ): Promise<Title | never> {
     return this.dataSource.transaction(async (manager) => {
       const existingTitle = await manager.findOne(Title, {
@@ -149,12 +169,24 @@ export class TitlesService {
       updatedTitle.tags = [...(existingTitle.tags || []), ...(newTags || [])];
       updatedTitle.characters = [...(existingTitle.characters || []), ...(newCharacters || [])];
 
-      return manager.save(Title, updatedTitle).catch((error) => {
-        if (error.code === DBErrors.Conflict) {
-          throw new ConflictException(ConflictMessages.Slug);
-        }
-        throw error;
-      });
+      const dbTitle = await manager.save(Title, updatedTitle);
+
+      if (staffId) {
+        await this.staffsService.createAction(
+          {
+            staffId,
+            type: StaffActionTypes.TitleUpdated,
+            entityId: dbTitle.id,
+            entityType: EntityTypes.Title
+          },
+          manager
+        );
+      }
+      
+      return dbTitle;
+    }).catch((error) => {
+      dbErrorHandler(error);
+      throw error;
     });
   }
 
@@ -184,9 +216,16 @@ export class TitlesService {
     });
   }
 
-  async getByCharacterId(id: string, page = 1, limit = 10): Promise<Title[]> {
+  async getByCharacterId(
+    id: string,
+    page = 1,
+    limit = 10,
+    manager?: EntityManager
+  ): Promise<Title[]> {
+    const repository = manager ? manager.getRepository(Title) : this.titleRepo;
     const skip = (page - 1) * limit;
-    return this.titleRepo.find({
+
+    return repository.find({
       where: {
         characters: { id }
       },
@@ -211,9 +250,28 @@ export class TitlesService {
       .remove(characterId);
   }
 
-  async createCharacter(characterDto: CreateCharacterDto): Promise<Character | never> {
-    const character = this.characterRepo.create(characterDto);
-    return this.characterRepo.save(character);
+  async createCharacter(
+    characterDto: CreateCharacterDto,
+    staffId?: string
+  ): Promise<Character | never> {
+    return this.dataSource.transaction(async manager => {
+      const character = manager.create(Character, characterDto);
+      const dbCharacter = await manager.save(Character, character);
+
+      if (staffId) {
+        await this.staffsService.createAction(
+          {
+            staffId,
+            type: StaffActionTypes.CharacterCreated,
+            entityId: dbCharacter.id,
+            entityType: EntityTypes.Character
+          },
+          manager
+        );
+      }
+
+      return dbCharacter;
+    });
   }
 
   async getCharacter(
@@ -221,7 +279,10 @@ export class TitlesService {
     page: number = 1,
     limit: number = 10,
     complete = false,
+    manager?: EntityManager
   ): Promise<Character | never> {
+    const repository = manager ? manager.getRepository(Character) : this.characterRepo;
+
     const where: FindOptionsWhere<Character> = {};
     if (identifier.id) {
       where.id = identifier.id;
@@ -231,7 +292,7 @@ export class TitlesService {
       throw new BadRequestException('Either id or slug must be provided.');
     }
 
-    const character = await this.characterRepo.findOneOrFail({
+    const character = await repository.findOneOrFail({
       where
     }).catch((error: Error) => {
       if (error instanceof EntityNotFoundError) {
@@ -242,7 +303,7 @@ export class TitlesService {
 
     let titles: Title[] = [];
     if (complete) {
-      titles = await this.getByCharacterId(character.id, page, limit);
+      titles = await this.getByCharacterId(character.id, page, limit, manager);
     }
 
     return {
@@ -251,9 +312,33 @@ export class TitlesService {
     };
   }
 
-  async updateCharacter(id: string, characterDto: UpdateCharacterDto): Promise<Character | never> {
-    const character = await this.getCharacter({ id });
-    Object.assign(character, characterDto);
-    return this.characterRepo.save(character);
+  async updateCharacter(
+    id: string,
+    characterDto: UpdateCharacterDto,
+    staffId?: string
+  ): Promise<Character | never> {
+    return this.dataSource.transaction(async manager => {
+      const character = await this.getCharacter({ id }, 0, 0, false, manager);
+      Object.assign(character, characterDto);
+
+      const dbCharacter = await manager.save(character);
+
+      if (staffId) {
+        await this.staffsService.createAction(
+          {
+            staffId,
+            type: StaffActionTypes.CharacterUpdated,
+            entityId: dbCharacter.id,
+            entityType: EntityTypes.Character
+          },
+          manager
+        );
+      }
+
+      return dbCharacter;
+    }).catch(error => {
+      dbErrorHandler(error);
+      throw error;
+    });
   }
 }

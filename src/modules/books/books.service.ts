@@ -19,6 +19,8 @@ import { Language } from '../languages/language.entity';
 import { Bookmark, BookmarkTypes } from './entities/bookmark.entity';
 import { BookmarkDto } from './dtos/bookmark.dto';
 import { dbErrorHandler } from 'src/common/utilities/error-handler';
+import { StaffsService } from '../staffs/staffs.service';
+import { EntityTypes, StaffActionTypes } from '../staffs/entities/staff-action.entity';
 
 @Injectable()
 export class BooksService {
@@ -27,15 +29,19 @@ export class BooksService {
     @InjectRepository(BookImage) private bookImageRepo: Repository<BookImage>,
     @InjectRepository(Bookmark) private bookmarkRepo: Repository<Bookmark>,
     private dataSource: DataSource,
+    private staffsService: StaffsService
   ) {}
 
-  async create({
-    titleId,
-    publisherId,
-    languageId,
-    translatorIds,
-    ...bookDto
-  }: CreateBookDto): Promise<Book | never> {
+  async create(
+    {
+      titleId,
+      publisherId,
+      languageId,
+      translatorIds,
+      ...bookDto
+    }: CreateBookDto,
+    staffId?: string
+  ): Promise<Book | never> {
     return this.dataSource.transaction(async (manager) => {
       const [title, publisher, language, translators] = await Promise.all([
         manager.findOne(Title, { where: { id: titleId } }),
@@ -68,16 +74,24 @@ export class BooksService {
         language,
       });
 
-      return manager.save(Book, book).catch((error) => {
-        if (error.code === DBErrors.Conflict) {
-          const sqlMessage = error.driverError.sqlMessage as string;
+      const dbBook = await manager.save(Book, book);
 
-          if (sqlMessage.includes('ISBN_UNIQUE')) {
-            throw new ConflictException(ConflictMessages.ISBN);
-          }
-        }
-        throw error;
-      });
+      if (staffId) {
+        await this.staffsService.createAction(
+          {
+            staffId,
+            type: StaffActionTypes.BookCreated,
+            entityId: dbBook.id,
+            entityType: EntityTypes.Book
+          },
+          manager
+        );
+      }
+
+      return dbBook;
+    }).catch((error) => {
+      dbErrorHandler(error);
+      throw error;
     });
   }
 
@@ -128,6 +142,7 @@ export class BooksService {
       images,
       ...bookDto
     }: UpdateBookDto,
+    staffId?: string
   ): Promise<Book | never> {
     return this.dataSource.transaction(async (manager) => {
       const existingBook = await manager.findOne(Book, {
@@ -171,16 +186,24 @@ export class BooksService {
       updatedBook.translators = translators;
       updatedBook.images = [...(existingBook.images || []), ...(newImages || [])];
 
-      return manager.save(Book, updatedBook).catch((error) => {
-        if (error.code === DBErrors.Conflict) {
-          const sqlMessage = error.driverError.sqlMessage as string;
+      const dbBook = await manager.save(Book, updatedBook);
 
-          if (sqlMessage.includes('ISBN_UNIQUE')) {
-            throw new ConflictException(ConflictMessages.ISBN);
-          }
-        }
-        throw error;
-      });
+      if (staffId) {
+        await this.staffsService.createAction(
+          {
+            staffId,
+            type: StaffActionTypes.BookUpdated,
+            entityId: dbBook.id,
+            entityType: EntityTypes.Book
+          },
+          manager
+        );
+      }
+
+      return dbBook;
+    }).catch((error) => {
+      dbErrorHandler(error);
+      throw error;
     });
   }
 
