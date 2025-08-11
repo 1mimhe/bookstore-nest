@@ -1,6 +1,7 @@
 import { Expose, Type } from 'class-transformer';
 import { ReactionsEnum } from '../entities/review-reaction.entity';
 import { ApiProperty } from '@nestjs/swagger';
+import { BookResponseDto } from 'src/modules/books/dtos/book-response.dto';
 
 class UserDto {
   @Expose()
@@ -69,6 +70,10 @@ export class ReviewResponseDto {
 export class BookReviewResponseDto extends ReviewResponseDto {
   @Expose()
   bookId?: string;
+
+  @Expose()
+  @Type(() => BookResponseDto)
+  book?: BookResponseDto;
 }
 
 export class BlogReviewResponseDto extends ReviewResponseDto {

@@ -74,6 +74,7 @@ export class ReviewsService {
     const queryBuilder = this.reviewRepo
       .createQueryBuilder('review')
       .leftJoinAndSelect('review.user', 'user')
+      .leftJoinAndSelect('replies.book', 'book')
       .leftJoinAndSelect('review.replies', 'replies')
       .leftJoinAndSelect('replies.user', 'repliesUser')
       .where(whereCondition)
