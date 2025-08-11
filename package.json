@@ -17,9 +17,11 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "cross-env NODE_ENV=test jest --config ./test/jest-e2e.json"
+    "test:e2e": "cross-env NODE_ENV=test jest --config ./test/jest-e2e.json",
+    "seed": "ts-node --files .\\src\\modules\\languages\\language-seed.ts"
   },
   "dependencies": {
+    "@2toad/profanity": "^3.1.1",
     "@keyv/redis": "^4.5.0",
     "@nestjs/cache-manager": "^3.0.1",
     "@nestjs/common": "^11.0.1",
@@ -37,6 +39,7 @@
     "cross-env": "^7.0.3",
     "express-session": "^1.18.1",
     "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.14.3",
     "redis": "^5.5.6",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
