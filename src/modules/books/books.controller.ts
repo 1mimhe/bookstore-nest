@@ -153,6 +153,7 @@ export class BooksController {
   @ApiConflictResponse({
     description: ConflictMessages.Slug,
   })
+  @ApiBearerAuth()
   @Serialize(TitleCompactResponseDto)
   @UseGuards(AuthGuard, RolesGuard)
   @RequiredRoles(
@@ -163,8 +164,9 @@ export class BooksController {
   async updateTitle(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: UpdateTitleDto,
+    @Session() session: SessionData
   ): Promise<TitleCompactResponseDto> {
-    return this.titlesService.update(id, body);
+    return this.titlesService.update(id, body, session.staffId);
   }
 
   @ApiOperation({

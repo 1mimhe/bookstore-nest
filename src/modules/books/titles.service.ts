@@ -106,6 +106,7 @@ export class TitlesService {
       characterIds,
       ...titleDto
     }: UpdateTitleDto,
+    staffId?: string
   ): Promise<Title | never> {
     return this.dataSource.transaction(async (manager) => {
       const existingTitle = await manager.findOne(Title, {
@@ -168,12 +169,24 @@ export class TitlesService {
       updatedTitle.tags = [...(existingTitle.tags || []), ...(newTags || [])];
       updatedTitle.characters = [...(existingTitle.characters || []), ...(newCharacters || [])];
 
-      return manager.save(Title, updatedTitle).catch((error) => {
-        if (error.code === DBErrors.Conflict) {
-          throw new ConflictException(ConflictMessages.Slug);
-        }
-        throw error;
-      });
+      const dbTitle = await manager.save(Title, updatedTitle);
+
+      if (staffId) {
+        await this.staffsService.createAction(
+          {
+            staffId,
+            type: StaffActionTypes.TitleUpdated,
+            entityId: dbTitle.id,
+            entityType: EntityTypes.Title
+          },
+          manager
+        );
+      }
+      
+      return dbTitle;
+    }).catch((error) => {
+      dbErrorHandler(error);
+      throw error;
     });
   }
 
