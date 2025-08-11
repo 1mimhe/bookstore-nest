@@ -8,13 +8,15 @@ import { ReactionsEnum, ReviewReaction } from './entities/review-reaction.entity
 import { AuthMessages, NotFoundMessages } from 'src/common/enums/error.messages';
 import { UpdateReviewDto } from './dtos/update-review.dto';
 import { ReactToReviewDto } from './dtos/react-review.dto';
+import { BooksService } from '../books/books.service';
 
 @Injectable()
 export class ReviewsService {
   constructor(
     @InjectRepository(Review) private reviewRepo: Repository<Review>,
     @InjectRepository(ReviewReaction) private reviewReactionRepo: Repository<ReviewReaction>,
-    private dataSource: DataSource
+    private dataSource: DataSource,
+    private booksService: BooksService
   ) {}
 
   async create(
@@ -23,37 +25,43 @@ export class ReviewsService {
     reviewableId: string,
     {
       parentReviewId,
-      ...reviewDto
+      rate,
+      content
     }: CreateReviewDto
   ): Promise<Review | never> {
     const entityLike = {
       userId,
       reviewableType,
       parentReviewId,
-      ...reviewDto
+      content
     } as DeepPartial<Review>;
-
-    switch (reviewableType) {
-      case ReviewableType.Book:
-        entityLike.bookId = reviewableId;
-        break;
-
-      case ReviewableType.Blog:
-        entityLike.blogId = reviewableId;
-        break;
-    }
-
     return this.dataSource.transaction(async manager => {
-      const review = manager.create(Review, entityLike);
+      const entityLike: DeepPartial<Review> = {
+        userId,
+        reviewableType,
+        ...(reviewableType === ReviewableType.Book && { bookId: reviewableId }),
+        ...(reviewableType === ReviewableType.Blog && { blogId: reviewableId }),
+        parentReviewId,
+        rate,
+        content
+      };
 
+      // Update book rating
+      if (reviewableType === ReviewableType.Book && rate) {
+        await this.booksService.updateRate(reviewableId, rate, 1, manager);
+      }
+      
+      const review = manager.create(Review, entityLike);
+      const dbReview = await manager.save(Review, review);
+      
       if (parentReviewId) {
         await this.incrementRepliesCount(parentReviewId, 1, manager);
       }
 
-      return manager.save(Review, review).catch(error => {
-        dbErrorHandler(error);
-        throw error;
-      });
+      return dbReview;
+    }).catch(error => {
+      dbErrorHandler(error);
+      throw error;
     });
   }
 
