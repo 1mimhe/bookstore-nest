@@ -152,9 +152,13 @@ export class UsersService {
   }
 
   async getAllUserAddresses(userId: string): Promise<Address[]> {
-    return this.addressRepo.find({
-      where: { userId }
-    });
+    return this.addressRepo.createQueryBuilder('address')
+      .where('userId = :userId', { userId })
+      .andWhere(
+        '(address.addressId, address.version) IN ' +
+        '(SELECT addressId, MAX(version) FROM addresses a WHERE a.userId = :userId GROUP BY userId, addressId)'
+      )
+      .getRawMany();
   }
 
   async getAddressById(id: string): Promise<Address | never> {
