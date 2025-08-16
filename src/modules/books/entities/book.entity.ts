@@ -17,6 +17,7 @@ import { Language } from 'src/modules/languages/language.entity';
 import { CollectionBook } from 'src/modules/collections/entities/collection-book.entity';
 import { Review } from 'src/modules/reviews/entities/review.entity';
 import { Bookmark } from './bookmark.entity';
+import { OrderBook } from 'src/modules/orders/entities/order-book.entity';
 
 export enum Quartos {
   Vaziri = 'vaziri',
@@ -96,7 +97,6 @@ export class Book extends BaseEntity {
   price: number;
 
   @Column({
-    nullable: true,
     type: 'float', // 0-1
     default: 0,
   })
@@ -150,4 +150,7 @@ export class Book extends BaseEntity {
 
   @OneToMany(() => Bookmark, (bookmark) => bookmark.book)
   bookmarks: Bookmark[];
+
+  @OneToMany(() => OrderBook, (orderBook) => orderBook.book)
+  orderBooks: OrderBook[];
 }

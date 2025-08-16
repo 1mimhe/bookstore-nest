@@ -1,7 +1,8 @@
 import { BaseEntity } from 'src/common/entities/base.entity';
 import { Address } from 'src/modules/users/entities/address.entity';
 import { User } from 'src/modules/users/entities/user.entity';
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
+import { OrderBook } from './order-book.entity';
 
 export enum PaymentStatuses {
   Pending = 'pending',
@@ -73,4 +74,7 @@ export class Order extends BaseEntity {
 
   @Column({ nullable: true })
   trackingCode: string;
+
+  @OneToMany(() => OrderBook, (orderBook) => orderBook.order)
+  orderBooks: OrderBook[];
 }
