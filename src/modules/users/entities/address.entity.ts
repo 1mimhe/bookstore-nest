@@ -1,10 +1,13 @@
 import { BaseEntity } from 'src/common/entities/base.entity';
-import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
 import { User } from './user.entity';
 
 @Entity('addresses')
 @Index(['user'])
 export class Address extends BaseEntity {
+  @PrimaryColumn()
+  version: number;
+
   @Column()
   recipientName: string;
 
