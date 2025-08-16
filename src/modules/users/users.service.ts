@@ -11,6 +11,7 @@ import { UpdateUserDto } from './dtos/update-user.dto';
 import { AuthService } from '../auth/auth.service';
 import { Contact } from './entities/contact.entity';
 import { Bookmark, BookmarkTypes } from '../books/entities/bookmark.entity';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class UsersService {
@@ -142,12 +143,16 @@ export class UsersService {
 
   async createAddress(
     userId: string,
-    addressDto: CreateAddressDto
+    addressDto: CreateAddressDto,
   ): Promise<Address> {
+    const logicalId = uuidv4();
+
     const address = this.addressRepo.create({
       userId,
-      ...addressDto
+      logicalId,
+      ...addressDto,
     });
+
     return this.addressRepo.save(address);
   }
 

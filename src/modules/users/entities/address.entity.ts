@@ -1,11 +1,15 @@
 import { BaseEntity } from 'src/common/entities/base.entity';
-import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { User } from './user.entity';
 
 @Entity('addresses')
 @Index(['user'])
+@Index(['logicalId', 'version'], { unique: true })
 export class Address extends BaseEntity {
-  @PrimaryColumn()
+  @Column('uuid')
+  logicalId: string;
+
+  @Column({ default: 1 })
   version: number;
 
   @Column()
@@ -26,15 +30,18 @@ export class Address extends BaseEntity {
   @Column('text')
   postalAddress: string;
 
-  @Column()
-  postalCode: string;
+  @Column({ nullable: true })
+  postalCode?: string;
 
-  @Column()
-  plate: number;
+  @Column({ nullable: true })
+  plate?: number;
 
   @Column('uuid')
   userId: string;
   @ManyToOne(() => User, (user) => user.addresses)
   @JoinColumn()
   user: User;
+
+  @Column({ default: true })
+  isActive: boolean;
 }
