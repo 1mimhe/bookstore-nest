@@ -145,60 +145,37 @@ export class UsersService {
     userId: string,
     addressDto: CreateAddressDto,
   ): Promise<Address> {
-    const logicalId = uuidv4();
-
     const address = this.addressRepo.create({
       userId,
-      logicalId,
       ...addressDto,
     });
-
     return this.addressRepo.save(address);
   }
 
   private async createAddressNewVersion(
-    logicalId: string,
+    latestVersionId: string,
     addressDto: UpdateAddressDto
   ): Promise<Address> {
-    const latestVersion = await this.addressRepo.findOne({
-      where: { logicalId },
-      order: { version: 'DESC' },
+    return this.dataSource.transaction(async manager => {
+      // Deactivate current active version
+      await manager.update(
+        Address,
+        { id: latestVersionId },
+        { isActive: false }
+      );
+  
+      // Create new version
+      const newVersion = manager.create(Address, addressDto);
+      return this.addressRepo.save(newVersion);
     });
-
-    // Deactivate current active version
-    await this.addressRepo.update(
-      { logicalId, isActive: true },
-      { isActive: false }
-    );
-
-    // Create new version
-    const newVersion = this.addressRepo.create({
-      logicalId,
-      ...addressDto,
-      version: (latestVersion?.version ?? 0) + 1,
-    });
-
-    return this.addressRepo.save(newVersion);
   }
 
   async getAllUserAddresses(userId: string): Promise<Address[]> {
-    return this.addressRepo.createQueryBuilder('address')
-      .where('userId = :userId', { userId })
-      .andWhere(
-        '(address.addressId, address.version) IN ' +
-        '(SELECT addressId, MAX(version) FROM addresses a WHERE a.userId = :userId GROUP BY userId, addressId)'
-      )
-      .getRawMany();
-  }
-
-  private async getAddressById(id: string): Promise<Address | never> {
-    return this.addressRepo.findOneOrFail({
-      where: { id }
-    }).catch((error: Error) => {
-      if (error instanceof EntityNotFoundError) {
-        throw new NotFoundException(NotFoundMessages.Address);
+    return this.addressRepo.find({
+      where: {
+        userId,
+        isActive: true
       }
-      throw error;
     });
   }
 
@@ -236,12 +213,20 @@ export class UsersService {
       return this.addressRepo.save(address);
     }
     
-    return this.createAddressNewVersion(address.logicalId, address);
+    return this.createAddressNewVersion(address.id, address);
   }
 
-  async deleteAddress(id: string): Promise<Address | never> {
-    const address = await this.getAddressById(id);
-    return this.addressRepo.remove(address);
+  async deleteAddress(id: string) {
+    const { orderCount, address } = await this.getAddressByIdWithOrderCount(id);
+
+    if (orderCount < 1) {
+      return this.addressRepo.softDelete(address);
+    }
+
+    return this.addressRepo.update(
+      { id },
+      { isActive: false }
+    );
   }
 
   async getAllBookmarks(

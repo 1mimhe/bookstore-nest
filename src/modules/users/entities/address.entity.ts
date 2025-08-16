@@ -4,14 +4,7 @@ import { User } from './user.entity';
 
 @Entity('addresses')
 @Index(['user'])
-@Index(['logicalId', 'version'], { unique: true })
 export class Address extends BaseEntity {
-  @Column('uuid')
-  logicalId: string;
-
-  @Column({ default: 1 })
-  version: number;
-
   @Column()
   recipientName: string;
 
