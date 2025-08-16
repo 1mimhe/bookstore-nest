@@ -1,22 +1,76 @@
-// import { BaseEntity } from 'src/common/entities/base.entity';
-// import { Address } from 'src/modules/users/entities/address.entity';
-// import { User } from 'src/modules/users/entities/user.entity';
-// import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { BaseEntity } from 'src/common/entities/base.entity';
+import { Address } from 'src/modules/users/entities/address.entity';
+import { User } from 'src/modules/users/entities/user.entity';
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 
-// @Entity('orders')
-// export class Order extends BaseEntity {
-//   @Column('uuid')
-//   userId: string;
-//   @ManyToOne(() => User, (user) => user.orders)
-//   @JoinColumn()
-//   user: User;
+export enum PaymentStatuses {
+  Pending = 'pending',
+  Paid = 'paid',
+  Failed = 'failed'
+}
 
-//   @Column('uuid')
-//   shippingAddressId: string;
-//   @ManyToOne(() => Address, (address) => address.orders)
-//   @JoinColumn([
-//     { name: 'addressId', referencedColumnName: 'id' },
-//     { name: 'addressVersion', referencedColumnName: 'version' }
-//   ])
-//   shippingAddress: Address;
-// }
+export enum OrderStatuses {
+  Pending = 'pending',
+  Processing = 'processing',
+  Shipped = 'shipped',
+  Delivered = 'delivered',
+  Returned = 'returned',
+  Canceled = 'canceled'
+}
+
+export enum ShippingTypes {
+  Post = 'post',
+  Peyk = 'peyk', // Just for Tehran
+  Tipax = 'tipax'
+}
+
+@Entity('orders')
+export class Order extends BaseEntity {
+  @Column('uuid')
+  userId: string;
+  @ManyToOne(() => User, (user) => user.orders)
+  @JoinColumn()
+  user: User;
+
+  @Column('uuid')
+  shippingAddressId: string;
+  @ManyToOne(() => Address, (address) => address.orders)
+  @JoinColumn()
+  shippingAddress: Address;
+
+  @Column({
+    type: 'enum',
+    enum: PaymentStatuses,
+    default: PaymentStatuses.Pending
+  })
+  paymentStatus: PaymentStatuses;
+
+  @Column({
+    type: 'enum',
+    enum: OrderStatuses,
+    default: OrderStatuses.Pending
+  })
+  orderStatus: OrderStatuses;
+
+  @Column({
+    type: 'enum',
+    enum: ShippingTypes
+  })
+  shippingType: ShippingTypes;
+
+  @Column('int')
+  shippingPrice: number;
+
+  // TODO: discountCode: DiscountCode;
+  // With eager loading.
+
+  @Column('int')
+  totalPrice: number; // Without apply the discount code
+
+  get amountPayable() {
+    return ''; // TODO: Complete this
+  }
+
+  @Column({ nullable: true })
+  trackingCode: string;
+}

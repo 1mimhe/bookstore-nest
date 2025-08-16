@@ -15,6 +15,7 @@ import { ReviewReaction } from 'src/modules/reviews/entities/review-reaction.ent
 import { Review } from 'src/modules/reviews/entities/review.entity';
 import { Bookmark } from 'src/modules/books/entities/bookmark.entity';
 import { Staff } from 'src/modules/staffs/entities/staff.entity';
+import { Order } from 'src/modules/orders/entities/order.entity';
 
 export enum Genders {
   Male = 'male',
@@ -77,4 +78,7 @@ export class User extends BaseEntity {
 
   @OneToOne(() => Staff, (staff) => staff.user)
   staff?: Staff;
+
+  @OneToMany(() => Order, (order) => order.user)
+  orders: Order[];
 }
