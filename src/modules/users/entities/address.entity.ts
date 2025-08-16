@@ -23,15 +23,18 @@ export class Address extends BaseEntity {
   @Column('text')
   postalAddress: string;
 
-  @Column()
-  postalCode: string;
+  @Column({ nullable: true })
+  postalCode?: string;
 
-  @Column()
-  plate: number;
+  @Column({ nullable: true })
+  plate?: number;
 
   @Column('uuid')
   userId: string;
   @ManyToOne(() => User, (user) => user.addresses)
   @JoinColumn()
   user: User;
+
+  @Column({ default: true })
+  isActive: boolean;
 }

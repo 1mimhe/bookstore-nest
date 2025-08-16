@@ -1,7 +1,7 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
-import { DataSource, EntityNotFoundError, FindOptionsWhere, Repository } from 'typeorm';
+import { DataSource, DeepPartial, EntityNotFoundError, FindOptionsWhere, Repository } from 'typeorm';
 import { ConflictDto } from 'src/common/dtos/error.dtos';
 import { CreateAddressDto } from './dtos/create-address.dto';
 import { Address } from './entities/address.entity';
@@ -11,6 +11,7 @@ import { UpdateUserDto } from './dtos/update-user.dto';
 import { AuthService } from '../auth/auth.service';
 import { Contact } from './entities/contact.entity';
 import { Bookmark, BookmarkTypes } from '../books/entities/bookmark.entity';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class UsersService {
@@ -142,44 +143,90 @@ export class UsersService {
 
   async createAddress(
     userId: string,
-    addressDto: CreateAddressDto
+    addressDto: CreateAddressDto,
   ): Promise<Address> {
     const address = this.addressRepo.create({
       userId,
-      ...addressDto
+      ...addressDto,
     });
     return this.addressRepo.save(address);
   }
 
-  async getAllUserAddresses(userId: string): Promise<Address[]> {
-    return this.addressRepo.find({
-      where: { userId }
+  private async createAddressNewVersion(
+    latestVersionId: string,
+    addressDto: UpdateAddressDto
+  ): Promise<Address> {
+    return this.dataSource.transaction(async manager => {
+      // Deactivate current active version
+      await manager.update(
+        Address,
+        { id: latestVersionId },
+        { isActive: false }
+      );
+  
+      // Create new version
+      const newVersion = manager.create(Address, addressDto);
+      return this.addressRepo.save(newVersion);
     });
   }
 
-  async getAddressById(id: string): Promise<Address | never> {
-    return this.addressRepo.findOneOrFail({
-      where: { id }
+  async getAllUserAddresses(userId: string): Promise<Address[]> {
+    return this.addressRepo.find({
+      where: {
+        userId,
+        isActive: true
+      }
+    });
+  }
+
+  private async getAddressByIdWithOrderCount(
+    id: string
+  ): Promise<{ address: Address, orderCount: number } | never> {
+    const address = await this.addressRepo.findOneOrFail({
+      where: {
+        id,
+        isActive: true
+      }
     }).catch((error: Error) => {
       if (error instanceof EntityNotFoundError) {
         throw new NotFoundException(NotFoundMessages.Address);
       }
       throw error;
     });
+
+    // TODO: calculate order count
+      
+    return {
+      address,
+      orderCount: 0
+    };
   }
 
   async updateAddress(
     id: string,
     addressDto: UpdateAddressDto
   ): Promise<Address | never> {
-    const address = await this.getAddressById(id);
+    const { orderCount, address } = await this.getAddressByIdWithOrderCount(id);
     Object.assign(address, addressDto);
-    return this.addressRepo.save(address);
+
+    if (orderCount < 1) {
+      return this.addressRepo.save(address);
+    }
+    
+    return this.createAddressNewVersion(address.id, address);
   }
 
-  async deleteAddress(id: string): Promise<Address | never> {
-    const address = await this.getAddressById(id);
-    return this.addressRepo.remove(address);
+  async deleteAddress(id: string) {
+    const { orderCount, address } = await this.getAddressByIdWithOrderCount(id);
+
+    if (orderCount < 1) {
+      return this.addressRepo.softDelete(address);
+    }
+
+    return this.addressRepo.update(
+      { id },
+      { isActive: false }
+    );
   }
 
   async getAllBookmarks(
