@@ -20,6 +20,7 @@ import { BlogsModule } from '../blogs/blogs.module';
 import { CollectionsModule } from '../collections/collections.module';
 import { ReviewsModule } from '../reviews/reviews.module';
 import { StaffModule } from '../staffs/staffs.module';
+import { OrdersModule } from '../orders/orders.module';
 
 @Module({
   imports: [
@@ -62,6 +63,7 @@ import { StaffModule } from '../staffs/staffs.module';
     CollectionsModule,
     ReviewsModule,
     StaffModule,
+    OrdersModule
   ],
   providers: [
     {
