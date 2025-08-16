@@ -13,7 +13,6 @@ import { Publisher } from 'src/modules/publishers/publisher.entity';
 import { Address } from './address.entity';
 import { ReviewReaction } from 'src/modules/reviews/entities/review-reaction.entity';
 import { Review } from 'src/modules/reviews/entities/review.entity';
-import { Book } from 'src/modules/books/entities/book.entity';
 import { Bookmark } from 'src/modules/books/entities/bookmark.entity';
 import { Staff } from 'src/modules/staffs/entities/staff.entity';
 

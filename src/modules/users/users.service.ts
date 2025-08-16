@@ -1,7 +1,7 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
-import { DataSource, EntityNotFoundError, FindOptionsWhere, Repository } from 'typeorm';
+import { DataSource, DeepPartial, EntityNotFoundError, FindOptionsWhere, Repository } from 'typeorm';
 import { ConflictDto } from 'src/common/dtos/error.dtos';
 import { CreateAddressDto } from './dtos/create-address.dto';
 import { Address } from './entities/address.entity';
@@ -191,7 +191,7 @@ export class UsersService {
       .getRawMany();
   }
 
-  async getAddressById(id: string): Promise<Address | never> {
+  private async getAddressById(id: string): Promise<Address | never> {
     return this.addressRepo.findOneOrFail({
       where: { id }
     }).catch((error: Error) => {
@@ -202,13 +202,41 @@ export class UsersService {
     });
   }
 
+  private async getAddressByIdWithOrderCount(
+    id: string
+  ): Promise<{ address: Address, orderCount: number } | never> {
+    const address = await this.addressRepo.findOneOrFail({
+      where: {
+        id,
+        isActive: true
+      }
+    }).catch((error: Error) => {
+      if (error instanceof EntityNotFoundError) {
+        throw new NotFoundException(NotFoundMessages.Address);
+      }
+      throw error;
+    });
+
+    // TODO: calculate order count
+      
+    return {
+      address,
+      orderCount: 0
+    };
+  }
+
   async updateAddress(
     id: string,
     addressDto: UpdateAddressDto
   ): Promise<Address | never> {
-    const address = await this.getAddressById(id);
+    const { orderCount, address } = await this.getAddressByIdWithOrderCount(id);
     Object.assign(address, addressDto);
-    return this.addressRepo.save(address);
+
+    if (orderCount < 1) {
+      return this.addressRepo.save(address);
+    }
+    
+    return this.createAddressNewVersion(address.logicalId, address);
   }
 
   async deleteAddress(id: string): Promise<Address | never> {
