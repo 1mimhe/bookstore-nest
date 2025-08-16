@@ -156,6 +156,31 @@ export class UsersService {
     return this.addressRepo.save(address);
   }
 
+  private async createAddressNewVersion(
+    logicalId: string,
+    addressDto: UpdateAddressDto
+  ): Promise<Address> {
+    const latestVersion = await this.addressRepo.findOne({
+      where: { logicalId },
+      order: { version: 'DESC' },
+    });
+
+    // Deactivate current active version
+    await this.addressRepo.update(
+      { logicalId, isActive: true },
+      { isActive: false }
+    );
+
+    // Create new version
+    const newVersion = this.addressRepo.create({
+      logicalId,
+      ...addressDto,
+      version: (latestVersion?.version ?? 0) + 1,
+    });
+
+    return this.addressRepo.save(newVersion);
+  }
+
   async getAllUserAddresses(userId: string): Promise<Address[]> {
     return this.addressRepo.createQueryBuilder('address')
       .where('userId = :userId', { userId })
