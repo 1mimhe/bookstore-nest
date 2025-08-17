@@ -10,6 +10,7 @@ import { UnprocessableEntityMessages } from 'src/common/enums/error.messages';
 import { Cart } from './orders.types';
 import { BooksService } from '../books/books.service';
 import { CartBookDto, CartResponseDto, UnprocessableDto } from './dto/cart-response.dto';
+import { RemoveBookFromCartDto } from './dto/remove-book.dto';
 
 @Injectable()
 export class OrdersService {
@@ -49,6 +50,31 @@ export class OrdersService {
 
     // Update cart in redis
     return this.setCacheCart(userId, cart);
+  }
+
+  async removeBookFromCart(
+    userId: string,
+    {
+      amount = 1,
+      bookId
+    }: RemoveBookFromCartDto
+  ) {
+    const cart = await this.getCacheCart(userId);
+    const cartBook = cart.books.find(b => b.id === bookId);
+
+    if (!cartBook || cartBook.quantity < amount) {
+      return false;
+    }
+    
+    cartBook.quantity -= amount;
+
+    if (cartBook.quantity === 0) {
+      const cartBookIndex = cart.books.findIndex(b => b.id === bookId);
+      cart.books.splice(cartBookIndex, 1);
+    }
+
+    await this.setCacheCart(userId, cart);
+    return true;
   }
 
   async getCart(userId: string): Promise<CartResponseDto> {

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Patch, Post, UseGuards } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiUnprocessableEntityResponse } from '@nestjs/swagger';
 import { UnprocessableEntityMessages } from 'src/common/enums/error.messages';
@@ -7,6 +7,7 @@ import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { AddBookToCartDto } from './dto/add-book.dto';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 import { CartResponseDto } from './dto/cart-response.dto';
+import { RemoveBookFromCartDto } from './dto/remove-book.dto';
 
 @Controller('orders')
 export class OrdersController {
@@ -29,6 +30,23 @@ export class OrdersController {
     @CurrentUser('id') userId: string
   ) {
     return this.ordersService.addBookToCart(userId, body);
+  }
+
+  @ApiOperation({
+    summary: 'Remove a book from a user’s cart',
+    description: `Decreases the quantity of a specified book in the user's cart by the provided amount.
+      If the book's quantity reaches zero, it is removed from the cart.
+      Returns \`true\`, or \`false\` if the bookId or quantity is invalid.`
+  })
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @Patch('cart/remove-book')
+  async removeBookFromCart(
+    @Body() body: RemoveBookFromCartDto,
+    @CurrentUser('id') userId: string
+  ) {
+    return this.ordersService.removeBookFromCart(userId, body);
   }
 
   @ApiOperation({
