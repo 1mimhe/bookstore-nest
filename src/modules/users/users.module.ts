@@ -11,6 +11,8 @@ import { Bookmark } from '../books/entities/bookmark.entity';
 import { Staff } from '../staffs/entities/staff.entity';
 import { StaffAction } from '../staffs/entities/staff-action.entity';
 import { TokenModule } from '../token/token.module';
+import { Order } from '../orders/entities/order.entity';
+import { OrderBook } from '../orders/entities/order-book.entity';
 
 @Module({
   imports: [
@@ -21,6 +23,8 @@ import { TokenModule } from '../token/token.module';
       Bookmark,
       Staff,
       StaffAction,
+      Order,
+      OrderBook,
     ]),
     AuthModule,
     TokenModule,

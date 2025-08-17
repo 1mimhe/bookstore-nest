@@ -71,10 +71,6 @@ import { OrdersModule } from '../orders/orders.module';
       useValue: new ValidationPipe({
         whitelist: true,
       }),
-    },
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: ClassSerializerInterceptor
     }
   ],
 })

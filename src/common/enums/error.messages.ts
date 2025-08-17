@@ -42,3 +42,7 @@ export enum NotFoundMessages {
   Review = 'Review not found.',
   Staff = 'Staff not found.'
 }
+
+export enum UnprocessableEntityMessages {
+  BookStock = 'This book is currently out of stock. The amount you requested are not available.'
+}
