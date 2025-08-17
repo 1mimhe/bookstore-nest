@@ -4,6 +4,7 @@ import { OrdersService } from './orders.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Book } from '../books/entities/book.entity';
 import { TokenModule } from '../token/token.module';
+import { BooksModule } from '../books/books.module';
 
 @Module({
   imports: [
@@ -11,6 +12,7 @@ import { TokenModule } from '../token/token.module';
       Book
     ]),
     TokenModule,
+    BooksModule,
   ],
   controllers: [OrdersController],
   providers: [OrdersService]

@@ -139,7 +139,12 @@ export class BooksService {
       where: {
         id: In(ids)
       },
+      relations: {
+        title: true,
+        publisher: true,
+      },
       select: {
+        id: true,
         name: true,
         title: {
           slug: true
