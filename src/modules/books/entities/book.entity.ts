@@ -102,6 +102,10 @@ export class Book extends BaseEntity {
   })
   discountPercent?: number;
 
+  get finalPrice() {
+    return this.price * (1 - (this.discountPercent ?? 0));
+  }
+
   @Column({
     nullable: true,
     type: 'int',

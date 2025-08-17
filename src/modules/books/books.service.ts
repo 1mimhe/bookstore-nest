@@ -133,6 +133,23 @@ export class BooksService {
     });
   }
 
+  async getMultipleById(ids: string[]) {
+    return this.bookRepo.find({
+      where: {
+        id: In(ids)
+      },
+      select: {
+        name: true,
+        publisher: {
+          publisherName: true
+        },
+        stock: true,
+        price: true,
+        discountPercent: true,
+      }
+    });
+  }
+
   async update(
     id: string,
     {
