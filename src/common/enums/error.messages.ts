@@ -44,5 +44,5 @@ export enum NotFoundMessages {
 }
 
 export enum UnprocessableEntityMessages {
-  BookStock = 'This book is currently out of stock. The amount you requested are not available.'
+  BookStock = 'This book is currently out of stock. The quantity you requested are not available.'
 }
