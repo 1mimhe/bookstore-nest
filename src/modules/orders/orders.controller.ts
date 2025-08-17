@@ -22,10 +22,10 @@ export class OrdersController {
   @UseGuards(AuthGuard)
   @HttpCode(HttpStatus.OK)
   @Post('cart/add-book')
-  async addBookToBasket(
+  async addBookToCart(
     @Body() body: AddBookToCartDto,
     @CurrentUser('id') userId: string
   ) {
-    return this.ordersService.addBookToBasket(userId, body);
+    return this.ordersService.addBookToCart(userId, body);
   }
 }

@@ -16,7 +16,7 @@ export class OrdersService {
     @Inject(CACHE_MANAGER) private cacheManager: Cache
   ) {}
 
-  async addBookToBasket(
+  async addBookToCart(
     userId: string,
     {
       amount = 1,
