@@ -11,14 +11,20 @@ import { Cart } from './orders.types';
 import { BooksService } from '../books/books.service';
 import { CartBookDto, CartResponseDto, UnprocessableDto } from './dto/cart-response.dto';
 import { RemoveBookFromCartDto } from './dto/remove-book.dto';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class OrdersService {
+  private cartCacheTime: number;
+
   constructor(
     @InjectRepository(Book) private bookRepo: Repository<Book>,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
-    private booksService: BooksService
-  ) {}
+    private booksService: BooksService,
+    config: ConfigService
+  ) {
+    this.cartCacheTime = config.get<number>('CART_CACHE_TIME', 2 * 24 * 60 * 60 * 1000);
+  }
 
   async addBookToCart(
     userId: string,
@@ -141,6 +147,10 @@ export class OrdersService {
     };
   }
 
+  async clearCart(userId: string) {
+    return this.cacheManager.del(`cart-${userId}`);
+  }
+
   private async getCacheCart(userId: string) {
     const userBasketKey = `cart-${userId}`;
     const cart = await this.cacheManager.get<Cart>(userBasketKey);
@@ -155,6 +165,6 @@ export class OrdersService {
   }
 
   private async setCacheCart(userId: string, cart: Cart) {
-    return this.cacheManager.set(`cart-${userId}`, cart);
+    return this.cacheManager.set(`cart-${userId}`, cart, this.cartCacheTime);
   }
 }

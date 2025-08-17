@@ -50,6 +50,18 @@ export class OrdersController {
   }
 
   @ApiOperation({
+    summary: 'Clear user’s cart',
+    description: 'The cart is automatically cleared after 48 hours of inactivity if no changes are made.'
+  })
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @Patch('cart/clear')
+  async clearCart(@CurrentUser('id') userId: string) {
+    return this.ordersService.clearCart(userId);
+  }
+
+  @ApiOperation({
     summary: 'Retrieve a user’s cart',
     description: `For each book, if the requested quantity exceeds the available stock (even if stock is not zero),
       the book is added to the unprocessables array, and the quantity is reduced to the available stock.`
