@@ -20,12 +20,12 @@ export class OrderBook extends BaseEntity {
   book: Book;
 
   @Column('int', { default: 1 })
-  amount: number;
+  quantity: number;
 
   @Column('int')
   price: number;
 
   get totalPrice() {
-    return this.amount * this.book.price * (1 - (this.book.discountPercent ?? 0));
+    return this.quantity * this.book.price * (1 - (this.book.discountPercent ?? 0));
   }
 }
