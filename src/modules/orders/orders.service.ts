@@ -19,7 +19,7 @@ export class OrdersService {
   async addBookToCart(
     userId: string,
     {
-      amount = 1,
+      quantity = 1,
       bookId
     }: AddBookToCartDto
   ) {
@@ -30,7 +30,7 @@ export class OrdersService {
     if (!cartBook.quantity) {
       cart.books.push(cartBook);
     }
-    cartBook.quantity += amount;
+    cartBook.quantity += quantity;
 
     // Check book's stock
     const { stock } = await this.bookRepo.findOneOrFail({

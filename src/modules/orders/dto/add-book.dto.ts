@@ -4,7 +4,7 @@ export class AddBookToCartDto {
   @IsOptional()
   @IsInt()
   @Min(1)
-  amount?: number;
+  quantity?: number;
 
   @IsNotEmpty()
   @IsUUID()
