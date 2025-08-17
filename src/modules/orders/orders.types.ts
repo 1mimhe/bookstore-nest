@@ -1,6 +1,6 @@
-export interface Basket {
+export interface Cart {
   books: {
     id: string;
-    amount: number;
+    quantity: number;
   }[]
 }

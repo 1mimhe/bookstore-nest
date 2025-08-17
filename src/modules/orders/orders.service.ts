@@ -1,13 +1,13 @@
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Inject, Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { Cache } from 'cache-manager';
-import { AddBookToBasketDto } from './dto/add-book.dto';
+import { AddBookToCartDto } from './dto/add-book.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Book } from '../books/entities/book.entity';
 import { Repository } from 'typeorm';
 import { dbErrorHandler } from 'src/common/utilities/error-handler';
 import { UnprocessableEntityMessages } from 'src/common/enums/error.messages';
-import { Basket } from './orders.types';
+import { Cart } from './orders.types';
 
 @Injectable()
 export class OrdersService {
@@ -21,16 +21,16 @@ export class OrdersService {
     {
       amount = 1,
       bookId
-    }: AddBookToBasketDto
+    }: AddBookToCartDto
   ) {
-    // Get basket from redis
-    const basket = await this.getBasket(userId);
-    const basketBook = basket.books.find(b => b.id === bookId) ?? { id: bookId, amount: 0 };
+    // Get cart from redis
+    const cart = await this.getBasket(userId);
+    const cartBook = cart.books.find(b => b.id === bookId) ?? { id: bookId, quantity: 0 };
 
-    if (!basketBook.amount) {
-      basket.books.push(basketBook);
+    if (!cartBook.quantity) {
+      cart.books.push(cartBook);
     }
-    basketBook.amount += amount;
+    cartBook.quantity += amount;
 
     // Check book's stock
     const { stock } = await this.bookRepo.findOneOrFail({
@@ -40,28 +40,28 @@ export class OrdersService {
       throw error;
     });
 
-    if (!stock || stock < basketBook.amount) {
+    if (!stock || stock < cartBook.quantity) {
       throw new UnprocessableEntityException(UnprocessableEntityMessages.BookStock);
     }
 
-    // Update basket in redis
-    return this.setBasket(userId, basket);
+    // Update cart in redis
+    return this.setBasket(userId, cart);
   }
 
   private async getBasket(userId: string) {
-    const userBasketKey = `basket-${userId}`;
-    const basket = await this.cacheManager.get<Basket>(userBasketKey);
+    const userBasketKey = `cart-${userId}`;
+    const cart = await this.cacheManager.get<Cart>(userBasketKey);
 
-    if (!basket) {
+    if (!cart) {
       return this.setBasket(userId, {
         books: []
       });
     }
     
-    return basket;
+    return cart;
   }
 
-  private async setBasket(userId: string, basket: Basket) {
-    return this.cacheManager.set(`basket-${userId}`, basket);
+  private async setBasket(userId: string, cart: Cart) {
+    return this.cacheManager.set(`cart-${userId}`, cart);
   }
 }

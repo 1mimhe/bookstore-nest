@@ -1,6 +1,6 @@
 import { IsInt, IsNotEmpty, IsOptional, IsUUID, Min } from 'class-validator';
 
-export class AddBookToBasketDto {
+export class AddBookToCartDto {
   @IsOptional()
   @IsInt()
   @Min(1)

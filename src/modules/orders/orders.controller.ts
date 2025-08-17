@@ -4,15 +4,15 @@ import { ApiBearerAuth, ApiOperation, ApiUnprocessableEntityResponse } from '@ne
 import { UnprocessableEntityMessages } from 'src/common/enums/error.messages';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
-import { AddBookToBasketDto } from './dto/add-book.dto';
+import { AddBookToCartDto } from './dto/add-book.dto';
 
 @Controller('orders')
 export class OrdersController {
   constructor(private ordersService: OrdersService) {}
 
   @ApiOperation({
-    summary: 'Add a book to a user’s basket',
-    description: `Adds a specified quantity of a book to the user's basket. If the book already exists in the basket, 
+    summary: 'Add a book to a user’s cart',
+    description: `Adds a specified quantity of a book to the user's cart. If the book already exists in the cart, 
       the requested quantity is added to the existing quantity. Requires user authentication.`
   })
   @ApiBearerAuth()
@@ -21,9 +21,9 @@ export class OrdersController {
   })
   @UseGuards(AuthGuard)
   @HttpCode(HttpStatus.OK)
-  @Post('basket/add-book')
+  @Post('cart/add-book')
   async addBookToBasket(
-    @Body() body: AddBookToBasketDto,
+    @Body() body: AddBookToCartDto,
     @CurrentUser('id') userId: string
   ) {
     return this.ordersService.addBookToBasket(userId, body);
