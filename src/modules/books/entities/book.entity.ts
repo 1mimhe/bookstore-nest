@@ -91,7 +91,7 @@ export class Book extends BaseEntity {
     type: 'int',
     default: 0,
   })
-  stock?: number;
+  stock: number;
 
   @Column('int')
   price: number;
@@ -100,7 +100,7 @@ export class Book extends BaseEntity {
     type: 'float', // 0-1
     default: 0,
   })
-  discountPercent?: number;
+  discountPercent: number;
 
   get finalPrice() {
     return this.price * (1 - (this.discountPercent ?? 0));

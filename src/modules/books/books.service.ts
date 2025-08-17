@@ -22,6 +22,7 @@ import { BookmarkDto } from './dtos/bookmark.dto';
 import { dbErrorHandler } from 'src/common/utilities/error-handler';
 import { StaffsService } from '../staffs/staffs.service';
 import { EntityTypes, StaffActionTypes } from '../staffs/entities/staff-action.entity';
+import { CartBook } from './books.types';
 
 @Injectable()
 export class BooksService {
@@ -133,13 +134,16 @@ export class BooksService {
     });
   }
 
-  async getMultipleById(ids: string[]) {
+  async getMultipleById(ids: string[]): Promise<CartBook[]> {
     return this.bookRepo.find({
       where: {
         id: In(ids)
       },
       select: {
         name: true,
+        title: {
+          slug: true
+        },
         publisher: {
           publisherName: true
         },
