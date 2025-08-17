@@ -8,6 +8,7 @@ import { AddBookToCartDto } from './dto/add-book.dto';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 import { CartResponseDto } from './dto/cart-response.dto';
 import { RemoveBookFromCartDto } from './dto/remove-book.dto';
+import { CreateOrderDto } from './dto/create-order.dto';
 
 @Controller('orders')
 export class OrdersController {
@@ -75,5 +76,18 @@ export class OrdersController {
   @Get('cart')
   async getCart(@CurrentUser('id') userId: string) {
     return this.ordersService.getCart(userId);
+  }
+
+  @ApiOperation({
+    summary: 'Initiate an Order from Cart',
+    description: `Creates a pending order based on the user\`s cart.
+      The order is finalized as \`paid\`/\`unpaid\` upon payment confirmation via webhook.`,
+  })
+  @Post()
+  async initiateOrder(
+    @Body() body: CreateOrderDto,
+    @CurrentUser('id') userId: string
+  ) {
+    return this.ordersService.initiateOrder(userId, body);
   }
 }

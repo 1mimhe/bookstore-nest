@@ -7,7 +7,7 @@ import { OrderBook } from './order-book.entity';
 export enum PaymentStatuses {
   Pending = 'pending',
   Paid = 'paid',
-  Failed = 'failed'
+  Unpaid = 'unpaid'
 }
 
 export enum OrderStatuses {
@@ -59,18 +59,20 @@ export class Order extends BaseEntity {
   })
   shippingType: ShippingTypes;
 
-  @Column('int')
+  @Column('int', { default: 0 })
   shippingPrice: number;
 
   // TODO: discountCode: DiscountCode;
   // With eager loading.
 
   @Column('int')
-  totalPrice: number; // Without apply the discount code
+  totalPrice: number; // Without apply the discount code and shipping price
 
-  get amountPayable() {
-    return ''; // TODO: Complete this
-  }
+  @Column('int')
+  discount: number;
+
+  @Column('int')
+  finalPrice: number;
 
   @Column({ nullable: true })
   trackingCode: string;

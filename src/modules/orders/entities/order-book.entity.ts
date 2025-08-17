@@ -22,10 +22,13 @@ export class OrderBook extends BaseEntity {
   @Column('int', { default: 1 })
   quantity: number;
 
+  @Column({ default: 0 })
+  discountPercent: number;
+
   @Column('int')
   price: number;
 
-  get totalPrice() {
-    return this.quantity * this.book.price * (1 - (this.book.discountPercent ?? 0));
+  get finalPrice() {
+    return this.quantity * this.price * (1 - (this.discountPercent ?? 0));
   }
 }

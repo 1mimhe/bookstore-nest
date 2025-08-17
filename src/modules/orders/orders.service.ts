@@ -1,17 +1,22 @@
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Inject, Injectable, UnprocessableEntityException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { Cache } from 'cache-manager';
 import { AddBookToCartDto } from './dto/add-book.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Book } from '../books/entities/book.entity';
-import { Repository } from 'typeorm';
+import { DataSource, EntityNotFoundError, Repository } from 'typeorm';
 import { dbErrorHandler } from 'src/common/utilities/error-handler';
-import { UnprocessableEntityMessages } from 'src/common/enums/error.messages';
+import { NotFoundMessages, UnprocessableEntityMessages } from 'src/common/enums/error.messages';
 import { Cart } from './orders.types';
 import { BooksService } from '../books/books.service';
 import { CartBookDto, CartResponseDto, UnprocessableDto } from './dto/cart-response.dto';
 import { RemoveBookFromCartDto } from './dto/remove-book.dto';
 import { ConfigService } from '@nestjs/config';
+import { Order, ShippingTypes } from './entities/order.entity';
+import { ShippingPrice } from './entities/shipping-price.entity';
+import { CreateOrderDto } from './dto/create-order.dto';
+import { OrderBook } from './entities/order-book.entity';
+import { Address } from '../users/entities/address.entity';
 
 @Injectable()
 export class OrdersService {
@@ -19,9 +24,10 @@ export class OrdersService {
 
   constructor(
     @InjectRepository(Book) private bookRepo: Repository<Book>,
+    private dataSource: DataSource,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private booksService: BooksService,
-    config: ConfigService
+    config: ConfigService,
   ) {
     this.cartCacheTime = config.get<number>('CART_CACHE_TIME', 2 * 24 * 60 * 60 * 1000);
   }
@@ -151,6 +157,62 @@ export class OrdersService {
     return this.cacheManager.del(`cart-${userId}`);
   }
 
+  async initiateOrder(
+    userId: string,
+    {
+      shippingAddressId,
+      shippingType,
+      discountCode
+    }: CreateOrderDto
+  ) {
+    let {
+      books,
+      totalPrice,
+      discount,
+      finalPrice
+    } = await this.getCart(userId);
+
+    // Sub shipping price
+    let shippingPrice = 0;
+    if (totalPrice < 10_000_000) {
+      shippingPrice = await this.getShippingPrice(shippingType) ?? 0;
+    }
+    finalPrice += shippingPrice;
+
+    // TODO: Apply discount code
+
+    return this.dataSource.transaction(async manager => {
+      const shippingAddress = await manager.findOneOrFail(Address, {
+        where: {
+          id: shippingAddressId,
+          userId
+        }
+      }).catch((error: Error) => {
+        if (error instanceof EntityNotFoundError) {
+          throw new NotFoundException(NotFoundMessages.Address);
+        }
+        throw error;
+      });
+
+      const order = manager.create(Order, {
+        orderBooks: books.map(book => manager.create(OrderBook, book)),
+        shippingAddressId,
+        shippingAddress,
+        shippingType,
+        totalPrice,
+        shippingPrice,
+        discount,
+        finalPrice
+      });
+      
+      return manager.save(Order, order);
+    }).catch(error => {
+      dbErrorHandler(error);
+      throw error;
+    });
+    // TODO: It should also return payment info
+  }
+
   private async getCacheCart(userId: string) {
     const userBasketKey = `cart-${userId}`;
     const cart = await this.cacheManager.get<Cart>(userBasketKey);
@@ -166,5 +228,11 @@ export class OrdersService {
 
   private async setCacheCart(userId: string, cart: Cart) {
     return this.cacheManager.set(`cart-${userId}`, cart, this.cartCacheTime);
+  }
+
+  private async getShippingPrice(type: ShippingTypes) {
+    return (await this.dataSource.getRepository(ShippingPrice).findOne({
+      where: { type }
+    }))?.price;
   }
 }
