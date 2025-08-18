@@ -263,6 +263,25 @@ export class OrdersService {
     return order;
   }
 
+  async getAllOrders(
+    userId: string,
+    page = 1,
+    limit = 10
+  ): Promise<Order[]> {
+    const skip = (page - 1) * limit;
+    return this.orderRepo.find({
+      where: { userId },
+      relations: {
+        shippingAddress: true,
+        orderBooks: {
+          book: true
+        }
+      },
+      skip,
+      take: limit
+    });
+  }
+
   private async processOrder(order: Order): Promise<Order> {
     const updatedOrder = await this.dataSource.transaction(async manager => {
       // Update stock and sold column of each order's books

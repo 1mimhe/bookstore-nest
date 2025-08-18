@@ -110,4 +110,14 @@ export class OrdersController {
   ) {
     return this.ordersService.submitOrder(userId, body);
   }
+
+  @ApiOperation({
+    summary: 'Get all user\'s orders'
+  })
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard)
+  @Get()
+  async getAllOrders(@CurrentUser('id') userId: string) {
+    return this.ordersService.getAllOrders(userId);
+  }
 }
