@@ -15,13 +15,14 @@ import { DBErrors } from 'src/common/enums/db.errors';
 import { ConflictMessages } from 'src/common/enums/error.messages';
 import { Author } from '../authors/author.entity';
 import { UpdateBookDto } from './dtos/update-book.dto';
-import { BookImage } from './entities/book-image.entity';
+import { BookImage, BookImageTypes } from './entities/book-image.entity';
 import { Language } from '../languages/language.entity';
 import { Bookmark, BookmarkTypes } from './entities/bookmark.entity';
 import { BookmarkDto } from './dtos/bookmark.dto';
 import { dbErrorHandler } from 'src/common/utilities/error-handler';
 import { StaffsService } from '../staffs/staffs.service';
 import { EntityTypes, StaffActionTypes } from '../staffs/entities/staff-action.entity';
+import { CartBook } from './books.types';
 
 @Injectable()
 export class BooksService {
@@ -130,6 +131,38 @@ export class BooksService {
       relations: ['images'],
       skip,
       take: limit,
+    });
+  }
+
+  async getMultipleById(ids: string[]): Promise<CartBook[]> {
+    return this.bookRepo.find({
+      where: {
+        id: In(ids),
+        images: {
+          type: In([
+            BookImageTypes.Main,
+            BookImageTypes.Cover
+          ])
+        }
+      },
+      relations: {
+        title: true,
+        publisher: true,
+        images: true
+      },
+      select: {
+        id: true,
+        name: true,
+        title: {
+          slug: true
+        },
+        publisher: {
+          publisherName: true
+        },
+        stock: true,
+        price: true,
+        discountPercent: true,
+      }
     });
   }
 
