@@ -1,22 +1,23 @@
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Inject, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Inject, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { Cache } from 'cache-manager';
 import { AddBookToCartDto } from './dto/add-book.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Book } from '../books/entities/book.entity';
 import { DataSource, EntityNotFoundError, Repository } from 'typeorm';
 import { dbErrorHandler } from 'src/common/utilities/error-handler';
-import { NotFoundMessages, UnprocessableEntityMessages } from 'src/common/enums/error.messages';
+import { AuthMessages, NotFoundMessages, UnprocessableEntityMessages } from 'src/common/enums/error.messages';
 import { Cart } from './orders.types';
 import { BooksService } from '../books/books.service';
 import { CartBookDto, CartResponseDto, UnprocessableDto } from './dto/cart-response.dto';
 import { RemoveBookFromCartDto } from './dto/remove-book.dto';
 import { ConfigService } from '@nestjs/config';
-import { Order, ShippingTypes } from './entities/order.entity';
+import { Order, OrderStatuses, PaymentStatuses, ShippingTypes } from './entities/order.entity';
 import { ShippingPrice } from './entities/shipping-price.entity';
 import { InitiateOrderDto as InitiateOrderDto } from './dto/initiate-order.dto';
 import { OrderBook } from './entities/order-book.entity';
 import { Address } from '../users/entities/address.entity';
+import { SubmitOrderDto } from './dto/submit-order.dto';
 
 @Injectable()
 export class OrdersService {
@@ -24,6 +25,8 @@ export class OrdersService {
 
   constructor(
     @InjectRepository(Book) private bookRepo: Repository<Book>,
+    @InjectRepository(Order) private orderRepo: Repository<Order>,
+    @InjectRepository(ShippingPrice) private shippingPriceRepo: Repository<ShippingPrice>,
     private dataSource: DataSource,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private booksService: BooksService,
@@ -195,7 +198,8 @@ export class OrdersService {
       });
 
       const order = manager.create(Order, {
-        orderBooks: books.map(book => manager.create(OrderBook, book)),
+        userId,
+        orderBooks: books.map(({ id, ...book }) => manager.create(OrderBook, { bookId: id, ...book })),
         shippingAddressId,
         shippingAddress,
         shippingType,
@@ -213,8 +217,83 @@ export class OrdersService {
     // TODO: It should also return payment info
   }
 
-  async submitOrder() {
+  async submitOrder(
+    userId: string,
+    {
+      orderId,
+      paymentId,
+      status
+    }: SubmitOrderDto
+  ) {
+    const order = await this.orderRepo.findOneOrFail({
+      where: { id: orderId },
+      relations: {
+        orderBooks: true
+      }
+    }).catch((error: Error) => {
+      if (error instanceof EntityNotFoundError) {
+        throw new NotFoundException(NotFoundMessages.Order);
+      }
+      throw error;
+    });
 
+    if (order.userId !== userId) {
+      throw new ForbiddenException(AuthMessages.AccessDenied);
+    }
+
+    if (order.orderStatus !== OrderStatuses.Pending) {
+      throw new BadRequestException('Order has already been processed.');
+    }
+
+    // TODO: Check payment status (Simplified)
+    if (status === PaymentStatuses.Paid) {
+      // TODO: Verify payment
+      // if (!paymentVerified) {
+        // throw new BadRequestException('Payment verification failed');
+      // }
+
+      order.paymentId = paymentId;
+      return this.processOrder(order);
+    } else if (status === PaymentStatuses.Unpaid) {
+      order.paymentStatus = PaymentStatuses.Unpaid;
+      order.orderStatus = OrderStatuses.Canceled;
+      return this.orderRepo.save(order);
+    }
+
+    return order;
+  }
+
+  private async processOrder(order: Order): Promise<Order> {
+    const updatedOrder = await this.dataSource.transaction(async manager => {
+      // Update stock and sold column of each order's books
+      const updateStockAndSoldPromises = order.orderBooks.flatMap(ob => 
+        [
+          manager.decrement(
+            Book,
+            { id: ob.bookId },
+            'stock',
+            ob.quantity
+          ),
+          manager.increment(
+            Book,
+            { id: ob.bookId },
+            'sold',
+            ob.quantity
+          )
+        ]
+      );
+      await Promise.all(updateStockAndSoldPromises);
+
+      // Update order status
+      order.paymentStatus = PaymentStatuses.Paid;
+      order.orderStatus = OrderStatuses.Processing;
+      return manager.save(Order, order);
+    });
+
+    // Clear user's cart
+    await this.clearCart(order.userId);
+
+    return updatedOrder;
   }
 
   private async getCacheCart(userId: string) {
@@ -235,7 +314,7 @@ export class OrdersService {
   }
 
   private async getShippingPrice(type: ShippingTypes) {
-    return (await this.dataSource.getRepository(ShippingPrice).findOne({
+    return (await this.shippingPriceRepo.findOne({
       where: { type }
     }))?.price;
   }

@@ -40,7 +40,8 @@ export enum NotFoundMessages {
   SomeCollectionBooks = 'Some collection book ids are not found within the category.',
   ParentReview = 'Parent review not found.',
   Review = 'Review not found.',
-  Staff = 'Staff not found.'
+  Staff = 'Staff not found.',
+  Order = 'Order not found.'
 }
 
 export enum UnprocessableEntityMessages {

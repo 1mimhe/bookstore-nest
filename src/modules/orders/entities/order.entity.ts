@@ -75,8 +75,11 @@ export class Order extends BaseEntity {
   finalPrice: number;
 
   @Column({ nullable: true })
+  paymentId: string;
+
+  @Column({ nullable: true })
   trackingCode: string;
 
-  @OneToMany(() => OrderBook, (orderBook) => orderBook.order)
+  @OneToMany(() => OrderBook, (orderBook) => orderBook.order, { cascade: true })
   orderBooks: OrderBook[];
 }

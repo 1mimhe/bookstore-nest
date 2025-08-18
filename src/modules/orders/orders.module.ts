@@ -5,11 +5,15 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Book } from '../books/entities/book.entity';
 import { TokenModule } from '../token/token.module';
 import { BooksModule } from '../books/books.module';
+import { Order } from './entities/order.entity';
+import { ShippingPrice } from './entities/shipping-price.entity';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
-      Book
+      Book,
+      Order,
+      ShippingPrice
     ]),
     TokenModule,
     BooksModule,
