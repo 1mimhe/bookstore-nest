@@ -34,6 +34,7 @@ import { ApiQueryPagination } from 'src/common/decorators/query.decorators';
 import { BookmarkTypes } from '../books/entities/bookmark.entity';
 import { BookmarksDto } from './dtos/bookmark.dto';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import { AddressResponseDto } from './dtos/address-response.dto';
 
 @Controller('users')
 @ApiTags('User')
@@ -69,7 +70,11 @@ export class UsersController {
   @ApiOperation({
     summary: 'Create a address for user',
   })
+  @ApiOkResponse({
+    type: AddressResponseDto
+  })
   @ApiBearerAuth()
+  @Serialize(AddressResponseDto)
   @HttpCode(HttpStatus.CREATED)
   @Post('addresses')
   createAddress(
@@ -82,7 +87,11 @@ export class UsersController {
   @ApiOperation({
     summary: 'Retrieves all user addresses',
   })
+  @ApiOkResponse({
+    type: [AddressResponseDto]
+  })
   @ApiBearerAuth()
+  @Serialize(AddressResponseDto)
   @Get('addresses')
   getAllUserAddresses(@CurrentUser('id') userId: string) {
     return this.usersService.getAllUserAddresses(userId);
@@ -91,7 +100,11 @@ export class UsersController {
   @ApiOperation({
     summary: 'Update a address by its id',
   })
+  @ApiOkResponse({
+    type: [AddressResponseDto]
+  })
   @ApiBearerAuth()
+  @Serialize(AddressResponseDto)
   @Patch('addresses/:id')
   updateAddress(
     @Param('id', ParseUUIDPipe) id: string,
