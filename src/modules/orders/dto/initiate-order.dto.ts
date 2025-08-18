@@ -1,7 +1,7 @@
 import { IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { ShippingTypes } from '../entities/order.entity';
 
-export class CreateOrderDto {
+export class InitiateOrderDto {
   @IsNotEmpty()
   @IsUUID()
   shippingAddressId: string;

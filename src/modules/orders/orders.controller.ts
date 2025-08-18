@@ -8,7 +8,7 @@ import { AddBookToCartDto } from './dto/add-book.dto';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 import { CartResponseDto } from './dto/cart-response.dto';
 import { RemoveBookFromCartDto } from './dto/remove-book.dto';
-import { CreateOrderDto } from './dto/create-order.dto';
+import { InitiateOrderDto } from './dto/initiate-order.dto';
 
 @Controller('orders')
 export class OrdersController {
@@ -85,7 +85,7 @@ export class OrdersController {
   })
   @Post()
   async initiateOrder(
-    @Body() body: CreateOrderDto,
+    @Body() body: InitiateOrderDto,
     @CurrentUser('id') userId: string
   ) {
     return this.ordersService.initiateOrder(userId, body);

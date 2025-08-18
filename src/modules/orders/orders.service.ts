@@ -14,7 +14,7 @@ import { RemoveBookFromCartDto } from './dto/remove-book.dto';
 import { ConfigService } from '@nestjs/config';
 import { Order, ShippingTypes } from './entities/order.entity';
 import { ShippingPrice } from './entities/shipping-price.entity';
-import { CreateOrderDto } from './dto/create-order.dto';
+import { InitiateOrderDto as InitiateOrderDto } from './dto/initiate-order.dto';
 import { OrderBook } from './entities/order-book.entity';
 import { Address } from '../users/entities/address.entity';
 
@@ -163,7 +163,7 @@ export class OrdersService {
       shippingAddressId,
       shippingType,
       discountCode
-    }: CreateOrderDto
+    }: InitiateOrderDto
   ) {
     let {
       books,
@@ -211,6 +211,10 @@ export class OrdersService {
       throw error;
     });
     // TODO: It should also return payment info
+  }
+
+  async submitOrder() {
+
   }
 
   private async getCacheCart(userId: string) {
