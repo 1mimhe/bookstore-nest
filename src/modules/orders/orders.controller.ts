@@ -9,6 +9,7 @@ import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 import { CartResponseDto } from './dto/cart-response.dto';
 import { RemoveBookFromCartDto } from './dto/remove-book.dto';
 import { InitiateOrderDto } from './dto/initiate-order.dto';
+import { SubmitOrderDto } from './dto/submit-order.dto';
 
 @Controller('orders')
 export class OrdersController {
@@ -80,14 +81,33 @@ export class OrdersController {
 
   @ApiOperation({
     summary: 'Initiate an Order from Cart',
-    description: `Creates a pending order based on the user\`s cart.
+    description: `Creates a pending order based on the user's cart.
       The order is finalized as \`paid\`/\`unpaid\` upon payment confirmation via webhook.`,
   })
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard)
   @Post()
   async initiateOrder(
     @Body() body: InitiateOrderDto,
     @CurrentUser('id') userId: string
   ) {
     return this.ordersService.initiateOrder(userId, body);
+  }
+
+  @ApiOperation({
+    summary: 'Simulate Payment Confirmation for Order (MVP)',
+    description: `A test webhook endpoint for simulating payment confirmation in an MVP environment.
+      Accepts a payment status to update the order status. This endpoint is designed for testing purposes
+      without a real payment gateway.`
+  })
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @Post('submit')
+  async submitOrder(
+    @Body() body: SubmitOrderDto,
+    @CurrentUser('id') userId: string
+  ) {
+    return this.ordersService.submitOrder(userId, body);
   }
 }
