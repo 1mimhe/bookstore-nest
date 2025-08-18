@@ -201,7 +201,8 @@ export class OrdersService {
 
       const order = manager.create(Order, {
         userId,
-        orderBooks: books.map(({ id, ...book }) => manager.create(OrderBook, { bookId: id, ...book })),
+        orderBooks: books.map(({ id, ...book }) =>
+          manager.create(OrderBook, { bookId: id, ...book })),
         shippingAddressId,
         shippingAddress,
         shippingType,
@@ -273,10 +274,29 @@ export class OrdersService {
     const skip = (page - 1) * limit;
     return this.orderRepo.find({
       where: { userId },
+      select: {
+        id: true,
+        shippingAddress: true,
+        paymentStatus: true,
+        orderStatus: true,
+        shippingType: true,
+        shippingPrice: true,
+        totalPrice: true,
+        discount: true,
+        finalPrice: true,
+        paymentId: true,
+        trackingCode: true,
+        createdAt: true,
+        updatedAt: true,
+      },
       relations: {
         shippingAddress: true,
         orderBooks: {
-          book: true
+          book: {
+            title: true,
+            publisher: true,
+            images: true,
+          }
         }
       },
       skip,

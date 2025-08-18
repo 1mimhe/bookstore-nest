@@ -11,6 +11,7 @@ import { RemoveBookFromCartDto } from './dto/remove-book.dto';
 import { InitiateOrderDto } from './dto/initiate-order.dto';
 import { SubmitOrderDto } from './dto/submit-order.dto';
 import { ApiQueryPagination } from 'src/common/decorators/query.decorators';
+import { OrderResponseDto } from './dto/order-response.dto';
 
 @Controller('orders')
 export class OrdersController {
@@ -85,6 +86,9 @@ export class OrdersController {
     description: `Creates a pending order based on the user's cart.
       The order is finalized as \`paid\`/\`unpaid\` upon payment confirmation via webhook.`,
   })
+  @ApiOkResponse({
+    type: OrderResponseDto
+  })
   @ApiBearerAuth()
   @UseGuards(AuthGuard)
   @Post()
@@ -101,6 +105,9 @@ export class OrdersController {
       Accepts a payment status to update the order status. This endpoint is designed for testing purposes
       without a real payment gateway.`
   })
+  @ApiOkResponse({
+    type: OrderResponseDto
+  })
   @ApiBearerAuth()
   @UseGuards(AuthGuard)
   @HttpCode(HttpStatus.OK)
@@ -115,9 +122,13 @@ export class OrdersController {
   @ApiOperation({
     summary: 'Get all user\'s orders'
   })
+  @ApiOkResponse({
+    type: [OrderResponseDto]
+  })
   @ApiBearerAuth()
   @ApiQueryPagination()
   @UseGuards(AuthGuard)
+  @Serialize(OrderResponseDto)
   @Get()
   async getAllOrders(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
