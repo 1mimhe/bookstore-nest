@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, DefaultValuePipe, Get, HttpCode, HttpStatus, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiUnprocessableEntityResponse } from '@nestjs/swagger';
 import { UnprocessableEntityMessages } from 'src/common/enums/error.messages';
@@ -10,6 +10,7 @@ import { CartResponseDto } from './dto/cart-response.dto';
 import { RemoveBookFromCartDto } from './dto/remove-book.dto';
 import { InitiateOrderDto } from './dto/initiate-order.dto';
 import { SubmitOrderDto } from './dto/submit-order.dto';
+import { ApiQueryPagination } from 'src/common/decorators/query.decorators';
 
 @Controller('orders')
 export class OrdersController {
@@ -115,9 +116,14 @@ export class OrdersController {
     summary: 'Get all user\'s orders'
   })
   @ApiBearerAuth()
+  @ApiQueryPagination()
   @UseGuards(AuthGuard)
   @Get()
-  async getAllOrders(@CurrentUser('id') userId: string) {
-    return this.ordersService.getAllOrders(userId);
+  async getAllOrders(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
+    @CurrentUser('id') userId: string
+  ) {
+    return this.ordersService.getAllOrders(userId, page, limit);
   }
 }
