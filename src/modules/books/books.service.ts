@@ -15,7 +15,7 @@ import { DBErrors } from 'src/common/enums/db.errors';
 import { ConflictMessages } from 'src/common/enums/error.messages';
 import { Author } from '../authors/author.entity';
 import { UpdateBookDto } from './dtos/update-book.dto';
-import { BookImage } from './entities/book-image.entity';
+import { BookImage, BookImageTypes } from './entities/book-image.entity';
 import { Language } from '../languages/language.entity';
 import { Bookmark, BookmarkTypes } from './entities/bookmark.entity';
 import { BookmarkDto } from './dtos/bookmark.dto';
@@ -137,11 +137,18 @@ export class BooksService {
   async getMultipleById(ids: string[]): Promise<CartBook[]> {
     return this.bookRepo.find({
       where: {
-        id: In(ids)
+        id: In(ids),
+        images: {
+          type: In([
+            BookImageTypes.Main,
+            BookImageTypes.Cover
+          ])
+        }
       },
       relations: {
         title: true,
         publisher: true,
+        images: true
       },
       select: {
         id: true,

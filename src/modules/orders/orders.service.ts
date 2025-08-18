@@ -9,7 +9,7 @@ import { dbErrorHandler } from 'src/common/utilities/error-handler';
 import { AuthMessages, NotFoundMessages, UnprocessableEntityMessages } from 'src/common/enums/error.messages';
 import { Cart } from './orders.types';
 import { BooksService } from '../books/books.service';
-import { CartBookDto, CartResponseDto, UnprocessableDto } from './dto/cart-response.dto';
+import { CartResponseDto, UnprocessableDto } from './dto/cart-response.dto';
 import { RemoveBookFromCartDto } from './dto/remove-book.dto';
 import { ConfigService } from '@nestjs/config';
 import { Order, OrderStatuses, PaymentStatuses, ShippingTypes } from './entities/order.entity';
@@ -18,6 +18,7 @@ import { InitiateOrderDto as InitiateOrderDto } from './dto/initiate-order.dto';
 import { OrderBook } from './entities/order-book.entity';
 import { Address } from '../users/entities/address.entity';
 import { SubmitOrderDto } from './dto/submit-order.dto';
+import { OrderBookDto } from './dto/order-response.dto';
 
 @Injectable()
 export class OrdersService {
@@ -99,7 +100,7 @@ export class OrdersService {
     const books = await this.booksService.getMultipleById(bookIds);
 
     const unprocessables: UnprocessableDto[] = [];
-    const cartBooks: CartBookDto[] = [];
+    const cartBooks: OrderBookDto[] = [];
     const result = books.reduce((acc, book) => {
       const cartBook = cart.books.find(b => b.id === book.id);
 
@@ -125,6 +126,7 @@ export class OrdersService {
       const cartBookFinalPrice = book.finalPrice * cartBook.quantity;
       cartBooks.push({
         ...book,
+        imageUrl: book.images[0].url,
         quantity: cartBook.quantity,
         finalPrice: cartBookFinalPrice,
         slug: book.title.slug,
