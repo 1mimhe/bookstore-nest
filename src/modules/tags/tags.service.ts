@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { DataSource, EntityManager, EntityNotFoundError, In, Repository } from 'typeorm';
 import { Tag, TagType } from './tag.entity';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -17,7 +17,7 @@ export class TagsService {
   constructor(
     @InjectRepository(Tag) private tagRepo: Repository<Tag>,
     private dataSource: DataSource,
-    private titlesService: TitlesService,
+    @Inject(forwardRef(() => TitlesService)) private titlesService:  TitlesService,
     private staffsService: StaffsService
   ) {}
 

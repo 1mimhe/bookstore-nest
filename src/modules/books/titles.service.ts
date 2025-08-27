@@ -1,5 +1,7 @@
 import {
   BadRequestException,
+  forwardRef,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -17,6 +19,7 @@ import { UpdateCharacterDto } from './dtos/update-character.dto';
 import { dbErrorHandler } from 'src/common/utilities/error-handler';
 import { StaffsService } from '../staffs/staffs.service';
 import { EntityTypes, StaffActionTypes } from '../staffs/entities/staff-action.entity';
+import { TagsService } from '../tags/tags.service';
 
 @Injectable()
 export class TitlesService {
@@ -24,7 +27,8 @@ export class TitlesService {
     @InjectRepository(Title) private titleRepo: Repository<Title>,
     @InjectRepository(Character) private characterRepo: Repository<Character>,
     private dataSource: DataSource,
-    private staffsService: StaffsService
+    private staffsService: StaffsService,
+    @Inject(forwardRef(() => TagsService)) private tagsService:  TagsService,
   ) {}
 
   async create(
@@ -56,9 +60,7 @@ export class TitlesService {
 
       let dbTags: Tag[] | undefined;
       if (tags && tags.length > 0) {
-        dbTags = await manager.findBy(Tag, {
-          name: In(tags),
-        });
+        dbTags = await this.tagsService.findOrCreateTags(tags, manager);
       }
 
       const title = manager.create(Title, {
