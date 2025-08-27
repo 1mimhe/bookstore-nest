@@ -1,5 +1,5 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { DataSource, EntityManager, EntityNotFoundError, Repository } from 'typeorm';
+import { DataSource, EntityManager, EntityNotFoundError, In, Repository } from 'typeorm';
 import { Tag, TagType } from './tag.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ConflictMessages, NotFoundMessages } from 'src/common/enums/error.messages';
@@ -10,6 +10,7 @@ import { UpdateTagDto } from './dtos/update-tag.dto';
 import { dbErrorHandler } from 'src/common/utilities/error-handler';
 import { StaffsService } from '../staffs/staffs.service';
 import { EntityTypes, StaffActionTypes } from '../staffs/entities/staff-action.entity';
+import { makeUnique } from 'src/common/utilities/make-unique';
 
 @Injectable()
 export class TagsService {
@@ -44,7 +45,36 @@ export class TagsService {
     }).catch((error) => {
       dbErrorHandler(error);
       throw error;
-    });;
+    });
+  }
+
+  async findOrCreateTags(tags: string[], manager: EntityManager): Promise<Tag[]> {
+    if (!tags || tags.length === 0) {
+      return [];
+    }
+
+    const existingTags = await manager.findBy(Tag, {
+      name: In(tags),
+    });
+
+    const existingTagNames = new Set(existingTags.map(tag => tag.name));
+    const tagsToCreate = tags.filter(tagName => !existingTagNames.has(tagName));
+
+    // Create new tags
+    let createdTags: Tag[] = [];
+    if (tagsToCreate.length > 0) {
+      const newTags = tagsToCreate.map(tagName => 
+        this.tagRepo.create({
+          name: tagName,
+          slug: makeUnique(tagName)
+        })
+      );
+      
+      createdTags = await manager.save(Tag, newTags);
+    }
+    
+    // Return all tags
+    return [...existingTags, ...createdTags];
   }
 
   async getAll(type?: TagType): Promise<Tag[]> {
