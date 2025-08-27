@@ -175,17 +175,63 @@ export class TitlesService {
     });
   }
 
-  async getAllByTag(tagSlug: string, page = 1, limit = 10): Promise<Title[]> {
+  async getAllByTag(tagSlugs: string[], page = 1, limit = 10): Promise<Title[]> {
+    if (!tagSlugs || tagSlugs.length === 0) {
+      return [];
+    }
+
     const skip = (page - 1) * limit;
-    return this.titleRepo.find({
-      where: {
-        tags: {
-          slug: tagSlug,
+    const [requiredTag, ...optionalTags] = tagSlugs;
+
+    if (optionalTags.length === 0) {
+      return this.titleRepo.find({
+        where: {
+          tags: {
+            slug: requiredTag,
+          },
         },
-      },
-      skip,
-      take: limit,
-    });
+        skip,
+        take: limit,
+      });
+    }
+
+    // For multiple tags
+    const qb = this.titleRepo.createQueryBuilder('title');
+    return qb
+      .leftJoinAndSelect('title.tags', 'tags')
+      .where(
+        qb => {
+          const subQuery1 = qb
+            .subQuery()
+            .select('1')
+            .from('title_tag', 'tt1')
+            .innerJoin('tags', 't1', 'tt1.tagId = t1.id')
+            .where('tt1.titleId = title.id')
+            .andWhere('t1.slug = :requiredTag')
+            .getQuery();
+          
+          return `EXISTS (${subQuery1})`;
+        }
+      )
+      .andWhere(
+        qb => {
+          const subQuery2 = qb
+            .subQuery()
+            .select('1')
+            .from('title_tag', 'tt2')
+            .innerJoin('tags', 't2', 'tt2.tagId = t2.id')
+            .where('tt2.titleId = title.id')
+            .andWhere('t2.slug IN (:...optionalTags)')
+            .getQuery();
+          
+          return `EXISTS (${subQuery2})`;
+        }
+      )
+      .setParameter('requiredTag', requiredTag)
+      .setParameter('optionalTags', optionalTags)
+      .skip(skip)
+      .take(limit)
+      .getMany();
   }
 
   async getBySlug(slug: string): Promise<Title | never> {

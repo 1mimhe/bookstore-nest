@@ -66,8 +66,12 @@ export class TagsService {
     });
   }
 
-  // TODO
-  async getBySlug(slug: string, page = 1, limit = 10): Promise<Tag | never> {
+  async getBySlug(
+    slug: string,
+    others: string[] = [],
+    page = 1, 
+    limit = 10
+  ): Promise<Tag | never> {
     const tag = await this.tagRepo.findOneOrFail({
       where: { slug },
     }).catch((error: Error) => {
@@ -77,7 +81,7 @@ export class TagsService {
       throw error;
     });
 
-    const titles = await this.titlesService.getAllByTag(slug, page, limit);
+    const titles = await this.titlesService.getAllByTag([slug, ...others], page, limit);
 
     return {
       ...tag,

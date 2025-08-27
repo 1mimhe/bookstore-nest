@@ -52,6 +52,6 @@ export class CreateTitleDto {
   @IsOptional()
   @ArrayMinSize(1)
   @IsArray()
-  @IsAlphanumeric(undefined, { each: true })
+  @IsString({ each: true })
   tags?: string[];
 }
