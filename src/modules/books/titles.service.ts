@@ -1,11 +1,13 @@
 import {
   BadRequestException,
+  forwardRef,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Title } from './entities/title.entity';
-import { DataSource, EntityManager, EntityNotFoundError, FindOptionsWhere, In, Repository } from 'typeorm';
+import { Between, DataSource, EntityManager, EntityNotFoundError, FindOperator, FindOptionsWhere, In, Repository, SelectQueryBuilder } from 'typeorm';
 import { CreateTitleDto } from './dtos/create-title.dto';
 import { Author } from '../authors/author.entity';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
@@ -17,6 +19,10 @@ import { UpdateCharacterDto } from './dtos/update-character.dto';
 import { dbErrorHandler } from 'src/common/utilities/error-handler';
 import { StaffsService } from '../staffs/staffs.service';
 import { EntityTypes, StaffActionTypes } from '../staffs/entities/staff-action.entity';
+import { TagsService } from '../tags/tags.service';
+import { BookFilterDto } from './dtos/book-filter.dto';
+import { getDateRange } from 'src/common/utilities/decade.utils';
+import { Book } from './entities/book.entity';
 
 @Injectable()
 export class TitlesService {
@@ -24,7 +30,8 @@ export class TitlesService {
     @InjectRepository(Title) private titleRepo: Repository<Title>,
     @InjectRepository(Character) private characterRepo: Repository<Character>,
     private dataSource: DataSource,
-    private staffsService: StaffsService
+    private staffsService: StaffsService,
+    @Inject(forwardRef(() => TagsService)) private tagsService:  TagsService,
   ) {}
 
   async create(
@@ -56,9 +63,7 @@ export class TitlesService {
 
       let dbTags: Tag[] | undefined;
       if (tags && tags.length > 0) {
-        dbTags = await manager.findBy(Tag, {
-          name: In(tags),
-        });
+        dbTags = await this.tagsService.getOrCreateTags(tags, manager);
       }
 
       const title = manager.create(Title, {
@@ -175,17 +180,53 @@ export class TitlesService {
     });
   }
 
-  async getAllByTag(tagSlug: string, page = 1, limit = 10): Promise<Title[]> {
+  async getAllByTag(
+    tagSlug: string,
+    {
+      page = 1,
+      limit = 10,
+      tags: optionalTags = [],
+      decades = []
+    }: BookFilterDto
+  ): Promise<Title[]> {
+    if (!tagSlug) {
+      return [];
+    }
+
     const skip = (page - 1) * limit;
-    return this.titleRepo.find({
-      where: {
-        tags: {
-          slug: tagSlug,
-        },
-      },
-      skip,
-      take: limit,
-    });
+    const qb = this.titleRepo.createQueryBuilder('title')
+        .leftJoinAndSelect('title.tags', 'tags')
+        .where(
+          qb => {
+            const subQuery1 = qb
+              .subQuery()
+              .select('1')
+              .from('title_tag', 'tt1')
+              .innerJoin('tags', 't1', 'tt1.tagId = t1.id')
+              .where('tt1.titleId = title.id')
+              .andWhere('t1.slug = :requiredTag')
+              .getQuery();
+            
+            return `EXISTS (${subQuery1})`;
+          }
+        )
+        .setParameter('requiredTag', tagSlug);
+
+    // Add additional tags filtering
+    if (optionalTags.length > 0) {
+      this.buildTagsConditions(qb, optionalTags);
+    }
+
+    // Add decades filtering
+    if (decades.length > 0) {
+      this.buildDecadeConditions(qb, decades);
+    }
+
+    // For multiple tags
+    return qb
+      .skip(skip)
+      .take(limit)
+      .getMany();
   }
 
   async getBySlug(slug: string): Promise<Title | never> {
@@ -325,5 +366,58 @@ export class TitlesService {
       dbErrorHandler(error);
       throw error;
     });
+  }
+
+  // Helper method for query building
+  buildTagsConditions(
+    qb: SelectQueryBuilder<Title | Book>,
+    tags: string[] = []
+  ) {
+    qb.andWhere(
+      qb => {
+        const subQuery2 = qb
+          .subQuery()
+          .select('1')
+          .from('title_tag', 'tt2')
+          .innerJoin('tags', 't2', 'tt2.tagId = t2.id')
+          .where('tt2.titleId = title.id')
+          .andWhere('t2.slug IN (:...tags)')
+          .getQuery();
+        return `EXISTS (${subQuery2})`;
+      }
+    )
+    .setParameter('tags', tags);
+  }
+
+  // Helper method for query building
+  buildDecadeConditions(
+    qb: SelectQueryBuilder<Title | Book>, 
+    decades: string[]
+  ): void{
+    if (!decades || decades.length === 0) {
+      return;
+    }
+
+    const decadeConditions: string[] = [];
+    
+    decades.forEach((decade, index) => {
+      try {
+        const { startDate, endDate } = getDateRange(decade);
+        const startParam = `decadeStart${index}`;
+        const endParam = `decadeEnd${index}`;
+        
+        decadeConditions.push(`(title.originallyPublishedAt >= :${startParam} AND title.originallyPublishedAt <= :${endParam})`);
+        
+        // Set parameters
+        qb.setParameter(startParam, startDate);
+        qb.setParameter(endParam, endDate);
+      } catch (error) {
+        console.warn(`Invalid decade format: ${decade}`, error);
+      }
+    });
+    
+    if (decadeConditions.length > 0) {
+      qb.andWhere(`(${decadeConditions.join(' OR ')})`);
+    }
   }
 }

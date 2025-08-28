@@ -28,3 +28,14 @@ export function ApiQueryComplete(related?: string) {
     }),
   );
 }
+
+export function ApiQueryArray(arrayName: string, type: any, description?: string) {
+  return applyDecorators(
+    ApiQuery({
+      name: arrayName,
+      type: [type],
+      required: false,
+      description
+    }),
+  );
+}

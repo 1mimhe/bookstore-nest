@@ -1,13 +1,11 @@
 import {
   Body,
   Controller,
-  DefaultValuePipe,
   Get,
   HttpCode,
   HttpStatus,
   Param,
   ParseEnumPipe,
-  ParseIntPipe,
   ParseUUIDPipe,
   Patch,
   Post,
@@ -20,7 +18,7 @@ import { CreateTagDto } from './dtos/create-tag.dto';
 import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { TagType } from './tag.entity';
 import { UpdateTagDto } from './dtos/update-tag.dto';
-import { ApiQueryPagination } from 'src/common/decorators/query.decorators';
+import { ApiQueryArray, ApiQueryPagination } from 'src/common/decorators/query.decorators';
 import { TagCompactResponseDto, TagResponseDto } from './dtos/tag-response.dto';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 import { RolesEnum } from '../users/entities/role.entity';
@@ -28,6 +26,7 @@ import { RequiredRoles } from 'src/common/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { SessionData } from 'express-session';
+import { BookFilterDto } from '../books/dtos/book-filter.dto';
 
 @Controller('tags')
 @ApiTags('Tag')
@@ -91,19 +90,14 @@ export class TagsController {
     summary: 'Retrieves a tag by slug with its relations',
   })
   @ApiQueryPagination()
+  @ApiQueryArray('tags', String, 'Other tags to filter')
   @Serialize(TagResponseDto)
-  @UseGuards(AuthGuard, RolesGuard)
-  @RequiredRoles(
-    RolesEnum.Admin,
-    RolesEnum.ContentManager,
-  )
   @Get(':slug')
   async getTagByName(
     @Param('slug') slug: string,
-    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
-    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+    @Query() query: BookFilterDto
   ): Promise<TagResponseDto> {
-    return this.tagsService.getBySlug(slug, page, limit);
+    return this.tagsService.getBySlug(slug, query);
   }
 
   @ApiOperation({

@@ -115,7 +115,8 @@ export class PublishersController {
   }
 
   @ApiOperation({
-    summary: 'Retrieves a publisher by its slug'
+    summary: 'Retrieves a publisher by its slug',
+    description: 'If you want to filter books. You should use \`GET /books/publisher/:id\`'
   })
   @ApiNotFoundResponse({
     description: NotFoundMessages.Publisher

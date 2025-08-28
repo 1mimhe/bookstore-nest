@@ -1,4 +1,4 @@
-import { MiddlewareConsumer, Module } from '@nestjs/common';
+import { forwardRef, MiddlewareConsumer, Module } from '@nestjs/common';
 import { BooksController } from './books.controller';
 import { LanguagesService } from '../languages/languages.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -15,6 +15,7 @@ import { CurrentUserMiddleware } from 'src/common/middlewares/current-user.middl
 import { UsersModule } from '../users/users.module';
 import { TokenModule } from '../token/token.module';
 import { StaffModule } from '../staffs/staffs.module';
+import { TagsModule } from '../tags/tags.module';
 
 @Module({
   imports: [
@@ -29,7 +30,8 @@ import { StaffModule } from '../staffs/staffs.module';
     ]),
     UsersModule,
     TokenModule,
-    StaffModule
+    StaffModule,
+    forwardRef(() => TagsModule)
   ],
   controllers: [BooksController],
   providers: [LanguagesService, TitlesService, BooksService],

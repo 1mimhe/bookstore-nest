@@ -5,7 +5,7 @@ import { makeUnique } from 'src/common/utilities/make-unique';
 
 export class CreateTagDto {
   @IsNotEmpty()
-  @IsAlphanumeric()
+  @IsString()
   name: string;
 
   @Transform(({ obj, value }) => {
