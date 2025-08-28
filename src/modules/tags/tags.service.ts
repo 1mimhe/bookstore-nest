@@ -1,9 +1,8 @@
-import { ConflictException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { DataSource, EntityManager, EntityNotFoundError, In, Repository } from 'typeorm';
 import { Tag, TagType } from './tag.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ConflictMessages, NotFoundMessages } from 'src/common/enums/error.messages';
-import { DBErrors } from 'src/common/enums/db.errors';
+import { NotFoundMessages } from 'src/common/enums/error.messages';
 import { CreateTagDto } from './dtos/create-tag.dto';
 import { TitlesService } from '../books/titles.service';
 import { UpdateTagDto } from './dtos/update-tag.dto';
@@ -99,11 +98,7 @@ export class TagsService {
 
   async getBySlug(
     slug: string,
-    {
-      tags: others = [],
-      page = 1, 
-      limit = 10
-    }: TitleFilterDto
+    filter: TitleFilterDto
   ): Promise<Tag | never> {
     const tag = await this.tagRepo.findOneOrFail({
       where: { slug },
@@ -114,7 +109,7 @@ export class TagsService {
       throw error;
     });
 
-    const titles = await this.titlesService.getAllByTag([slug, ...others], page, limit);
+    const titles = await this.titlesService.getAllByTag(slug, filter);
 
     return {
       ...tag,

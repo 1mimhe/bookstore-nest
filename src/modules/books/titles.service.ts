@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Title } from './entities/title.entity';
-import { DataSource, EntityManager, EntityNotFoundError, FindOptionsWhere, In, Repository } from 'typeorm';
+import { Between, DataSource, EntityManager, EntityNotFoundError, FindOperator, FindOptionsWhere, In, Repository, SelectQueryBuilder } from 'typeorm';
 import { CreateTitleDto } from './dtos/create-title.dto';
 import { Author } from '../authors/author.entity';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
@@ -20,6 +20,8 @@ import { dbErrorHandler } from 'src/common/utilities/error-handler';
 import { StaffsService } from '../staffs/staffs.service';
 import { EntityTypes, StaffActionTypes } from '../staffs/entities/staff-action.entity';
 import { TagsService } from '../tags/tags.service';
+import { TitleFilterDto } from './dtos/title-filter.dto';
+import { getDateRange } from 'src/common/utilities/decade.utils';
 
 @Injectable()
 export class TitlesService {
@@ -177,45 +179,41 @@ export class TitlesService {
     });
   }
 
-  async getAllByTag(tagSlugs: string[], page = 1, limit = 10): Promise<Title[]> {
-    if (!tagSlugs || tagSlugs.length === 0) {
+  async getAllByTag(
+    tagSlug: string,
+    {
+      page = 1,
+      limit = 10,
+      tags: optionalTags = [],
+      decades = []
+    }: TitleFilterDto
+  ): Promise<Title[]> {
+    if (!tagSlug) {
       return [];
     }
 
     const skip = (page - 1) * limit;
-    const [requiredTag, ...optionalTags] = tagSlugs;
+    const qb = this.titleRepo.createQueryBuilder('title')
+        .leftJoinAndSelect('title.tags', 'tags')
+        .where(
+          qb => {
+            const subQuery1 = qb
+              .subQuery()
+              .select('1')
+              .from('title_tag', 'tt1')
+              .innerJoin('tags', 't1', 'tt1.tagId = t1.id')
+              .where('tt1.titleId = title.id')
+              .andWhere('t1.slug = :requiredTag')
+              .getQuery();
+            
+            return `EXISTS (${subQuery1})`;
+          }
+        )
+        .setParameter('requiredTag', tagSlug);
 
-    if (optionalTags.length === 0) {
-      return this.titleRepo.find({
-        where: {
-          tags: {
-            slug: requiredTag,
-          },
-        },
-        skip,
-        take: limit,
-      });
-    }
-
-    // For multiple tags
-    const qb = this.titleRepo.createQueryBuilder('title');
-    return qb
-      .leftJoinAndSelect('title.tags', 'tags')
-      .where(
-        qb => {
-          const subQuery1 = qb
-            .subQuery()
-            .select('1')
-            .from('title_tag', 'tt1')
-            .innerJoin('tags', 't1', 'tt1.tagId = t1.id')
-            .where('tt1.titleId = title.id')
-            .andWhere('t1.slug = :requiredTag')
-            .getQuery();
-          
-          return `EXISTS (${subQuery1})`;
-        }
-      )
-      .andWhere(
+    // Add additional tags filtering
+    if (optionalTags.length > 0) {
+      qb.andWhere(
         qb => {
           const subQuery2 = qb
             .subQuery()
@@ -229,8 +227,16 @@ export class TitlesService {
           return `EXISTS (${subQuery2})`;
         }
       )
-      .setParameter('requiredTag', requiredTag)
-      .setParameter('optionalTags', optionalTags)
+      .setParameter('optionalTags', optionalTags);
+    }
+
+    // Add decades filtering
+    if (decades.length > 0) {
+      this.buildDecadeConditions(qb, decades);
+    }
+
+    // For multiple tags
+    return qb
       .skip(skip)
       .take(limit)
       .getMany();
@@ -373,5 +379,37 @@ export class TitlesService {
       dbErrorHandler(error);
       throw error;
     });
+  }
+
+  // Helper method
+  private buildDecadeConditions(
+    qb: SelectQueryBuilder<Title>, 
+    decades: string[]
+  ): void{
+    if (!decades || decades.length === 0) {
+      return;
+    }
+
+    const decadeConditions: string[] = [];
+    
+    decades.forEach((decade, index) => {
+      try {
+        const { startDate, endDate } = getDateRange(decade);
+        const startParam = `decadeStart${index}`;
+        const endParam = `decadeEnd${index}`;
+        
+        decadeConditions.push(`(title.originallyPublishedAt >= :${startParam} AND title.originallyPublishedAt <= :${endParam})`);
+        
+        // Set parameters
+        qb.setParameter(startParam, startDate);
+        qb.setParameter(endParam, endDate);
+      } catch (error) {
+        console.warn(`Invalid decade format: ${decade}`, error);
+      }
+    });
+    
+    if (decadeConditions.length > 0) {
+      qb.andWhere(`(${decadeConditions.join(' OR ')})`);
+    }
   }
 }
