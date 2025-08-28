@@ -48,6 +48,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { RequiredRoles } from 'src/common/decorators/roles.decorator';
 import { RolesEnum } from '../users/entities/role.entity';
 import { SessionData } from 'express-session';
+import { BookFilterDto } from './dtos/book-filter.dto';
 
 @Controller('books')
 @ApiTags('Book')
@@ -114,10 +115,9 @@ export class BooksController {
   @Get('publisher/:id')
   async getBooksByPublisherId(
     @Param('id', ParseUUIDPipe) id: string,
-    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
-    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
+    @Query() query: BookFilterDto
   ): Promise<BookResponseDto[]> {
-    return this.booksService.getByPublisherId(id, page, limit);
+    return this.booksService.getByPublisherId(id, query);
   }
 
   @ApiOperation({
