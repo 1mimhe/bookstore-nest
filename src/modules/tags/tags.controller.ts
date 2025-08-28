@@ -29,6 +29,7 @@ import { RequiredRoles } from 'src/common/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { SessionData } from 'express-session';
+import { TitleFilterDto } from '../books/dtos/title-filter.dto';
 
 @Controller('tags')
 @ApiTags('Tag')
@@ -97,11 +98,9 @@ export class TagsController {
   @Get(':slug')
   async getTagByName(
     @Param('slug') slug: string,
-    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
-    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
-    @Query('tags', new ParseArrayPipe({ items: String, separator: ',', optional: true })) tags?: string[],
+    @Query() query: TitleFilterDto
   ): Promise<TagResponseDto> {
-    return this.tagsService.getBySlug(slug, tags, page, limit);
+    return this.tagsService.getBySlug(slug, query);
   }
 
   @ApiOperation({

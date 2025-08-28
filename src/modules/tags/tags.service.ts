@@ -11,6 +11,7 @@ import { dbErrorHandler } from 'src/common/utilities/error-handler';
 import { StaffsService } from '../staffs/staffs.service';
 import { EntityTypes, StaffActionTypes } from '../staffs/entities/staff-action.entity';
 import { makeUnique } from 'src/common/utilities/make-unique';
+import { TitleFilterDto } from '../books/dtos/title-filter.dto';
 
 @Injectable()
 export class TagsService {
@@ -48,7 +49,7 @@ export class TagsService {
     });
   }
 
-  async findOrCreateTags(tags: string[], manager: EntityManager): Promise<Tag[]> {
+  async getOrCreateTags(tags: string[], manager: EntityManager): Promise<Tag[]> {
     if (!tags || tags.length === 0) {
       return [];
     }
@@ -98,9 +99,11 @@ export class TagsService {
 
   async getBySlug(
     slug: string,
-    others: string[] = [],
-    page = 1, 
-    limit = 10
+    {
+      tags: others = [],
+      page = 1, 
+      limit = 10
+    }: TitleFilterDto
   ): Promise<Tag | never> {
     const tag = await this.tagRepo.findOneOrFail({
       where: { slug },

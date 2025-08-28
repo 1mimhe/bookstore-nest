@@ -60,7 +60,7 @@ export class TitlesService {
 
       let dbTags: Tag[] | undefined;
       if (tags && tags.length > 0) {
-        dbTags = await this.tagsService.findOrCreateTags(tags, manager);
+        dbTags = await this.tagsService.getOrCreateTags(tags, manager);
       }
 
       const title = manager.create(Title, {
