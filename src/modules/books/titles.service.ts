@@ -22,6 +22,7 @@ import { EntityTypes, StaffActionTypes } from '../staffs/entities/staff-action.e
 import { TagsService } from '../tags/tags.service';
 import { BookFilterDto } from './dtos/book-filter.dto';
 import { getDateRange } from 'src/common/utilities/decade.utils';
+import { Book } from './entities/book.entity';
 
 @Injectable()
 export class TitlesService {
@@ -213,21 +214,7 @@ export class TitlesService {
 
     // Add additional tags filtering
     if (optionalTags.length > 0) {
-      qb.andWhere(
-        qb => {
-          const subQuery2 = qb
-            .subQuery()
-            .select('1')
-            .from('title_tag', 'tt2')
-            .innerJoin('tags', 't2', 'tt2.tagId = t2.id')
-            .where('tt2.titleId = title.id')
-            .andWhere('t2.slug IN (:...optionalTags)')
-            .getQuery();
-          
-          return `EXISTS (${subQuery2})`;
-        }
-      )
-      .setParameter('optionalTags', optionalTags);
+      this.buildTagsConditions(qb, optionalTags);
     }
 
     // Add decades filtering
@@ -381,9 +368,30 @@ export class TitlesService {
     });
   }
 
-  // Helper method
-  private buildDecadeConditions(
-    qb: SelectQueryBuilder<Title>, 
+  // Helper method for query building
+  buildTagsConditions(
+    qb: SelectQueryBuilder<Title | Book>,
+    tags: string[] = []
+  ) {
+    qb.andWhere(
+      qb => {
+        const subQuery2 = qb
+          .subQuery()
+          .select('1')
+          .from('title_tag', 'tt2')
+          .innerJoin('tags', 't2', 'tt2.tagId = t2.id')
+          .where('tt2.titleId = title.id')
+          .andWhere('t2.slug IN (:...tags)')
+          .getQuery();
+        return `EXISTS (${subQuery2})`;
+      }
+    )
+    .setParameter('tags', tags);
+  }
+
+  // Helper method for query building
+  buildDecadeConditions(
+    qb: SelectQueryBuilder<Title | Book>, 
     decades: string[]
   ): void{
     if (!decades || decades.length === 0) {
