@@ -20,7 +20,7 @@ import { dbErrorHandler } from 'src/common/utilities/error-handler';
 import { StaffsService } from '../staffs/staffs.service';
 import { EntityTypes, StaffActionTypes } from '../staffs/entities/staff-action.entity';
 import { TagsService } from '../tags/tags.service';
-import { TitleFilterDto } from './dtos/title-filter.dto';
+import { BookFilterDto } from './dtos/book-filter.dto';
 import { getDateRange } from 'src/common/utilities/decade.utils';
 
 @Injectable()
@@ -186,7 +186,7 @@ export class TitlesService {
       limit = 10,
       tags: optionalTags = [],
       decades = []
-    }: TitleFilterDto
+    }: BookFilterDto
   ): Promise<Title[]> {
     if (!tagSlug) {
       return [];

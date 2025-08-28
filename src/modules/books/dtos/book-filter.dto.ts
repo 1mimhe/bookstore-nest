@@ -1,7 +1,7 @@
 import { Transform } from 'class-transformer';
 import { IsArray, IsInt, IsOptional, IsPositive, IsString } from 'class-validator';
 
-export class TitleFilterDto {
+export class BookFilterDto {
   @Transform(({ value }) => Number(value))
   @IsOptional()
   @IsInt()

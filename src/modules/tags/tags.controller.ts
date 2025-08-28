@@ -26,7 +26,7 @@ import { RequiredRoles } from 'src/common/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { SessionData } from 'express-session';
-import { TitleFilterDto } from '../books/dtos/title-filter.dto';
+import { BookFilterDto } from '../books/dtos/book-filter.dto';
 
 @Controller('tags')
 @ApiTags('Tag')
@@ -95,7 +95,7 @@ export class TagsController {
   @Get(':slug')
   async getTagByName(
     @Param('slug') slug: string,
-    @Query() query: TitleFilterDto
+    @Query() query: BookFilterDto
   ): Promise<TagResponseDto> {
     return this.tagsService.getBySlug(slug, query);
   }

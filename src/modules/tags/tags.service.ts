@@ -10,7 +10,7 @@ import { dbErrorHandler } from 'src/common/utilities/error-handler';
 import { StaffsService } from '../staffs/staffs.service';
 import { EntityTypes, StaffActionTypes } from '../staffs/entities/staff-action.entity';
 import { makeUnique } from 'src/common/utilities/make-unique';
-import { TitleFilterDto } from '../books/dtos/title-filter.dto';
+import { BookFilterDto } from '../books/dtos/book-filter.dto';
 
 @Injectable()
 export class TagsService {
@@ -98,7 +98,7 @@ export class TagsService {
 
   async getBySlug(
     slug: string,
-    filter: TitleFilterDto
+    filter: BookFilterDto
   ): Promise<Tag | never> {
     const tag = await this.tagRepo.findOneOrFail({
       where: { slug },
