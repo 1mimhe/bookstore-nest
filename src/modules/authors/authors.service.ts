@@ -107,7 +107,7 @@ export class AuthorsService {
 
     let books: Book[] = [];
     if (complete) {
-      books = await this.booksService.getByAuthorId(author.id, page, limit);
+      books = await this.booksService.getByAuthorId(author.id, { page, limit });
     }
 
     return {

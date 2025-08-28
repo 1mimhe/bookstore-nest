@@ -104,7 +104,7 @@ export class AuthorsController {
 
   @ApiOperation({
     summary: 'Retrieves a author by its slug',
-    description: 'Includes relations.',
+    description: 'If you want to filter books. You should use \`GET /books/author/:id\`'
   })
   @ApiNotFoundResponse({
     description: NotFoundMessages.Publisher,

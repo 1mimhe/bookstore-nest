@@ -131,10 +131,9 @@ export class BooksController {
   @Get('author/:id')
   async getBooksByAuthorId(
     @Param('id', ParseUUIDPipe) id: string,
-    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
-    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
+    @Query() query: BookFilterDto
   ): Promise<BookResponseDto[]> {
-    return this.booksService.getByAuthorId(id, page, limit);
+    return this.booksService.getByAuthorId(id, query);
   }
 
   @ApiOperation({

@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Book } from './entities/book.entity';
-import { DataSource, EntityManager, EntityNotFoundError, In, Repository, SelectQueryBuilder } from 'typeorm';
+import { Brackets, DataSource, EntityManager, EntityNotFoundError, In, Repository, SelectQueryBuilder } from 'typeorm';
 import { CreateBookDto } from './dtos/create-book.dto';
 import { Title } from './entities/title.entity';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
@@ -104,8 +104,8 @@ export class BooksService {
   async getByPublisherId(
     publisherId: string,
     {
-      page,
-      limit,
+      page = 1,
+      limit = 10,
       tags = [],
       decades = []
     }: BookFilterDto
@@ -134,27 +134,44 @@ export class BooksService {
       .getMany();
   }
 
-  async getByAuthorId(authorId: string, page = 1, limit = 10): Promise<Book[]> {
+  async getByAuthorId(
+    authorId: string,
+    {
+      page = 1,
+      limit = 10,
+      tags = [],
+      decades = []
+    }: BookFilterDto
+  ): Promise<Book[]> {
     const skip = (page - 1) * limit;
-    return this.bookRepo.find({
-      where: [
-        {
-          title: {
-            authors: {
-              id: authorId,
-            },
-          },
-        },
-        {
-          translators: {
-            id: authorId,
-          },
-        },
-      ],
-      relations: ['images'],
-      skip,
-      take: limit,
-    });
+    
+    const qb = this.bookRepo
+      .createQueryBuilder('book')
+      .leftJoinAndSelect('book.images', 'images')
+      .leftJoin('book.title', 'title')
+      .leftJoin('title.authors', 'authors')
+      .leftJoin('book.translators', 'translators')
+      .where(
+        new Brackets((qb) => {
+          qb.where('authors.id = :authorId', { authorId })
+            .orWhere('translators.id = :authorId', { authorId });
+        })
+      );
+
+    // Add tags filters
+    if (tags.length > 0) {
+      this.titleService.buildTagsConditions(qb, tags);
+    }
+
+    // Add tags filters
+    if (decades.length > 0) {
+      this.titleService.buildDecadeConditions(qb, decades);
+    }
+
+    return qb
+      .skip(skip)
+      .take(limit)
+      .getMany();
   }
 
   async getMultipleById(ids: string[]): Promise<CartBook[]> {
