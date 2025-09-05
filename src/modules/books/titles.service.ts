@@ -224,7 +224,7 @@ export class TitlesService {
     }
 
     // TODO: Sorting based on default book
-    // this.buildOrderBy(qb, sortBy);
+    // await this.buildOrderBy(qb, sortBy);
 
     // For multiple tags
     return qb
