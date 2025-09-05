@@ -145,6 +145,7 @@ export class BooksService {
       limit = 10,
       tags = [],
       decades = [],
+      sortBy
     }: BookFilterDto
   ): Promise<Book[]> {
     const skip = (page - 1) * limit;
@@ -171,6 +172,9 @@ export class BooksService {
     if (decades.length > 0) {
       this.titleService.buildDecadeConditions(qb, decades);
     }
+
+    // Sorting
+    this.titleService.buildOrderBy(qb, sortBy);
 
     return qb
       .skip(skip)
