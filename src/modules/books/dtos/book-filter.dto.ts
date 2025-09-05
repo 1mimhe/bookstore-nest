@@ -1,5 +1,12 @@
 import { Transform } from 'class-transformer';
-import { IsArray, IsInt, IsOptional, IsPositive, IsString } from 'class-validator';
+import { IsArray, IsEnum, IsInt, IsOptional, IsPositive, IsString } from 'class-validator';
+
+export enum SortBy {
+  MostLiked = 'mostliked',
+  MostView = 'mostview',
+  MostSale = 'mostsale',
+  Newest = 'newest'
+}
 
 export class BookFilterDto {
   @Transform(({ value }) => Number(value))
@@ -35,4 +42,8 @@ export class BookFilterDto {
     return value;
   })
   decades?: string[]; // e.g., ["1900s", "1380s", "800s"]
+
+  @IsOptional()
+  @IsEnum(SortBy)
+  sortBy?: SortBy;
 }
