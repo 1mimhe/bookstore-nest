@@ -20,7 +20,7 @@ import { dbErrorHandler } from 'src/common/utilities/error-handler';
 import { StaffsService } from '../staffs/staffs.service';
 import { EntityTypes, StaffActionTypes } from '../staffs/entities/staff-action.entity';
 import { TagsService } from '../tags/tags.service';
-import { BookFilterDto } from './dtos/book-filter.dto';
+import { BookFilterDto, SortBy } from './dtos/book-filter.dto';
 import { getDateRange } from 'src/common/utilities/decade.utils';
 import { Book } from './entities/book.entity';
 
@@ -186,7 +186,8 @@ export class TitlesService {
       page = 1,
       limit = 10,
       tags: optionalTags = [],
-      decades = []
+      decades = [],
+      sortBy
     }: BookFilterDto
   ): Promise<Title[]> {
     if (!tagSlug) {
@@ -221,6 +222,9 @@ export class TitlesService {
     if (decades.length > 0) {
       this.buildDecadeConditions(qb, decades);
     }
+
+    // TODO: Sorting based on default book
+    // this.buildOrderBy(qb, sortBy);
 
     // For multiple tags
     return qb
@@ -372,7 +376,7 @@ export class TitlesService {
   buildTagsConditions(
     qb: SelectQueryBuilder<Title | Book>,
     tags: string[] = []
-  ) {
+  ): void {
     qb.andWhere(
       qb => {
         const subQuery2 = qb
@@ -393,7 +397,7 @@ export class TitlesService {
   buildDecadeConditions(
     qb: SelectQueryBuilder<Title | Book>, 
     decades: string[]
-  ): void{
+  ): void {
     if (!decades || decades.length === 0) {
       return;
     }
@@ -418,6 +422,25 @@ export class TitlesService {
     
     if (decadeConditions.length > 0) {
       qb.andWhere(`(${decadeConditions.join(' OR ')})`);
+    }
+  }
+
+  buildOrderBy(
+    qb: SelectQueryBuilder<Title | Book>,
+    by: SortBy = SortBy.Newest
+  ): void {
+    switch (by) {
+      case SortBy.MostLiked:
+        qb.orderBy('rateCount', 'DESC');
+        break;
+      case SortBy.MostView:
+        // TODO
+        break;
+      case SortBy.MostSale:
+        qb.orderBy('sold', 'DESC');
+        break;
+      default:
+        qb.orderBy('createdAt', 'DESC');
     }
   }
 }
