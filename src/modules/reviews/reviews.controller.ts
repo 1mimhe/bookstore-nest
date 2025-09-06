@@ -21,6 +21,7 @@ import {
   GetBlogReviewsResponseDto,
   GetBookReviewsResponseDto,
   ReviewResponseDto,
+  ReviewResponseWithCountDto,
 } from './dtos/review-response.dto';
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 import { UpdateReviewDto } from './dtos/update-review.dto';
@@ -150,6 +151,25 @@ export class ReviewsController {
   }
 
   @ApiOperation({
+    summary: 'Get all authenticated user\'s reviews',
+  })
+  @ApiOkResponse({
+    type: [ReviewResponseWithCountDto],
+  })
+  @ApiQueryPagination()
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard)
+  @Serialize(ReviewResponseWithCountDto)
+  @Get()
+  async getMyReviews(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
+    @CurrentUser('id') userId: string
+  ) {
+    return this.reviewsService.getMyReviews(userId, page, limit)
+  }
+
+  @ApiOperation({
     summary: 'Update a review by its id',
   })
   @ApiOkResponse({
@@ -164,7 +184,7 @@ export class ReviewsController {
     @Body() body: UpdateReviewDto,
     @CurrentUser('id') userId: string
   ) {
-    return this.reviewsService.update(id, userId!, body);
+    return this.reviewsService.update(id, userId, body);
   }
 
   @ApiOperation({
@@ -181,7 +201,7 @@ export class ReviewsController {
     @Param('id') id: string,
     @CurrentUser('id') userId: string
   ) {
-    return this.reviewsService.delete(id, userId!);
+    return this.reviewsService.delete(id, userId);
   }
 
   @ApiOperation({
@@ -208,7 +228,7 @@ export class ReviewsController {
     @Body() body: ChangeReactionDto,
     @CurrentUser('id') userId: string
   ) {
-    return this.reviewsService.changeReaction(userId!, id, body.reaction);
+    return this.reviewsService.changeReaction(userId, id, body.reaction);
   }
 
   @ApiOperation({
@@ -221,6 +241,6 @@ export class ReviewsController {
     @Param('id') id: string,
     @CurrentUser('id') userId: string
   ) {
-    return this.reviewsService.deleteReaction(id, userId!);
+    return this.reviewsService.deleteReaction(id, userId);
   }
 }

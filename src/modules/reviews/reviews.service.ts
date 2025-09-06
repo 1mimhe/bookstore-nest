@@ -9,6 +9,7 @@ import { AuthMessages, NotFoundMessages } from 'src/common/enums/error.messages'
 import { UpdateReviewDto } from './dtos/update-review.dto';
 import { ReactToReviewDto } from './dtos/react-review.dto';
 import { BooksService } from '../books/books.service';
+import { RolesEnum } from '../users/entities/role.entity';
 
 @Injectable()
 export class ReviewsService {
@@ -71,9 +72,10 @@ export class ReviewsService {
       ? { bookId: reviewableId } 
       : { blogId: reviewableId };
 
-    const queryBuilder = this.reviewRepo
+    const [reviews, totalReviews] = await this.reviewRepo
       .createQueryBuilder('review')
       .leftJoinAndSelect('review.user', 'user')
+      .leftJoinAndSelect('user.roles', 'user.roles')
       .leftJoinAndSelect('replies.book', 'book')
       .leftJoinAndSelect('review.replies', 'replies')
       .leftJoinAndSelect('replies.user', 'repliesUser')
@@ -81,9 +83,8 @@ export class ReviewsService {
       .andWhere('review.parentReviewId IS NULL')
       .orderBy('review.createdAt', 'DESC') // TODO: Add more sorting
       .skip(skip)
-      .take(limit);
-
-    const [reviews, totalReviews] = await queryBuilder.getManyAndCount();
+      .take(limit)
+      .getManyAndCount();
 
     // Add user's reaction status if authenticated
     if (userId) {
@@ -94,7 +95,15 @@ export class ReviewsService {
     }
 
     return {
-      reviews,
+      reviews: reviews.map(r => ({
+        ...r,
+        user: {
+          ...r.user,
+          // Add user's role to response => customer/admin
+          role: r.user.roles[0].role === RolesEnum.Customer ? RolesEnum.Customer : RolesEnum.Admin,
+          roles: undefined
+        },
+      })),
       totalReviews,
       totalReviewPages: Math.ceil(totalReviews / limit)
     };
@@ -139,6 +148,27 @@ export class ReviewsService {
       }
       throw error;
     });
+  }
+
+  async getMyReviews(
+    userId: string,
+    page = 1,
+    limit = 10
+  ): Promise<{ reviews: Review[]; count: number }> {
+    const skip = (page - 1) * limit;
+    const [reviews, count] = await this.reviewRepo.findAndCount({
+      where: { userId },
+      order: {
+        createdAt: 'DESC'
+      },
+      skip,
+      take: limit
+    });
+
+    return {
+      reviews,
+      count
+    };
   }
 
   async update(

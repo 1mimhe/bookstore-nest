@@ -1,4 +1,4 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Param, Post, UseGuards } from '@nestjs/common';
 import { StaffsService } from './staffs.service';
 import { SignupStaffDto, StaffRoles } from './dtos/signup-staff.dto';
 import { ApiBadRequestResponse, ApiBearerAuth, ApiConflictResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -36,5 +36,20 @@ export class StaffsController {
   @Post('signup')
   async signupStaff(@Body() body: SignupStaffDto) {
     return this.staffsService.signup(body);
+  }
+
+  @ApiOperation({
+    summary: 'Delete a review by its id',
+    description: `For admin and content manager use.`
+  })
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequiredRoles(
+    RolesEnum.Admin,
+    RolesEnum.ContentManager,
+  )
+  @Delete('reviews/:id')
+  async deleteReview(@Param('id') reviewId: string) {
+    return this.staffsService.deleteReview(reviewId);
   }
 }
