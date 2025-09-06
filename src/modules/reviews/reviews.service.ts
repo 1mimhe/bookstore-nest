@@ -141,6 +141,27 @@ export class ReviewsService {
     });
   }
 
+  async getMyReviews(
+    userId: string,
+    page = 1,
+    limit = 10
+  ): Promise<{ reviews: Review[]; count: number }> {
+    const skip = (page - 1) * limit;
+    const [reviews, count] = await this.reviewRepo.findAndCount({
+      where: { userId },
+      order: {
+        createdAt: 'DESC'
+      },
+      skip,
+      take: limit
+    });
+
+    return {
+      reviews,
+      count
+    };
+  }
+
   async update(
     id: string,
     userId: string,

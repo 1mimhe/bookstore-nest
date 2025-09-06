@@ -67,6 +67,15 @@ export class ReviewResponseDto {
   deletedAt?: Date;
 }
 
+export class ReviewResponseWithCountDto {
+  @Expose()
+  count: number;
+
+  @Type(() => ReviewResponseDto)
+  @Expose()
+  reviews: ReviewResponseDto[];
+}
+
 export class BookReviewResponseDto extends ReviewResponseDto {
   @Expose()
   bookId?: string;
