@@ -82,6 +82,12 @@ export class BooksService {
 
       const dbBook = await manager.save(Book, book);
 
+      // Set this book as title's default book
+      if (!title.defaultBookId) {
+        title.defaultBookId = dbBook.id;
+        await manager.save(Title, title);
+      }
+
       if (staffId) {
         await this.staffsService.createAction(
           {

@@ -46,5 +46,5 @@ export class Title extends BaseEntity {
   defaultBookId?: string;
   @OneToOne(() => Book, (book) => book.title)
   @JoinColumn()
-  defaultBoo?: Book;
+  defaultBook?: Book;
 }
