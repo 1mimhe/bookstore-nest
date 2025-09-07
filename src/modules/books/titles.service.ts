@@ -303,7 +303,10 @@ console.log(existingTitle);
 
     return repository.find({
       where: {
-        characters: { id }
+        characters: { id },
+        defaultBook: {
+          images: true
+        }
       },
       skip,
       take: limit,
