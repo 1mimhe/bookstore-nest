@@ -1,6 +1,6 @@
 import { BaseEntity } from 'src/common/entities/base.entity';
 import { Author } from 'src/modules/authors/author.entity';
-import { Column, Entity, Index, ManyToMany, OneToMany } from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToMany, OneToMany, OneToOne } from 'typeorm';
 import { Book } from './book.entity';
 import { Tag } from 'src/modules/tags/tag.entity';
 import { Blog } from 'src/modules/blogs/blog.entity';
@@ -41,4 +41,10 @@ export class Title extends BaseEntity {
 
   @ManyToMany(() => Character, (character) => character.titles)
   characters: Character[];
+
+  @Column('uuid', { nullable: true })
+  defaultBookId?: string;
+  @OneToOne(() => Book, (book) => book.title)
+  @JoinColumn()
+  defaultBook?: Book;
 }

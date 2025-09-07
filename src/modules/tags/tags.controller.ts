@@ -115,7 +115,7 @@ export class TagsController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: UpdateTagDto,
     @Session() session: SessionData
-  ): Promise<TagResponseDto> {
+  ): Promise<TagCompactResponseDto> {
     return this.tagsService.update(id, body, session.staffId);
   }
 }

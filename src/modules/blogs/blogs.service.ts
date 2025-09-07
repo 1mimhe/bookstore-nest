@@ -87,7 +87,12 @@ export class BlogsService {
 
     return this.blogRepo.findOneOrFail({
       where,
-      relations: ['title', 'author', 'publisher', 'tags']
+      relations: {
+        title: true,
+        author: true,
+        publisher: true,
+        tags: true
+      },
     }).catch((error: Error) => {
         if (error instanceof EntityNotFoundError) {
           throw new NotFoundException(NotFoundMessages.Blog);
@@ -107,7 +112,9 @@ export class BlogsService {
     return this.dataSource.transaction(async (manager) => {
       const existingBlog = await manager.findOne(Blog, {
         where: { id },
-        relations: ['tags']
+        relations: {
+          tags: true
+        }
       });
 
       if (!existingBlog) {

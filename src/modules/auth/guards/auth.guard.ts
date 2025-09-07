@@ -30,9 +30,8 @@ export class AuthGuard implements CanActivate {
       throw new UnauthorizedException(AuthMessages.InvalidAccessToken);
     }
 
-    request.user = {
-      id: payload.sub!
-    }
+    request.user = request.user ?? {};
+    request.user.id = payload.sub;
 
     return true;
   }

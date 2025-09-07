@@ -82,6 +82,12 @@ export class BooksService {
 
       const dbBook = await manager.save(Book, book);
 
+      // Set this book as title's default book
+      if (!title.defaultBookId) {
+        title.defaultBookId = dbBook.id;
+        await manager.save(Title, title);
+      }
+
       if (staffId) {
         await this.staffsService.createAction(
           {
@@ -229,7 +235,13 @@ export class BooksService {
     return this.dataSource.transaction(async (manager) => {
       const existingBook = await manager.findOne(Book, {
         where: { id },
-        relations: ['title', 'publisher', 'language', 'translators', 'images'],
+        relations: {
+          title: true,
+          publisher: true,
+          language: true,
+          translators: true,
+          images: true
+        },
       });
 
       if (!existingBook) {

@@ -10,7 +10,7 @@ import { Title } from './entities/title.entity';
 import { Between, DataSource, EntityManager, EntityNotFoundError, FindOperator, FindOptionsWhere, In, Repository, SelectQueryBuilder } from 'typeorm';
 import { CreateTitleDto } from './dtos/create-title.dto';
 import { Author } from '../authors/author.entity';
-import { NotFoundMessages } from 'src/common/enums/error.messages';
+import { BadRequestMessages, NotFoundMessages } from 'src/common/enums/error.messages';
 import { UpdateTitleDto } from './dtos/update-title.dto';
 import { Tag } from '../tags/tag.entity';
 import { Character } from './entities/characters.entity';
@@ -28,6 +28,7 @@ import { Book } from './entities/book.entity';
 export class TitlesService {
   constructor(
     @InjectRepository(Title) private titleRepo: Repository<Title>,
+    @InjectRepository(Book) private bookRepo: Repository<Book>,
     @InjectRepository(Character) private characterRepo: Repository<Character>,
     private dataSource: DataSource,
     private staffsService: StaffsService,
@@ -111,7 +112,10 @@ export class TitlesService {
     return this.dataSource.transaction(async (manager) => {
       const existingTitle = await manager.findOne(Title, {
         where: { id },
-        relations: ['authors', 'tags', 'features', 'quotes'],
+        relations: {
+          authors: true,
+          tags: true
+        }
       });
 
       if (!existingTitle) {
@@ -140,10 +144,9 @@ export class TitlesService {
 
       let newTags: Tag[] | undefined;
       if (tags && tags.length > 0) {
-        newTags = await manager.findBy(Tag, {
-          name: In(tags),
-        });
+        newTags = await this.tagsService.getOrCreateTags(tags, manager);
       }
+console.log(existingTitle);
 
       const updatedTitle = manager.merge(
         Title,
@@ -180,6 +183,51 @@ export class TitlesService {
     });
   }
 
+  async setDefaultBook(
+    titleId: string,
+    bookId: string,
+    staffId?: string
+  ): Promise<Title | never> {
+    const title = await this.titleRepo.findOneOrFail({
+      where: { id: titleId }
+    }).catch((error: Error) => {
+      if (error instanceof EntityNotFoundError) {
+        throw new NotFoundException(NotFoundMessages.Title);
+      }
+      throw error;
+    });
+
+    const book = await this.bookRepo.findOneOrFail({
+      where: { id: bookId }
+    }).catch((error: Error) => {
+      if (error instanceof EntityNotFoundError) {
+        throw new NotFoundException(NotFoundMessages.Book);
+      }
+      throw error;
+    });
+
+    if (book.titleId !== titleId) {
+      throw new BadRequestException(BadRequestMessages.CannotSetDefaultBook);
+    }
+
+    return this.dataSource.transaction(async manager => {
+      if (staffId) {
+        await this.staffsService.createAction(
+          {
+            staffId,
+            type: StaffActionTypes.TitleUpdated,
+            entityId: title.id,
+            entityType: EntityTypes.Title
+          },
+          manager
+        );
+      }
+
+      title.defaultBookId = bookId;
+      return manager.save(Title, title);
+    });
+  }
+
   async getAllByTag(
     tagSlug: string,
     {
@@ -199,7 +247,7 @@ export class TitlesService {
         .leftJoinAndSelect('title.tags', 'tags')
         .where(
           qb => {
-            const subQuery1 = qb
+            const sq = qb
               .subQuery()
               .select('1')
               .from('title_tag', 'tt1')
@@ -208,10 +256,12 @@ export class TitlesService {
               .andWhere('t1.slug = :requiredTag')
               .getQuery();
             
-            return `EXISTS (${subQuery1})`;
+            return `EXISTS (${sq})`;
           }
         )
-        .setParameter('requiredTag', tagSlug);
+        .setParameter('requiredTag', tagSlug)
+        .leftJoinAndSelect('title.defaultBook', 'defaultBook')
+        .leftJoinAndSelect('defaultBook.images', 'images')
 
     // Add additional tags filtering
     if (optionalTags.length > 0) {
@@ -226,7 +276,6 @@ export class TitlesService {
     // TODO: Sorting based on default book
     // await this.buildOrderBy(qb, sortBy);
 
-    // For multiple tags
     return qb
       .skip(skip)
       .take(limit)
@@ -236,8 +285,18 @@ export class TitlesService {
   async getBySlug(slug: string): Promise<Title | never> {
     return this.titleRepo.findOneOrFail({
       where: { slug },
-      relations: ['authors', 'tags', 'characters', 'features', 'quotes', 'books',
-        'books.publisher', 'books.translators', 'books.language', 'books.images'],
+      relations: {
+        authors: true,
+        tags: true,
+        characters: true,
+        features: true,
+        books: {
+          publisher: true,
+          translators: true,
+          language: true,
+          images: true
+        },
+      }
     }).catch((error: Error) => {
       if (error instanceof EntityNotFoundError) {
         throw new NotFoundException(NotFoundMessages.Title);
@@ -257,7 +316,10 @@ export class TitlesService {
 
     return repository.find({
       where: {
-        characters: { id }
+        characters: { id },
+        defaultBook: {
+          images: true
+        }
       },
       skip,
       take: limit,

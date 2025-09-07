@@ -25,7 +25,7 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { ConflictMessages } from 'src/common/enums/error.messages';
+import { BadRequestMessages, ConflictMessages } from 'src/common/enums/error.messages';
 import { TitlesService } from './titles.service';
 import { CreateTitleDto } from './dtos/create-title.dto';
 import { ValidationErrorResponseDto } from 'src/common/dtos/error.dtos';
@@ -60,6 +60,7 @@ export class BooksController {
 
   @ApiOperation({
     summary: 'Create a title (For Admin, ContentManager, InventoryManager)',
+    description: 'If included tag doesn\'t exists, that will be created.'
   })
   @ApiBadRequestResponse({
     type: ValidationErrorResponseDto,
@@ -138,7 +139,9 @@ export class BooksController {
 
   @ApiOperation({
     summary: 'Update a title (For Admin and ContentManager)',
-    description: 'It override authors, features and quotes; tags and characters will be merged if included.',
+    description: `It override authors, features and quotes; 
+    tags and characters will be merged if included.
+    If included tag doesn\'t exists, that will be created.`,
   })
   @ApiBadRequestResponse({
     type: ValidationErrorResponseDto,
@@ -166,6 +169,34 @@ export class BooksController {
     @Session() session: SessionData
   ): Promise<TitleCompactResponseDto> {
     return this.titlesService.update(id, body, session.staffId);
+  }
+
+  @ApiOperation({
+    summary: 'Set a default book for a title (For Admin and ContentManager)',
+  })
+  @ApiBadRequestResponse({
+    type: BadRequestMessages.CannotSetDefaultBook,
+  })
+  @ApiNotFoundResponse({
+    description: NotFoundMessages.Title,
+  })
+  @ApiNotFoundResponse({
+    description: NotFoundMessages.Book,
+  })
+  @ApiBearerAuth()
+  @Serialize(TitleCompactResponseDto)
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequiredRoles(
+    RolesEnum.Admin,
+    RolesEnum.ContentManager,
+  )
+  @Patch('titles/:titleId/default-book/:bookId')
+  async setDefaultBook(
+    @Param('titleId', ParseUUIDPipe) titleId: string,
+    @Param('bookId', ParseUUIDPipe) bookId: string,
+    @Session() session: SessionData
+  ): Promise<TitleCompactResponseDto> {
+    return this.titlesService.setDefaultBook(titleId, bookId, session.staffId);
   }
 
   @ApiOperation({
