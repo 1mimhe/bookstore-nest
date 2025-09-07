@@ -9,13 +9,14 @@ export class CurrentUserMiddleware implements NestMiddleware {
   constructor(private usersService: UsersService) {}
 
   async use(req: Request, res: Response, next: NextFunction) {
-    const { id } = req.user ?? {};
+    const { userId } = req.session ?? {};
     
-    if (id) {
-      const user = await this.usersService.findOne(id);
+    if (userId && !req.user?.contact) {            
+      const user = await this.usersService.findOne(userId);      
       if (!user) throw new UnauthorizedException(AuthMessages.Unauthorized);
       req.user = user ? user : undefined;
     }
+    console.log(req.user);
 
     next();
   }
