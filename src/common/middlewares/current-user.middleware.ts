@@ -16,7 +16,6 @@ export class CurrentUserMiddleware implements NestMiddleware {
       if (!user) throw new UnauthorizedException(AuthMessages.Unauthorized);
       req.user = user ? user : undefined;
     }
-    console.log(req.user);
 
     next();
   }

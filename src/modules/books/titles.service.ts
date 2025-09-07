@@ -112,7 +112,7 @@ export class TitlesService {
     return this.dataSource.transaction(async (manager) => {
       const existingTitle = await manager.findOne(Title, {
         where: { id },
-        relations: ['authors', 'tags', 'features', 'quotes'],
+        relations: ['authors', 'tags'],
       });
 
       if (!existingTitle) {
@@ -141,10 +141,9 @@ export class TitlesService {
 
       let newTags: Tag[] | undefined;
       if (tags && tags.length > 0) {
-        newTags = await manager.findBy(Tag, {
-          name: In(tags),
-        });
+        newTags = await this.tagsService.getOrCreateTags(tags, manager);
       }
+console.log(existingTitle);
 
       const updatedTitle = manager.merge(
         Title,
@@ -245,7 +244,7 @@ export class TitlesService {
         .leftJoinAndSelect('title.tags', 'tags')
         .where(
           qb => {
-            const subQuery1 = qb
+            const sq = qb
               .subQuery()
               .select('1')
               .from('title_tag', 'tt1')
@@ -254,10 +253,12 @@ export class TitlesService {
               .andWhere('t1.slug = :requiredTag')
               .getQuery();
             
-            return `EXISTS (${subQuery1})`;
+            return `EXISTS (${sq})`;
           }
         )
-        .setParameter('requiredTag', tagSlug);
+        .setParameter('requiredTag', tagSlug)
+        .leftJoinAndSelect('title.defaultBook', 'defaultBook')
+        .leftJoinAndSelect('defaultBook.images', 'images')
 
     // Add additional tags filtering
     if (optionalTags.length > 0) {
@@ -272,7 +273,6 @@ export class TitlesService {
     // TODO: Sorting based on default book
     // await this.buildOrderBy(qb, sortBy);
 
-    // For multiple tags
     return qb
       .skip(skip)
       .take(limit)

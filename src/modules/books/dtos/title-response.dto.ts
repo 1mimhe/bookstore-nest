@@ -1,7 +1,7 @@
 import { Expose, Type } from 'class-transformer';
 import { AuthorResponseDto } from 'src/modules/authors/dtos/author-response.dto';
 import { TagCompactResponseDto } from 'src/modules/tags/dtos/tag-response.dto';
-import { BookResponseDto } from './book-response.dto';
+import { BookCompactResponseDto, BookResponseDto } from './book-response.dto';
 import { CharacterCompactResponseDto } from './character-response.dto';
 
 export class TitleCompactResponseDto {
@@ -19,6 +19,13 @@ export class TitleCompactResponseDto {
 
   @Expose()
   originallyPublishedAt?: Date;
+
+  @Expose()
+  defaultBookId?: string;
+
+  @Type(() => BookCompactResponseDto)
+  @Expose()
+  defaultBook?: BookCompactResponseDto;
 
   @Expose()
   createdAt: Date;

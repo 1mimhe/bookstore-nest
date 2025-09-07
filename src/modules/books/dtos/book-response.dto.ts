@@ -1,8 +1,9 @@
 import { Exclude, Expose, Transform, Type } from 'class-transformer';
 import { Language } from 'src/modules/languages/language.entity';
+import { Covers, Quartos } from '../entities/book.entity';
 
-export class BookResponseDto {
-  @Expose()
+export class BookCompactResponseDto {
+    @Expose()
   id: string;
 
   @Expose()
@@ -10,7 +11,22 @@ export class BookResponseDto {
 
   @Expose()
   anotherName?: string;
+  
+  @Expose()
+  price?: number;
 
+  @Expose()
+  discountPercent?: number;
+
+  @Expose()
+  stock?: number;
+
+  @Expose()
+  @Type(() => ImageResponseDto)
+  images: ImageResponseDto[];
+}
+
+export class BookResponseDto extends BookCompactResponseDto {
   @Expose()
   rate: number;
   
@@ -21,10 +37,10 @@ export class BookResponseDto {
   ISBN?: string;
 
   @Expose()
-  quarto?: string;
+  quarto?: Quartos;
 
   @Expose()
-  cover?: string;
+  cover?: Covers;
 
   @Expose()
   pagesNumber?: number;
@@ -39,18 +55,6 @@ export class BookResponseDto {
   weight?: number;
 
   @Expose()
-  stock?: number;
-
-  @Expose()
-  price?: number;
-
-  @Expose()
-  discountPercent?: number;
-
-  @Expose()
-  sold?: number;
-
-  @Expose()
   titleId: string;
 
   @Expose()
@@ -62,10 +66,6 @@ export class BookResponseDto {
   @Transform(({ obj }) => obj.language?.persianName)
   @Expose()
   language: string | Language;
-
-  @Expose()
-  @Type(() => ImageResponseDto)
-  images: ImageResponseDto[];
 
   @Expose()
   createdAt: Date;

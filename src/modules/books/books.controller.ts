@@ -60,6 +60,7 @@ export class BooksController {
 
   @ApiOperation({
     summary: 'Create a title (For Admin, ContentManager, InventoryManager)',
+    description: 'If included tag doesn\'t exists, that will be created.'
   })
   @ApiBadRequestResponse({
     type: ValidationErrorResponseDto,
@@ -138,7 +139,9 @@ export class BooksController {
 
   @ApiOperation({
     summary: 'Update a title (For Admin and ContentManager)',
-    description: 'It override authors, features and quotes; tags and characters will be merged if included.',
+    description: `It override authors, features and quotes; 
+    tags and characters will be merged if included.
+    If included tag doesn\'t exists, that will be created.`,
   })
   @ApiBadRequestResponse({
     type: ValidationErrorResponseDto,
