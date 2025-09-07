@@ -10,7 +10,7 @@ import { Title } from './entities/title.entity';
 import { Between, DataSource, EntityManager, EntityNotFoundError, FindOperator, FindOptionsWhere, In, Repository, SelectQueryBuilder } from 'typeorm';
 import { CreateTitleDto } from './dtos/create-title.dto';
 import { Author } from '../authors/author.entity';
-import { NotFoundMessages } from 'src/common/enums/error.messages';
+import { BadRequestMessages, NotFoundMessages } from 'src/common/enums/error.messages';
 import { UpdateTitleDto } from './dtos/update-title.dto';
 import { Tag } from '../tags/tag.entity';
 import { Character } from './entities/characters.entity';
@@ -28,6 +28,7 @@ import { Book } from './entities/book.entity';
 export class TitlesService {
   constructor(
     @InjectRepository(Title) private titleRepo: Repository<Title>,
+    @InjectRepository(Book) private bookRepo: Repository<Book>,
     @InjectRepository(Character) private characterRepo: Repository<Character>,
     private dataSource: DataSource,
     private staffsService: StaffsService,
@@ -177,6 +178,51 @@ export class TitlesService {
     }).catch((error) => {
       dbErrorHandler(error);
       throw error;
+    });
+  }
+
+  async setDefaultBook(
+    titleId: string,
+    bookId: string,
+    staffId?: string
+  ): Promise<Title | never> {
+    const title = await this.titleRepo.findOneOrFail({
+      where: { id: titleId }
+    }).catch((error: Error) => {
+      if (error instanceof EntityNotFoundError) {
+        throw new NotFoundException(NotFoundMessages.Title);
+      }
+      throw error;
+    });
+
+    const book = await this.bookRepo.findOneOrFail({
+      where: { id: bookId }
+    }).catch((error: Error) => {
+      if (error instanceof EntityNotFoundError) {
+        throw new NotFoundException(NotFoundMessages.Book);
+      }
+      throw error;
+    });
+
+    if (book.titleId !== titleId) {
+      throw new BadRequestException(BadRequestMessages.CannotSetDefaultBook);
+    }
+
+    return this.dataSource.transaction(async manager => {
+      if (staffId) {
+        await this.staffsService.createAction(
+          {
+            staffId,
+            type: StaffActionTypes.TitleUpdated,
+            entityId: title.id,
+            entityType: EntityTypes.Title
+          },
+          manager
+        );
+      }
+
+      title.defaultBookId = bookId;
+      return manager.save(Title, title);
     });
   }
 

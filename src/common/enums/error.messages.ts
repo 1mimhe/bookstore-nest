@@ -44,6 +44,10 @@ export enum NotFoundMessages {
   Order = 'Order not found.'
 }
 
+export enum BadRequestMessages {
+  CannotSetDefaultBook = 'Cannot set book as default: This book does not belong to the specified title.'
+}
+
 export enum UnprocessableEntityMessages {
   BookStock = 'This book is currently out of stock. The quantity you requested are not available.'
 }
