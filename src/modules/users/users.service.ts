@@ -26,7 +26,10 @@ export class UsersService {
   findOne(id: string) {
     return this.userRepo.findOne({
       where: { id },
-      relations: ['contact', 'roles'],
+      relations: {
+        contact: true,
+        roles: true,
+      },
     });
   }
 
@@ -52,8 +55,14 @@ export class UsersService {
 
     const existingUsers = await this.userRepo.find({
       where: whereConditions,
-      select: ['id', 'username'],
-      relations: ['contact'],
+      select: {
+        id: true,
+        username: true,
+        contact: true
+      },
+      relations: {
+        contact: true
+      },
     });
 
     if (existingUsers.length === 0) {
@@ -101,7 +110,9 @@ export class UsersService {
     return this.dataSource.transaction(async (manager) => {
       const existingUser = await manager.findOne(User, {
         where: { id },
-        relations: ['contact']
+        relations: {
+          contact: true
+        }
       });
 
       if (!existingUser) {

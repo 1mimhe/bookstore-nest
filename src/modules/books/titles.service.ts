@@ -112,7 +112,10 @@ export class TitlesService {
     return this.dataSource.transaction(async (manager) => {
       const existingTitle = await manager.findOne(Title, {
         where: { id },
-        relations: ['authors', 'tags'],
+        relations: {
+          authors: true,
+          tags: true
+        }
       });
 
       if (!existingTitle) {
@@ -282,8 +285,18 @@ console.log(existingTitle);
   async getBySlug(slug: string): Promise<Title | never> {
     return this.titleRepo.findOneOrFail({
       where: { slug },
-      relations: ['authors', 'tags', 'characters', 'features', 'quotes', 'books',
-        'books.publisher', 'books.translators', 'books.language', 'books.images'],
+      relations: {
+        authors: true,
+        tags: true,
+        characters: true,
+        features: true,
+        books: {
+          publisher: true,
+          translators: true,
+          language: true,
+          images: true
+        },
+      }
     }).catch((error: Error) => {
       if (error instanceof EntityNotFoundError) {
         throw new NotFoundException(NotFoundMessages.Title);

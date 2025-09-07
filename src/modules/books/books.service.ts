@@ -235,7 +235,13 @@ export class BooksService {
     return this.dataSource.transaction(async (manager) => {
       const existingBook = await manager.findOne(Book, {
         where: { id },
-        relations: ['title', 'publisher', 'language', 'translators', 'images'],
+        relations: {
+          title: true,
+          publisher: true,
+          language: true,
+          translators: true,
+          images: true
+        },
       });
 
       if (!existingBook) {

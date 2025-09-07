@@ -145,7 +145,9 @@ export class AuthService {
     const existingUsers = await this.userRepo.find({
       where: whereConditions,
       select: ['id', 'username'],
-      relations: ['contact'],
+      relations: {
+        contact: true
+      },
     });
 
     if (existingUsers.length === 0) {
