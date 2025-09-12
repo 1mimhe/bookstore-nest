@@ -17,6 +17,7 @@ import { StaffModule } from '../staffs/staffs.module';
     StaffModule
   ],
   controllers: [BlogsController],
-  providers: [BlogsService]
+  providers: [BlogsService],
+  exports: [BlogsService]
 })
 export class BlogsModule {}

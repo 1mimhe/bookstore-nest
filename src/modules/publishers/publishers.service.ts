@@ -14,13 +14,16 @@ import { BooksService } from '../books/books.service';
 import { Book } from '../books/entities/book.entity';
 import { dbErrorHandler } from 'src/common/utilities/error-handler';
 import { CreateBookDto } from '../books/dtos/create-book.dto';
+import { BlogsService } from '../blogs/blogs.service';
+import { CreateBlogDto } from '../blogs/dtos/create-blog.dto';
 
 @Injectable()
 export class PublishersService {
   constructor(
     @InjectRepository(Publisher) private publisherRepo: Repository<Publisher>,
     private authService: AuthService,
-    private booksService: BooksService
+    private booksService: BooksService,
+    private blogsService: BlogsService
   ) {}
 
   async signup(
@@ -134,6 +137,28 @@ export class PublishersService {
     return this.booksService.create({
       publisherId,
       ...bookDto
+    });
+  }
+
+  async createBlog(
+    userId: string,
+    {
+      publisherId: _,
+      ...blogDto
+    }: CreateBlogDto
+  ) {
+    const { id: publisherId } = await this.publisherRepo.findOneOrFail({
+      where: { userId },
+    }).catch((error: Error) => {
+      if (error instanceof EntityNotFoundError) {
+        throw new NotFoundException(NotFoundMessages.Publisher);
+      }
+      throw error;
+    });
+
+    return this.blogsService.create({
+      publisherId,
+      ...blogDto
     });
   }
 }

@@ -43,6 +43,8 @@ import { BookResponseDto } from '../books/dtos/book-response.dto';
 import { SessionData } from 'express-session';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { CreateBookDto } from '../books/dtos/create-book.dto';
+import { BlogCompactResponseDto } from '../blogs/dtos/blog-response.dto';
+import { CreateBlogDto } from '../blogs/dtos/create-blog.dto';
 
 @Controller('publishers')
 @ApiTags('Publisher')
@@ -168,7 +170,7 @@ export class PublishersController {
   }
 
   @ApiOperation({
-    summary: 'Create a book (By a publisher)',
+    summary: 'Create a book (Publish a book)',
     description: 'The `publisherId` will be ignored'
   })
   @ApiBadRequestResponse({
@@ -202,5 +204,37 @@ export class PublishersController {
     @CurrentUser('id') userId: string
   ): Promise<BookResponseDto> {
     return this.publishersService.createBook(userId, body);
+  }
+
+  @ApiOperation({
+    summary: 'Create a blog by a publisher',
+    description: 'The `publisherId` will be ignored'
+  })
+  @ApiBadRequestResponse({
+    type: ValidationErrorResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: NotFoundMessages.Title,
+  })
+  @ApiNotFoundResponse({
+    description: NotFoundMessages.Author,
+  })
+  @ApiNotFoundResponse({
+    description: NotFoundMessages.Publisher,
+  })
+  @ApiConflictResponse({
+    description: ConflictMessages.Slug,
+  })
+  @ApiBearerAuth()
+  @Serialize(BlogCompactResponseDto)
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequiredRoles(RolesEnum.Admin, RolesEnum.ContentManager, RolesEnum.Publisher)
+  @HttpCode(HttpStatus.CREATED)
+  @Post()
+  async createBlog(
+    @Body() body: CreateBlogDto,
+    @CurrentUser('id') userId: string
+  ): Promise<BlogCompactResponseDto> {
+    return this.publishersService.createBlog(userId, body);
   }
 }
