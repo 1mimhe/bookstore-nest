@@ -76,7 +76,9 @@ export class BlogsService {
       slug?: string
     },
   ): Promise<Blog | never> {
-    const where: FindOptionsWhere<Blog> = {};
+    const where: FindOptionsWhere<Blog> = {
+      isPublic: true
+    };
     if (identifier.id) {
       where.id = identifier.id;
     } else if (identifier.slug) {

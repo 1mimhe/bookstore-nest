@@ -5,7 +5,7 @@ import { EntityManager, EntityNotFoundError, FindOptionsWhere, Repository } from
 import { RolesEnum } from '../users/entities/role.entity';
 import { User } from '../users/entities/user.entity';
 import { SignupPublisherDto } from './dtos/create-publisher.dto';
-import { NotFoundMessages } from 'src/common/enums/error.messages';
+import { BadRequestMessages, NotFoundMessages } from 'src/common/enums/error.messages';
 import { UpdatePublisherDto } from './dtos/update-publisher.dto';
 import { ConflictMessages } from 'src/common/enums/error.messages';
 import { DBErrors } from 'src/common/enums/db.errors';
@@ -13,13 +13,18 @@ import { AuthService } from '../auth/auth.service';
 import { BooksService } from '../books/books.service';
 import { Book } from '../books/entities/book.entity';
 import { dbErrorHandler } from 'src/common/utilities/error-handler';
+import { CreateBookDto } from '../books/dtos/create-book.dto';
+import { BlogsService } from '../blogs/blogs.service';
+import { CreateBlogDto } from '../blogs/dtos/create-blog.dto';
+import { UpdateBlogDto } from '../blogs/dtos/update-blog.dto';
 
 @Injectable()
 export class PublishersService {
   constructor(
     @InjectRepository(Publisher) private publisherRepo: Repository<Publisher>,
     private authService: AuthService,
-    private booksService: BooksService
+    private booksService: BooksService,
+    private blogsService: BlogsService
   ) {}
 
   async signup(
@@ -112,5 +117,74 @@ export class PublishersService {
       }
       throw error;
     });
+  }
+
+  async createBook(
+    userId: string,
+    {
+      publisherId: _,
+      ...bookDto
+    }: CreateBookDto
+  ) {
+    const { id: publisherId } = await this.publisherRepo.findOneOrFail({
+      where: { userId },
+    }).catch((error: Error) => {
+      if (error instanceof EntityNotFoundError) {
+        throw new NotFoundException(NotFoundMessages.Publisher);
+      }
+      throw error;
+    });
+
+    return this.booksService.create({
+      publisherId,
+      ...bookDto
+    });
+  }
+
+  async createBlog(
+    userId: string,
+    {
+      publisherId: _,
+      ...blogDto
+    }: CreateBlogDto
+  ) {
+    const { id: publisherId } = await this.publisherRepo.findOneOrFail({
+      where: { userId },
+    }).catch((error: Error) => {
+      if (error instanceof EntityNotFoundError) {
+        throw new NotFoundException(NotFoundMessages.Publisher);
+      }
+      throw error;
+    });
+
+    return this.blogsService.create({
+      publisherId,
+      ...blogDto
+    });
+  }
+
+  async updateBlog(
+    blogId: string,
+    userId: string,
+    {
+      publisherId: _,
+      ...blogDto
+    }: UpdateBlogDto
+  ) {
+    const { id: publisherId } = await this.publisherRepo.findOneOrFail({
+      where: { userId },
+    }).catch((error: Error) => {
+      if (error instanceof EntityNotFoundError) {
+        throw new NotFoundException(NotFoundMessages.Publisher);
+      }
+      throw error;
+    });
+
+    const blog = await this.blogsService.getById(blogId);
+    if (blog.publisherId !== publisherId) {
+      throw new BadRequestException(BadRequestMessages.CannotUpdateBlog);
+    }
+
+    return this.blogsService.update(blogId, blogDto);
   }
 }

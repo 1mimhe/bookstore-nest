@@ -65,7 +65,6 @@ export class BlogsController {
   @Serialize(BlogCompactResponseDto)
   @UseGuards(AuthGuard, RolesGuard)
   @RequiredRoles(RolesEnum.Admin, RolesEnum.ContentManager, RolesEnum.Publisher)
-  // TODO: Publisher with separate createBlog
   @HttpCode(HttpStatus.CREATED)
   @Post()
   async createBlog(

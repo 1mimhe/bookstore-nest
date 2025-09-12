@@ -45,7 +45,8 @@ export enum NotFoundMessages {
 }
 
 export enum BadRequestMessages {
-  CannotSetDefaultBook = 'Cannot set book as default: This book does not belong to the specified title.'
+  CannotSetDefaultBook = 'Cannot set book as default: This book does not belong to the specified title.',
+  CannotUpdateBlog = 'You can not to update the blog you doesn\'t own it.'
 }
 
 export enum UnprocessableEntityMessages {
