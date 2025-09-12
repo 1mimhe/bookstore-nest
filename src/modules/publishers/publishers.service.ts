@@ -13,6 +13,7 @@ import { AuthService } from '../auth/auth.service';
 import { BooksService } from '../books/books.service';
 import { Book } from '../books/entities/book.entity';
 import { dbErrorHandler } from 'src/common/utilities/error-handler';
+import { CreateBookDto } from '../books/dtos/create-book.dto';
 
 @Injectable()
 export class PublishersService {
@@ -111,6 +112,28 @@ export class PublishersService {
         throw new ConflictException(ConflictMessages.PublisherName);
       }
       throw error;
+    });
+  }
+
+  async createBook(
+    userId: string,
+    {
+      publisherId: _,
+      ...bookDto
+    }: CreateBookDto
+  ) {
+    const { id: publisherId } = await this.publisherRepo.findOneOrFail({
+      where: { userId },
+    }).catch((error: Error) => {
+      if (error instanceof EntityNotFoundError) {
+        throw new NotFoundException(NotFoundMessages.Publisher);
+      }
+      throw error;
+    });
+
+    return this.booksService.create({
+      publisherId,
+      ...bookDto
     });
   }
 }
