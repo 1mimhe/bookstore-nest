@@ -5,7 +5,7 @@ import { EntityManager, EntityNotFoundError, FindOptionsWhere, Repository } from
 import { RolesEnum } from '../users/entities/role.entity';
 import { User } from '../users/entities/user.entity';
 import { SignupPublisherDto } from './dtos/create-publisher.dto';
-import { NotFoundMessages } from 'src/common/enums/error.messages';
+import { BadRequestMessages, NotFoundMessages } from 'src/common/enums/error.messages';
 import { UpdatePublisherDto } from './dtos/update-publisher.dto';
 import { ConflictMessages } from 'src/common/enums/error.messages';
 import { DBErrors } from 'src/common/enums/db.errors';
@@ -16,6 +16,7 @@ import { dbErrorHandler } from 'src/common/utilities/error-handler';
 import { CreateBookDto } from '../books/dtos/create-book.dto';
 import { BlogsService } from '../blogs/blogs.service';
 import { CreateBlogDto } from '../blogs/dtos/create-blog.dto';
+import { UpdateBlogDto } from '../blogs/dtos/update-blog.dto';
 
 @Injectable()
 export class PublishersService {
@@ -160,5 +161,30 @@ export class PublishersService {
       publisherId,
       ...blogDto
     });
+  }
+
+  async updateBlog(
+    blogId: string,
+    userId: string,
+    {
+      publisherId: _,
+      ...blogDto
+    }: UpdateBlogDto
+  ) {
+    const { id: publisherId } = await this.publisherRepo.findOneOrFail({
+      where: { userId },
+    }).catch((error: Error) => {
+      if (error instanceof EntityNotFoundError) {
+        throw new NotFoundException(NotFoundMessages.Publisher);
+      }
+      throw error;
+    });
+
+    const blog = await this.blogsService.getById(blogId);
+    if (blog.publisherId !== publisherId) {
+      throw new BadRequestException(BadRequestMessages.CannotUpdateBlog);
+    }
+
+    return this.blogsService.update(blogId, blogDto);
   }
 }

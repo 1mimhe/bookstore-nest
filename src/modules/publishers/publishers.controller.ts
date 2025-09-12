@@ -32,7 +32,7 @@ import {
 import { Serialize } from 'src/common/interceptors/serialize.interceptor';
 import { CreatePublisherResponseDto, PublisherCompactResponseDto, PublisherPlusResDto, PublisherResponseDto } from './dtos/publisher-response.dto';
 import { UpdatePublisherDto } from './dtos/update-publisher.dto';
-import { ConflictMessages } from 'src/common/enums/error.messages';
+import { BadRequestMessages, ConflictMessages } from 'src/common/enums/error.messages';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
 import { ApiQueryComplete, ApiQueryPagination } from 'src/common/decorators/query.decorators';
 import { AuthGuard } from '../auth/guards/auth.guard';
@@ -45,6 +45,7 @@ import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { CreateBookDto } from '../books/dtos/create-book.dto';
 import { BlogCompactResponseDto } from '../blogs/dtos/blog-response.dto';
 import { CreateBlogDto } from '../blogs/dtos/create-blog.dto';
+import { UpdateBlogDto } from '../blogs/dtos/update-blog.dto';
 
 @Controller('publishers')
 @ApiTags('Publisher')
@@ -198,7 +199,7 @@ export class PublishersController {
     RolesEnum.Publisher
   )
   @HttpCode(HttpStatus.CREATED)
-  @Post()
+  @Post('books')
   async createBook(
     @Body() body: CreateBookDto,
     @CurrentUser('id') userId: string
@@ -230,11 +231,46 @@ export class PublishersController {
   @UseGuards(AuthGuard, RolesGuard)
   @RequiredRoles(RolesEnum.Admin, RolesEnum.ContentManager, RolesEnum.Publisher)
   @HttpCode(HttpStatus.CREATED)
-  @Post()
+  @Post('blogs')
   async createBlog(
     @Body() body: CreateBlogDto,
     @CurrentUser('id') userId: string
   ): Promise<BlogCompactResponseDto> {
     return this.publishersService.createBlog(userId, body);
+  }
+
+  @ApiOperation({
+    summary: 'Update a publisher\'s blog',
+    description: 'You should '
+  })
+  @ApiBadRequestResponse({
+    type: ValidationErrorResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: NotFoundMessages.Title,
+  })
+  @ApiNotFoundResponse({
+    description: NotFoundMessages.Author,
+  })
+  @ApiNotFoundResponse({
+    description: NotFoundMessages.Publisher,
+  })
+  @ApiBadRequestResponse({
+    description: BadRequestMessages.CannotUpdateBlog,
+  })
+  @ApiConflictResponse({
+    description: ConflictMessages.Slug,
+  })
+  @ApiBearerAuth()
+  @Serialize(BlogCompactResponseDto)
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequiredRoles(RolesEnum.Admin, RolesEnum.ContentManager)
+  @Patch('blogs/:id')
+  async updateBlog(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: UpdateBlogDto,
+    @CurrentUser('id') userId: string
+  ): Promise<BlogCompactResponseDto> {
+    return this.publishersService.updateBlog(userId, id, body);
   }
 }
