@@ -326,6 +326,33 @@ console.log(existingTitle);
     });
   }
 
+  async getSimilarTitles(
+    titleId: string,
+    limit: number = 10
+  ): Promise<Title[]> {
+    return this.titleRepo
+      .createQueryBuilder('title')
+      .leftJoinAndSelect('title.authors', 'authors')
+      .leftJoinAndSelect('title.defaultBook', 'defaultBook')
+      .addSelect(
+        `(
+          SELECT COUNT(*)
+          FROM title_tag tt1
+          INNER JOIN title_tag tt2 ON tt1.tagId = tt2.tagId
+          WHERE tt1.titleId = :titleId
+          AND tt2.titleId = title.id
+          AND tt1.titleId != tt2.titleId
+        )`,
+        'commonTagsCount'
+      )
+      .where('title.id != :titleId')
+      .setParameter('titleId', titleId)
+      .having('commonTagsCount > 0')
+      .orderBy('commonTagsCount', 'DESC')
+      .limit(limit)
+      .getMany();
+  }
+
   async deleteTagFromTitle(titleId: string, tagId: string): Promise<void> {
     return this.titleRepo
       .createQueryBuilder()
