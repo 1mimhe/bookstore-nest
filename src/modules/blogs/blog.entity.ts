@@ -36,6 +36,9 @@ export class Blog extends BaseEntity {
   @Column('text')
   content: string;
 
+  @Column({ default: false })
+  isPublic: boolean;
+
   @Index()
   @Column({
     type: 'uuid',

@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer';
-import { IsString, IsUUID, IsArray, IsNotEmpty, IsOptional, IsAlphanumeric, ArrayMinSize } from 'class-validator';
+import { IsString, IsUUID, IsArray, IsNotEmpty, IsOptional, IsAlphanumeric, ArrayMinSize, IsBoolean } from 'class-validator';
 import { makeUnique } from 'src/common/utilities/make-unique';
 
 export class CreateBlogDto {
@@ -54,4 +54,8 @@ export class CreateBlogDto {
   @IsArray()
   @IsAlphanumeric(undefined, { each: true })
   tags?: string[];
+
+  @IsOptional()
+  @IsBoolean()
+  isPublic?: boolean;
 }
