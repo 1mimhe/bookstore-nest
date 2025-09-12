@@ -146,7 +146,6 @@ export class TitlesService {
       if (tags && tags.length > 0) {
         newTags = await this.tagsService.getOrCreateTags(tags, manager);
       }
-console.log(existingTitle);
 
       const updatedTitle = manager.merge(
         Title,
