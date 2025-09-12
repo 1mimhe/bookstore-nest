@@ -106,6 +106,24 @@ export class BooksController {
   }
 
   @ApiOperation({
+    summary: 'Get titles similar to a specific title',
+    description: 'Retrieves titles that have the most common tags with the title.'
+  })
+  @ApiOkResponse({
+    type: TitleResponseDto
+  })
+  @Serialize(TitleResponseDto)
+  @Get('titles/:id/similar')
+  async getSimilarTitles(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query('limit', new DefaultValuePipe(10), new ParseIntPipe({ optional: true })) limit: number = 10,
+  ): Promise<TitleResponseDto[]> {
+    const a = await this.titlesService.getSimilarTitles(id, limit);
+    console.log(a);
+    return a;
+  }
+
+  @ApiOperation({
     summary: 'Retrieves all books by its publisher id',
   })
   @ApiNotFoundResponse({
