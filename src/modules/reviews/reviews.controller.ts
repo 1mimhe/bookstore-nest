@@ -23,7 +23,7 @@ import {
   ReviewResponseDto,
   ReviewResponseWithCountDto,
 } from './dtos/review-response.dto';
-import { Serialize } from 'src/common/interceptors/serialize.interceptor';
+import { Serialize } from 'src/common/serialize.interceptor';
 import { UpdateReviewDto } from './dtos/update-review.dto';
 import { ReactToReviewDto } from './dtos/react-review.dto';
 import { ChangeReactionDto } from './dtos/change-reaction.dto';

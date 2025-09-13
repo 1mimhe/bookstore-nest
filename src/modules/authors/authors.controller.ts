@@ -13,6 +13,7 @@ import {
   Patch,
   Post,
   Query,
+  Res,
   Session,
   UseGuards,
 } from '@nestjs/common';
@@ -37,17 +38,28 @@ import {
   AuthorPlusCountResDto,
   AuthorResponseDto,
 } from './dtos/author-response.dto';
-import { Serialize } from 'src/common/interceptors/serialize.interceptor';
+import { Serialize } from 'src/common/serialize.interceptor';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { RequiredRoles } from 'src/common/decorators/roles.decorator';
 import { RolesEnum } from '../users/entities/role.entity';
 import { SessionData } from 'express-session';
+import { BaseController } from 'src/common/base.controller';
+import { ConfigService } from '@nestjs/config';
+import { Cookies } from 'src/common/decorators/cookies.decorator';
+import { CookieNames } from 'src/common/enums/cookie.names';
+import { RecentView, RecentViewTypes } from 'src/common/types/recent-view.type';
+import { Response } from 'express';
 
 @Controller('authors')
 @ApiTags('Author')
-export class AuthorsController {
-  constructor(private authorsService: AuthorsService) {}
+export class AuthorsController extends BaseController {
+  constructor(
+    private authorsService: AuthorsService,
+    config: ConfigService
+  ) {
+    super(config);
+  }
 
   @ApiOperation({
     summary: 'Create a new author',
@@ -115,12 +127,22 @@ export class AuthorsController {
   @Get('slug/:slug')
   async getPublisherBySlug(
     @Param('slug') slug: string,
+    @Cookies(CookieNames.RecentViews) recentViewsCookie: string,
+    @Res({ passthrough: true }) res: Response,
     @Query('complete', new ParseBoolPipe({ optional: true }))
     complete?: boolean,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
   ): Promise<AuthorResponseDto> {
-    return this.authorsService.get({ slug }, page, limit, complete);
+    const author = await this.authorsService.get({ slug }, page, limit, complete);
+
+    const newRecentView: RecentView = {
+      type: RecentViewTypes.Author,
+      slug: author.slug
+    };
+    this.updateRecentViewsCookie(res, recentViewsCookie, newRecentView);
+
+    return author;
   }
 
   @ApiOperation({

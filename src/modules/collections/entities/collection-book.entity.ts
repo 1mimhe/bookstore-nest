@@ -1,7 +1,7 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, Unique } from 'typeorm';
 import { Collection } from './collection.entity';
 import { Book } from 'src/modules/books/entities/book.entity';
-import { BaseEntity } from 'src/common/entities/base.entity';
+import { BaseEntity } from 'src/common/base.entity';
 
 @Entity('collection_book')
 @Index(['collection'])

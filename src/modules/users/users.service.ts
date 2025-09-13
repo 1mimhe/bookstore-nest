@@ -2,7 +2,7 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { DataSource, DeepPartial, EntityNotFoundError, FindOptionsWhere, Repository } from 'typeorm';
-import { ConflictDto } from 'src/common/dtos/error.dtos';
+import { ConflictDto } from 'src/common/error.dtos';
 import { CreateAddressDto } from './dtos/create-address.dto';
 import { Address } from './entities/address.entity';
 import { UpdateAddressDto } from './dtos/update-address.dto';
@@ -11,7 +11,13 @@ import { UpdateUserDto } from './dtos/update-user.dto';
 import { AuthService } from '../auth/auth.service';
 import { Contact } from './entities/contact.entity';
 import { Bookmark, BookmarkTypes } from '../books/entities/bookmark.entity';
-import { v4 as uuidv4 } from 'uuid';
+import { RecentView, RecentViewTypes } from 'src/common/types/recent-view.type';
+import { Title } from '../books/entities/title.entity';
+import { Author } from '../authors/author.entity';
+import { Publisher } from '../publishers/publisher.entity';
+import { Blog } from '../blogs/blog.entity';
+import { Character } from '../books/entities/characters.entity';
+import { RecentViewDto } from './dtos/recent-view-response.dto';
 
 @Injectable()
 export class UsersService {
@@ -263,5 +269,144 @@ export class UsersService {
       count,
       books
     };
+  }
+
+  async getRecentViews(recentViews: RecentView[]): Promise<RecentViewDto[]> {
+    const MODEL_MAP = {
+      [RecentViewTypes.Title]: Title,
+      [RecentViewTypes.Author]: Author,
+      [RecentViewTypes.Publisher]: Publisher,
+      [RecentViewTypes.Blog]: Blog,
+      [RecentViewTypes.Character]: Character,
+    } as const;
+
+    const fetchPromises = recentViews
+      .filter(view => view?.type && MODEL_MAP[view.type] && view?.slug)
+      .map(async (view): Promise<RecentViewDto | null> => {
+        const model = MODEL_MAP[view.type];
+        
+        try {
+          const repository = this.dataSource.getRepository(model) as any;
+          let entity;
+          
+          switch (view.type) {
+            case RecentViewTypes.Title:
+              entity = await (repository as Repository<Title>).findOne({
+                where: { slug: view.slug },
+                select: {
+                  id: true,
+                  name: true,
+                  slug: true,
+                  defaultBook: {
+                    images: true
+                  }
+                },
+                relations: {
+                  defaultBook: {
+                    images: true
+                  }
+                }
+              });
+              
+              if (entity) {
+                return {
+                  type: view.type,
+                  title: entity.name,
+                  slug: entity.slug,
+                  picUrl: entity.defaultBook?.images?.find((img: any) => img.type === 'main')?.url || null
+                };
+              }
+              break;
+
+            case RecentViewTypes.Author:
+              entity = await (repository as Repository<Author>).findOne({
+                where: { slug: view.slug },
+                select: {
+                  firstName: true,
+                  lastName: true,
+                  slug: true,
+                  picUrl: true
+                }
+              });
+              
+              if (entity) {
+                return {
+                  type: view.type,
+                  title: `${entity.firstName}${entity.lastName ? ' ' + entity.lastName : ''}`,
+                  slug: entity.slug,
+                  picUrl: entity.picUrl || null
+                };
+              }
+              break;
+
+            case RecentViewTypes.Publisher:
+              entity = await (repository as Repository<Publisher>).findOne({
+                where: { slug: view.slug },
+                select: {
+                  publisherName: true,
+                  slug: true,
+                  logoUrl: true
+                }
+              });
+              
+              if (entity) {
+                return {
+                  type: view.type,
+                  title: entity.publisherName,
+                  slug: entity.slug,
+                  picUrl: entity.logoUrl || null
+                };
+              }
+              break;
+
+            case RecentViewTypes.Blog:
+              entity = await (repository as Repository<Blog>).findOne({
+                where: { slug: view.slug },
+                select: {
+                  subject: true,
+                  slug: true,
+                  picUrl: true
+                }
+              });
+              
+              if (entity) {
+                return {
+                  type: view.type,
+                  title: entity.subject,
+                  slug: entity.slug,
+                  picUrl: entity.picUrl || null
+                };
+              }
+              break;
+
+            case RecentViewTypes.Character:
+              entity = await (repository as Repository<Character>).findOne({
+                where: { slug: view.slug },
+                select: {
+                  fullName: true,
+                  slug: true,
+                  picUrl: true
+                }
+              });
+              
+              if (entity) {
+                return {
+                  type: view.type,
+                  title: entity.fullName,
+                  slug: entity.slug,
+                  picUrl: entity.picUrl || null
+                };
+              }
+              break;
+          }
+          
+          return null;
+        } catch (error) {          
+          return null;
+        }
+      });
+
+    const results = await Promise.all(fetchPromises);
+    return results.filter((result): result is RecentViewDto => result !== null);
   }
 }

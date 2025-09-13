@@ -3,7 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
 import { User } from './entities/user.entity';
-import { CurrentUserMiddleware } from 'src/common/middlewares/current-user.middleware';
+import { CurrentUserMiddleware } from '../../common/current-user.middleware';
 import { AuthModule } from '../auth/auth.module';
 import { Address } from './entities/address.entity';
 import { ReviewReaction } from '../reviews/entities/review-reaction.entity';

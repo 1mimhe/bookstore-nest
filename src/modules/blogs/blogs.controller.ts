@@ -8,6 +8,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Res,
   Session,
   UseGuards,
 } from '@nestjs/common';
@@ -21,12 +22,12 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { ValidationErrorResponseDto } from 'src/common/dtos/error.dtos';
+import { ValidationErrorResponseDto } from 'src/common/error.dtos';
 import {
   ConflictMessages,
   NotFoundMessages,
 } from 'src/common/enums/error.messages';
-import { Serialize } from 'src/common/interceptors/serialize.interceptor';
+import { Serialize } from 'src/common/serialize.interceptor';
 import {
   BlogCompactResponseDto,
   BlogResponseDto,
@@ -37,11 +38,22 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { RolesEnum } from '../users/entities/role.entity';
 import { SessionData } from 'express-session';
+import { Cookies } from 'src/common/decorators/cookies.decorator';
+import { CookieNames } from 'src/common/enums/cookie.names';
+import { RecentView, RecentViewTypes } from 'src/common/types/recent-view.type';
+import { BaseController } from 'src/common/base.controller';
+import { ConfigService } from '@nestjs/config';
+import { Response } from 'express';
 
 @Controller('blogs')
 @ApiTags('Blog')
-export class BlogsController {
-  constructor(private blogsService: BlogsService) {}
+export class BlogsController extends BaseController {
+  constructor(
+    private blogsService: BlogsService,
+    config: ConfigService
+  ) {
+    super(config);
+  }
 
   @ApiOperation({
     summary: 'Create a blog',
@@ -96,8 +108,20 @@ export class BlogsController {
   })
   @Serialize(BlogResponseDto)
   @Get('slug/:slug')
-  async getBlogBySlug(@Param('slug') slug: string): Promise<BlogResponseDto> {
-    return this.blogsService.get({ slug });
+  async getBlogBySlug(
+    @Param('slug') slug: string,
+    @Cookies(CookieNames.RecentViews) recentViewsCookie: string,
+    @Res({ passthrough: true }) res: Response
+  ): Promise<BlogResponseDto> {
+    const blog = await this.blogsService.get({ slug });
+
+    const newRecentView: RecentView = {
+      type: RecentViewTypes.Blog,
+      slug: blog.slug
+    };
+    this.updateRecentViewsCookie(res, recentViewsCookie, newRecentView);
+
+    return blog;
   }
 
   @ApiOperation({

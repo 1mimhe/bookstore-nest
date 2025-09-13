@@ -1,4 +1,4 @@
-import { BaseEntity } from 'src/common/entities/base.entity';
+import { BaseEntity } from 'src/common/base.entity';
 import { Author } from 'src/modules/authors/author.entity';
 import { Column, Entity, Index, JoinColumn, ManyToMany, OneToMany, OneToOne } from 'typeorm';
 import { Book } from './book.entity';

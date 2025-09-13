@@ -2,7 +2,7 @@ import { Body, Controller, Delete, Param, Post, UseGuards } from '@nestjs/common
 import { StaffsService } from './staffs.service';
 import { SignupStaffDto, StaffRoles } from './dtos/signup-staff.dto';
 import { ApiBadRequestResponse, ApiBearerAuth, ApiConflictResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { ConflictResponseDto, ValidationErrorResponseDto } from 'src/common/dtos/error.dtos';
+import { ConflictResponseDto, ValidationErrorResponseDto } from 'src/common/error.dtos';
 import { ConflictMessages } from 'src/common/enums/error.messages';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { RequiredRoles } from 'src/common/decorators/roles.decorator';

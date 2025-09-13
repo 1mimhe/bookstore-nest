@@ -13,6 +13,7 @@ import {
   Patch,
   Post,
   Query,
+  Res,
   Session,
   UseGuards,
 } from '@nestjs/common';
@@ -28,7 +29,7 @@ import {
 import { BadRequestMessages, ConflictMessages } from 'src/common/enums/error.messages';
 import { TitlesService } from './titles.service';
 import { CreateTitleDto } from './dtos/create-title.dto';
-import { ValidationErrorResponseDto } from 'src/common/dtos/error.dtos';
+import { ValidationErrorResponseDto } from 'src/common/error.dtos';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
 import { CreateBookDto } from './dtos/create-book.dto';
 import { BooksService } from './books.service';
@@ -36,7 +37,7 @@ import { UpdateBookDto } from './dtos/update-book.dto';
 import { ApiQueryComplete, ApiQueryPagination } from 'src/common/decorators/query.decorators';
 import { BookResponseDto, ImageResponseDto } from './dtos/book-response.dto';
 import { TitleCompactResponseDto, TitleResponseDto } from './dtos/title-response.dto';
-import { Serialize } from 'src/common/interceptors/serialize.interceptor';
+import { Serialize } from 'src/common/serialize.interceptor';
 import { UpdateTitleDto } from './dtos/update-title.dto';
 import { CreateCharacterDto } from './dtos/create-character.dto';
 import { UpdateCharacterDto } from './dtos/update-character.dto';
@@ -49,14 +50,23 @@ import { RequiredRoles } from 'src/common/decorators/roles.decorator';
 import { RolesEnum } from '../users/entities/role.entity';
 import { SessionData } from 'express-session';
 import { BookFilterDto } from './dtos/book-filter.dto';
+import { ConfigService } from '@nestjs/config';
+import { BaseController } from 'src/common/base.controller';
+import { Response } from 'express';
+import { Cookies } from 'src/common/decorators/cookies.decorator';
+import { CookieNames } from 'src/common/enums/cookie.names';
+import { RecentView, RecentViewTypes } from 'src/common/types/recent-view.type';
 
 @Controller('books')
 @ApiTags('Book')
-export class BooksController {
+export class BooksController extends BaseController {
   constructor(
     private titlesService: TitlesService,
     private booksService: BooksService,
-  ) {}
+    config: ConfigService
+  ) {
+    super(config);
+  }
 
   @ApiOperation({
     summary: 'Create a title (For Admin, ContentManager, InventoryManager)',
@@ -100,9 +110,19 @@ export class BooksController {
   @Serialize(TitleResponseDto)
   @Get('titles/:slug')
   async getTitleBySlug(
-    @Param('slug') slug: string
+    @Param('slug') slug: string,
+    @Cookies(CookieNames.RecentViews) recentViewsCookie: string,
+    @Res({ passthrough: true }) res: Response
   ): Promise<TitleResponseDto> {
-    return this.titlesService.getBySlug(slug);
+    const title = await this.titlesService.getBySlug(slug);
+
+    const newRecentView: RecentView = {
+      type: RecentViewTypes.Title,
+      slug: title.slug
+    };
+    this.updateRecentViewsCookie(res, recentViewsCookie, newRecentView);
+
+    return title;
   }
 
   @ApiOperation({
@@ -401,11 +421,21 @@ export class BooksController {
   @Get('characters/slug/:slug')
   async getBookCharacterBySlug(
     @Param('slug') slug: string,
+    @Cookies(CookieNames.RecentViews) recentViewsCookie: string,
+    @Res({ passthrough: true }) res: Response,
     @Query('complete', new ParseBoolPipe({ optional: true })) complete?: boolean,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
   ): Promise<CharacterResponseDto> {
-    return this.titlesService.getCharacter({ slug }, page, limit, complete);
+    const character = await this.titlesService.getCharacter({ slug }, page, limit, complete);
+
+    const newRecentView: RecentView = {
+      type: RecentViewTypes.Character,
+      slug: character.slug
+    };
+    this.updateRecentViewsCookie(res, recentViewsCookie, newRecentView);
+
+    return character;
   }
 
   @ApiOperation({

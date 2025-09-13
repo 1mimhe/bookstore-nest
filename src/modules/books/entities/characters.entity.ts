@@ -1,6 +1,6 @@
 import { Column, Entity, JoinTable, ManyToMany, Unique } from 'typeorm';
 import { Title } from './title.entity';
-import { BaseEntity } from 'src/common/entities/base.entity';
+import { BaseEntity } from 'src/common/base.entity';
 
 @Entity('characters')
 @Unique(['slug'])

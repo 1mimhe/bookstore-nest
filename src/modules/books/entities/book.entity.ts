@@ -1,4 +1,4 @@
-import { BaseEntity } from 'src/common/entities/base.entity';
+import { BaseEntity } from 'src/common/base.entity';
 import { Publisher } from 'src/modules/publishers/publisher.entity';
 import {
   Column,

@@ -6,7 +6,7 @@ import {
   OneToOne,
 } from 'typeorm';
 import { User } from './user.entity';
-import { BaseEntity } from 'src/common/entities/base.entity';
+import { BaseEntity } from 'src/common/base.entity';
 
 @Entity('contacts')
 @Index(['user'])

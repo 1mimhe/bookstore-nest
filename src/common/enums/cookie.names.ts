@@ -1,4 +1,5 @@
 export enum CookieNames {
   SessionId = 'session-id',
-  RefreshToken = 'refresh-token'
+  RefreshToken = 'refresh-token',
+  RecentViews = 'recent-views'
 }

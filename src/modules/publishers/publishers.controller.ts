@@ -12,6 +12,7 @@ import {
   Patch,
   Post,
   Query,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import { PublishersService } from './publishers.service';
@@ -28,8 +29,8 @@ import { SignupPublisherDto } from './dtos/create-publisher.dto';
 import {
   ConflictResponseDto,
   ValidationErrorResponseDto,
-} from 'src/common/dtos/error.dtos';
-import { Serialize } from 'src/common/interceptors/serialize.interceptor';
+} from 'src/common/error.dtos';
+import { Serialize } from 'src/common/serialize.interceptor';
 import { CreatePublisherResponseDto, PublisherCompactResponseDto, PublisherPlusResDto, PublisherResponseDto } from './dtos/publisher-response.dto';
 import { UpdatePublisherDto } from './dtos/update-publisher.dto';
 import { BadRequestMessages, ConflictMessages } from 'src/common/enums/error.messages';
@@ -40,17 +41,27 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { RequiredRoles } from 'src/common/decorators/roles.decorator';
 import { RolesEnum } from '../users/entities/role.entity';
 import { BookResponseDto } from '../books/dtos/book-response.dto';
-import { SessionData } from 'express-session';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { CreateBookDto } from '../books/dtos/create-book.dto';
 import { BlogCompactResponseDto } from '../blogs/dtos/blog-response.dto';
 import { CreateBlogDto } from '../blogs/dtos/create-blog.dto';
 import { UpdateBlogDto } from '../blogs/dtos/update-blog.dto';
+import { ConfigService } from '@nestjs/config';
+import { BaseController } from 'src/common/base.controller';
+import { Cookies } from 'src/common/decorators/cookies.decorator';
+import { Response } from 'express';
+import { CookieNames } from 'src/common/enums/cookie.names';
+import { RecentView, RecentViewTypes } from 'src/common/types/recent-view.type';
 
 @Controller('publishers')
 @ApiTags('Publisher')
-export class PublishersController {
-  constructor(private publishersService: PublishersService) {}
+export class PublishersController extends BaseController {
+  constructor(
+    private publishersService: PublishersService,
+    config: ConfigService
+  ) {
+    super(config);
+  }
 
   @ApiOperation({
     summary: 'Sign up a new publisher',
@@ -136,11 +147,21 @@ export class PublishersController {
   @Get('slug/:slug')
   async getPublisherBySlug(
     @Param('slug') slug: string,
+    @Cookies(CookieNames.RecentViews) recentViewsCookie: string,
+    @Res({ passthrough: true }) res: Response,
     @Query('complete', new ParseBoolPipe({ optional: true })) complete?: boolean,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
   ): Promise<PublisherResponseDto> {
-    return this.publishersService.get({ slug }, page, limit, complete);
+    const publisher = await this.publishersService.get({ slug }, page, limit, complete);
+
+    const newRecentView: RecentView = {
+      type: RecentViewTypes.Publisher,
+      slug: publisher.slug
+    };
+    this.updateRecentViewsCookie(res, recentViewsCookie, newRecentView);
+
+    return publisher;
   }
 
   @ApiOperation({

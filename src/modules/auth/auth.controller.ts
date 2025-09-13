@@ -21,28 +21,31 @@ import {
 import {
   ConflictResponseDto,
   ValidationErrorResponseDto,
-} from 'src/common/dtos/error.dtos';
+} from 'src/common/error.dtos';
 import { SigninDto } from './dtos/sign-in.dto';
 import { AuthMessages } from 'src/common/enums/error.messages';
 import { Response } from 'express';
 import { CookieNames } from 'src/common/enums/cookie.names';
 import { ConfigService } from '@nestjs/config';
 import { SessionData } from 'express-session';
-import { Serialize } from 'src/common/interceptors/serialize.interceptor';
+import { Serialize } from 'src/common/serialize.interceptor';
 import { AccessTokenDto } from './dtos/access-token.dto';
 import { Cookies } from 'src/common/decorators/cookies.decorator';
 import { ConflictMessages } from 'src/common/enums/error.messages';
 import { UserResponseDto } from '../users/dtos/user-response.dto';
 import { TokenService } from '../token/token.service';
 import { SigninTestDto } from './dtos/sign-up-test.dto';
+import { BaseController } from 'src/common/base.controller';
 
 @Controller('auth')
-export class AuthController {
+export class AuthController extends BaseController {
   constructor(
     private authService: AuthService,
     private tokenService: TokenService,
-    private config: ConfigService,
-  ) {}
+    config: ConfigService,
+  ) {
+    super(config);
+  }
 
   @ApiOperation({
     summary: 'Sign up a new user account (customer)',
@@ -101,12 +104,7 @@ export class AuthController {
     session.refreshToken = refreshToken;
     session.roles = roles;
 
-    res.cookie(CookieNames.RefreshToken, refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: this.config.get<number>('COOKIE_MAX_AGE', 15 * 24 * 3600 * 1000), // 15 days
-    });
+    this.setCookie(res, CookieNames.RefreshToken, refreshToken);
 
     return {
       accessToken,
@@ -149,12 +147,7 @@ export class AuthController {
     } = this.tokenService.refreshTokens(oldRefreshToken, session);
 
     session.refreshToken = refreshToken;
-    res.cookie(CookieNames.RefreshToken, refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: expirationTime
-    });
+    this.setCookie(res, CookieNames.RefreshToken, refreshToken, expirationTime);
 
     return {
       accessToken
