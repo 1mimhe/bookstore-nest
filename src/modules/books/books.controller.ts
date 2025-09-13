@@ -13,6 +13,7 @@ import {
   Patch,
   Post,
   Query,
+  Res,
   Session,
   UseGuards,
 } from '@nestjs/common';
@@ -49,14 +50,23 @@ import { RequiredRoles } from 'src/common/decorators/roles.decorator';
 import { RolesEnum } from '../users/entities/role.entity';
 import { SessionData } from 'express-session';
 import { BookFilterDto } from './dtos/book-filter.dto';
+import { ConfigService } from '@nestjs/config';
+import { BaseController } from 'src/common/base.controller';
+import { Response } from 'express';
+import { Cookies } from 'src/common/decorators/cookies.decorator';
+import { CookieNames } from 'src/common/enums/cookie.names';
+import { RecentView, RecentViewTypes } from 'src/common/types/recent-view.type';
 
 @Controller('books')
 @ApiTags('Book')
-export class BooksController {
+export class BooksController extends BaseController {
   constructor(
     private titlesService: TitlesService,
     private booksService: BooksService,
-  ) {}
+    config: ConfigService
+  ) {
+    super(config);
+  }
 
   @ApiOperation({
     summary: 'Create a title (For Admin, ContentManager, InventoryManager)',
@@ -100,9 +110,19 @@ export class BooksController {
   @Serialize(TitleResponseDto)
   @Get('titles/:slug')
   async getTitleBySlug(
-    @Param('slug') slug: string
+    @Param('slug') slug: string,
+    @Cookies(CookieNames.RecentViews) recentViewsCookie: string,
+    @Res({ passthrough: true }) res: Response
   ): Promise<TitleResponseDto> {
-    return this.titlesService.getBySlug(slug);
+    const title = await this.titlesService.getBySlug(slug);
+
+    const newRecentView: RecentView = {
+      type: RecentViewTypes.Title,
+      slug: title.slug
+    };
+    this.updateRecentViewsCookie(res, recentViewsCookie, newRecentView);
+
+    return title;
   }
 
   @ApiOperation({

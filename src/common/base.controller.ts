@@ -31,7 +31,7 @@ export class BaseController {
   updateRecentViewsCookie(res: Response, oldViews: string, newView: RecentView) {
     try {
       // Validate existing views
-      const parsedViews = JSON.parse(oldViews || '[]') as RecentView[];
+      const parsedViews = JSON.parse(oldViews ?? '[]') as RecentView[];
       const validatedViews = plainToInstance(RecentViewCookieDto, parsedViews);
       
       // Remove duplications
