@@ -288,7 +288,6 @@ export class TitlesService {
         authors: true,
         tags: true,
         characters: true,
-        features: true,
         books: {
           publisher: true,
           translators: true,
