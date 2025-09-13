@@ -3,7 +3,7 @@ import { Response } from 'express';
 import { RecentView as RecentView } from './types/recent-view.type';
 import { CookieNames } from './enums/cookie.names';
 import { plainToInstance } from 'class-transformer';
-import { RecentlyViewedCookieDto as RecentViewCookieDto } from 'src/modules/reviews/dtos/revent-view-response';
+import { RecentViewCookieDto } from 'src/modules/reviews/dtos/recent-view-response';
 
 export class BaseController {
   private cookieMaxAge: number;
