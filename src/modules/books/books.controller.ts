@@ -421,11 +421,22 @@ export class BooksController extends BaseController {
   @Get('characters/slug/:slug')
   async getBookCharacterBySlug(
     @Param('slug') slug: string,
+    @Cookies(CookieNames.RecentViews) recentViewsCookie: string,
+    @Res({ passthrough: true }) res: Response,
     @Query('complete', new ParseBoolPipe({ optional: true })) complete?: boolean,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
   ): Promise<CharacterResponseDto> {
-    return this.titlesService.getCharacter({ slug }, page, limit, complete);
+    const character = await this.titlesService.getCharacter({ slug }, page, limit, complete);
+
+    const newRecentView: RecentView = {
+      type: RecentViewTypes.Character,
+      slug: character.slug
+    };
+    this.updateRecentViewsCookie(res, recentViewsCookie, newRecentView);
+
+
+    return character;
   }
 
   @ApiOperation({
