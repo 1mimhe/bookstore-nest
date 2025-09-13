@@ -28,7 +28,7 @@ import {
 import { BadRequestMessages, ConflictMessages } from 'src/common/enums/error.messages';
 import { TitlesService } from './titles.service';
 import { CreateTitleDto } from './dtos/create-title.dto';
-import { ValidationErrorResponseDto } from 'src/common/dtos/error.dtos';
+import { ValidationErrorResponseDto } from 'src/common/error.dtos';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
 import { CreateBookDto } from './dtos/create-book.dto';
 import { BooksService } from './books.service';
@@ -36,7 +36,7 @@ import { UpdateBookDto } from './dtos/update-book.dto';
 import { ApiQueryComplete, ApiQueryPagination } from 'src/common/decorators/query.decorators';
 import { BookResponseDto, ImageResponseDto } from './dtos/book-response.dto';
 import { TitleCompactResponseDto, TitleResponseDto } from './dtos/title-response.dto';
-import { Serialize } from 'src/common/interceptors/serialize.interceptor';
+import { Serialize } from 'src/common/serialize.interceptor';
 import { UpdateTitleDto } from './dtos/update-title.dto';
 import { CreateCharacterDto } from './dtos/create-character.dto';
 import { UpdateCharacterDto } from './dtos/update-character.dto';

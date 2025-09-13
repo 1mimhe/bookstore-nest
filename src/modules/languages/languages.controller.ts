@@ -5,7 +5,7 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { ValidationErrorResponseDto } from 'src/common/dtos/error.dtos';
+import { ValidationErrorResponseDto } from 'src/common/error.dtos';
 import { ConflictMessages } from 'src/common/enums/error.messages';
 import { CreateLanguageDto } from './create-language.dto';
 import { LanguagesService } from './languages.service';

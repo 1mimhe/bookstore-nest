@@ -21,14 +21,14 @@ import {
 import {
   ConflictResponseDto,
   ValidationErrorResponseDto,
-} from 'src/common/dtos/error.dtos';
+} from 'src/common/error.dtos';
 import { SigninDto } from './dtos/sign-in.dto';
 import { AuthMessages } from 'src/common/enums/error.messages';
 import { Response } from 'express';
 import { CookieNames } from 'src/common/enums/cookie.names';
 import { ConfigService } from '@nestjs/config';
 import { SessionData } from 'express-session';
-import { Serialize } from 'src/common/interceptors/serialize.interceptor';
+import { Serialize } from 'src/common/serialize.interceptor';
 import { AccessTokenDto } from './dtos/access-token.dto';
 import { Cookies } from 'src/common/decorators/cookies.decorator';
 import { ConflictMessages } from 'src/common/enums/error.messages';

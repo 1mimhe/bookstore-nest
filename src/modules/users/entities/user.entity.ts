@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import { Contact } from './contact.entity';
 import { Role } from './role.entity';
-import { BaseEntity } from 'src/common/entities/base.entity';
+import { BaseEntity } from 'src/common/base.entity';
 import { Publisher } from 'src/modules/publishers/publisher.entity';
 import { Address } from './address.entity';
 import { ReviewReaction } from 'src/modules/reviews/entities/review-reaction.entity';

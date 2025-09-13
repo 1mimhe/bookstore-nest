@@ -11,7 +11,7 @@ import { BookImage } from './entities/book-image.entity';
 import { Language } from '../languages/language.entity';
 import { Character } from './entities/characters.entity';
 import { Bookmark } from './entities/bookmark.entity';
-import { CurrentUserMiddleware } from 'src/common/middlewares/current-user.middleware';
+import { CurrentUserMiddleware } from '../../common/current-user.middleware';
 import { UsersModule } from '../users/users.module';
 import { TokenModule } from '../token/token.module';
 import { StaffModule } from '../staffs/staffs.module';

@@ -1,6 +1,6 @@
 import { Column, Entity, Unique } from 'typeorm';
 import { ShippingTypes } from './order.entity';
-import { BaseEntity } from 'src/common/entities/base.entity';
+import { BaseEntity } from 'src/common/base.entity';
 
 @Entity('shipping_prices')
 @Unique(['type'])

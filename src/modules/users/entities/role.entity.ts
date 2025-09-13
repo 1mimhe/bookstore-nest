@@ -6,7 +6,7 @@ import {
   ManyToOne
 } from 'typeorm';
 import { User } from './user.entity';
-import { BaseEntity } from 'src/common/entities/base.entity';
+import { BaseEntity } from 'src/common/base.entity';
 
 export enum RolesEnum {
   Customer = 'customer',

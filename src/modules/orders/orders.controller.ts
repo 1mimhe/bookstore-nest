@@ -5,7 +5,7 @@ import { UnprocessableEntityMessages } from 'src/common/enums/error.messages';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { AddBookToCartDto } from './dto/add-book.dto';
-import { Serialize } from 'src/common/interceptors/serialize.interceptor';
+import { Serialize } from 'src/common/serialize.interceptor';
 import { CartResponseDto } from './dto/cart-response.dto';
 import { RemoveBookFromCartDto } from './dto/remove-book.dto';
 import { InitiateOrderDto } from './dto/initiate-order.dto';

@@ -1,4 +1,4 @@
-import { BaseEntity } from 'src/common/entities/base.entity';
+import { BaseEntity } from 'src/common/base.entity';
 import { Column, Entity, Index, JoinColumn, ManyToMany, ManyToOne, OneToMany } from 'typeorm';
 import { Publisher } from '../publishers/publisher.entity';
 import { Author } from '../authors/author.entity';

@@ -12,7 +12,7 @@ import { AuthMessages } from 'src/common/enums/error.messages';
 import { Publisher } from '../publishers/publisher.entity';
 import { User } from '../users/entities/user.entity';
 import { RolesEnum } from '../users/entities/role.entity';
-import { ConflictDto } from 'src/common/dtos/error.dtos';
+import { ConflictDto } from 'src/common/error.dtos';
 import { Staff } from '../staffs/entities/staff.entity';
 import { TokenService } from '../token/token.service';
 

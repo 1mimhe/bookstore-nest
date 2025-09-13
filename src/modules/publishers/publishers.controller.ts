@@ -28,8 +28,8 @@ import { SignupPublisherDto } from './dtos/create-publisher.dto';
 import {
   ConflictResponseDto,
   ValidationErrorResponseDto,
-} from 'src/common/dtos/error.dtos';
-import { Serialize } from 'src/common/interceptors/serialize.interceptor';
+} from 'src/common/error.dtos';
+import { Serialize } from 'src/common/serialize.interceptor';
 import { CreatePublisherResponseDto, PublisherCompactResponseDto, PublisherPlusResDto, PublisherResponseDto } from './dtos/publisher-response.dto';
 import { UpdatePublisherDto } from './dtos/update-publisher.dto';
 import { BadRequestMessages, ConflictMessages } from 'src/common/enums/error.messages';

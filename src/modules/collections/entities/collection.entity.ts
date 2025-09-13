@@ -1,4 +1,4 @@
-import { BaseEntity } from 'src/common/entities/base.entity';
+import { BaseEntity } from 'src/common/base.entity';
 import { Column, Entity, OneToMany, Unique } from 'typeorm';
 import { CollectionBook } from './collection-book.entity';
 

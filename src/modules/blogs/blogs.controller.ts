@@ -21,12 +21,12 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { ValidationErrorResponseDto } from 'src/common/dtos/error.dtos';
+import { ValidationErrorResponseDto } from 'src/common/error.dtos';
 import {
   ConflictMessages,
   NotFoundMessages,
 } from 'src/common/enums/error.messages';
-import { Serialize } from 'src/common/interceptors/serialize.interceptor';
+import { Serialize } from 'src/common/serialize.interceptor';
 import {
   BlogCompactResponseDto,
   BlogResponseDto,

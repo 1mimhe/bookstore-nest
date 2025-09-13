@@ -24,7 +24,7 @@ import {
 } from '@nestjs/swagger';
 import { AuthMessages } from 'src/common/enums/error.messages';
 import { UserResponseDto } from './dtos/user-response.dto';
-import { Serialize } from 'src/common/interceptors/serialize.interceptor';
+import { Serialize } from 'src/common/serialize.interceptor';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { CreateAddressDto } from './dtos/create-address.dto';
 import { UsersService } from './users.service';

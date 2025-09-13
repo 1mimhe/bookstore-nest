@@ -20,7 +20,7 @@ import { TagType } from './tag.entity';
 import { UpdateTagDto } from './dtos/update-tag.dto';
 import { ApiQueryArray, ApiQueryPagination } from 'src/common/decorators/query.decorators';
 import { TagCompactResponseDto, TagResponseDto } from './dtos/tag-response.dto';
-import { Serialize } from 'src/common/interceptors/serialize.interceptor';
+import { Serialize } from 'src/common/serialize.interceptor';
 import { RolesEnum } from '../users/entities/role.entity';
 import { RequiredRoles } from 'src/common/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
