@@ -35,12 +35,22 @@ import { BookmarkTypes } from '../books/entities/bookmark.entity';
 import { BookmarksDto } from './dtos/bookmark.dto';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { AddressResponseDto } from './dtos/address-response.dto';
+import { RecentViewDto } from './dtos/recent-view-response.dto';
+import { Cookies } from 'src/common/decorators/cookies.decorator';
+import { CookieNames } from 'src/common/enums/cookie.names';
+import { BaseController } from 'src/common/base.controller';
+import { ConfigService } from '@nestjs/config';
 
 @Controller('users')
 @ApiTags('User')
 @UseGuards(AuthGuard)
-export class UsersController {
-  constructor(private usersService: UsersService) {}
+export class UsersController extends BaseController {
+  constructor(
+    private usersService: UsersService,
+    config: ConfigService
+  ) {
+    super(config);
+  }
 
   @ApiOperation({
     summary: 'Retrieves the current authorized user',
@@ -139,5 +149,21 @@ export class UsersController {
     @CurrentUser('id') userId: string
   ) {
     return this.usersService.getAllBookmarks(userId, type, page, limit);
+  }
+
+  @ApiOperation({
+    summary: 'Get recent user\'s views',
+    description: `Returns recent pages viewed
+      including \`titles\`, \`authors\`, \`publishers\`, \`blogs\`, and \`characters\`
+      with their basic information and images.`,
+  })
+  @ApiBearerAuth()
+  @Serialize(RecentViewDto)
+  @Get('recent-views')
+  async getUserRecentViews(
+    @Cookies(CookieNames.RecentViews) recentViewsCookie: string
+  ): Promise<RecentViewDto[]> {
+    const recentViews = this.getRecentViews(recentViewsCookie);
+    return this.usersService.getRecentViews(recentViews);
   }
 }

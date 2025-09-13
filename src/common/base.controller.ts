@@ -3,7 +3,7 @@ import { Response } from 'express';
 import { RecentView as RecentView } from './types/recent-view.type';
 import { CookieNames } from './enums/cookie.names';
 import { plainToInstance } from 'class-transformer';
-import { RecentViewCookieDto } from 'src/modules/reviews/dtos/recent-view-response';
+import { RecentViewDto } from 'src/modules/users/dtos/recent-view-response.dto';
 
 export class BaseController {
   private cookieMaxAge: number;
@@ -28,10 +28,10 @@ export class BaseController {
     });
   }
 
-  getRecentViews(oldViews: string) {
+  getRecentViews(views: string) {
     // Validate existing views
-    const parsedViews = JSON.parse(oldViews ?? '[]') as RecentView[];
-    return plainToInstance(RecentViewCookieDto, parsedViews);
+    const parsedViews = JSON.parse(views ?? '[]') as RecentView[];
+    return plainToInstance(RecentViewDto, parsedViews);
   }
 
   updateRecentViewsCookie(res: Response, oldViews: string, newView: RecentView) {
