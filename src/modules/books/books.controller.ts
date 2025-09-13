@@ -435,7 +435,6 @@ export class BooksController extends BaseController {
     };
     this.updateRecentViewsCookie(res, recentViewsCookie, newRecentView);
 
-
     return character;
   }
 

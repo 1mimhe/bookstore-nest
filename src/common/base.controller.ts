@@ -28,12 +28,16 @@ export class BaseController {
     });
   }
 
+  getRecentViews(oldViews: string) {
+    // Validate existing views
+    const parsedViews = JSON.parse(oldViews ?? '[]') as RecentView[];
+    return plainToInstance(RecentViewCookieDto, parsedViews);
+  }
+
   updateRecentViewsCookie(res: Response, oldViews: string, newView: RecentView) {
     try {
-      // Validate existing views
-      const parsedViews = JSON.parse(oldViews ?? '[]') as RecentView[];
-      const validatedViews = plainToInstance(RecentViewCookieDto, parsedViews);
-      
+      const validatedViews = this.getRecentViews(oldViews);
+
       // Remove duplications
       const filteredViews = validatedViews.filter(view => 
         view.slug !== newView.slug || view.type !== newView.type

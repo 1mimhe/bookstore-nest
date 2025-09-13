@@ -264,4 +264,8 @@ export class UsersService {
       books
     };
   }
+
+  async getRecentViews() {
+
+  }
 }
