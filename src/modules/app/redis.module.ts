@@ -7,7 +7,7 @@ export const REDIS_CLIENT = 'REDIS_CLIENT';
 const redisProvider: Provider = {
   provide: REDIS_CLIENT,
   useFactory: (configService: ConfigService) => {
-    const redisUrl = configService.getOrThrow<string>('VIEWS_REDIS_URL');
+    const redisUrl = configService.getOrThrow<string>('REDIS_VIEWS_URL');
     return new Redis(redisUrl);
   },
   inject: [ConfigService],

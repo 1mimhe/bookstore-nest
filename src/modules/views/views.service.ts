@@ -62,6 +62,7 @@ export class ViewsService {
     const pendingKeys = await this.redisClient.keys('pending:*:views');
 
     if (pendingKeys.length === 0) {
+      console.log(`Synced 0 entity.`);
       return;
     }
 
@@ -172,8 +173,6 @@ export class ViewsService {
   }
 
   private getOrCreateViewerId(req: Request, res: Response, userId?: string): string {
-    console.log(userId);
-    
     if (userId) {
       return `user_${userId}`;
     }
