@@ -13,6 +13,7 @@ import {
   Patch,
   Post,
   Query,
+  Req,
   Res,
   Session,
   UseGuards,
@@ -52,10 +53,13 @@ import { SessionData } from 'express-session';
 import { BookFilterDto } from './dtos/book-filter.dto';
 import { ConfigService } from '@nestjs/config';
 import { BaseController } from 'src/common/base.controller';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { Cookies } from 'src/common/decorators/cookies.decorator';
 import { CookieNames } from 'src/common/enums/cookie.names';
 import { RecentView, RecentViewTypes } from 'src/common/types/recent-view.type';
+import { ViewsService } from '../views/views.service';
+import { ViewEntityTypes } from '../views/views.types';
+import { SoftAuthGuard } from '../auth/guards/soft-auth.guard';
 
 @Controller('books')
 @ApiTags('Book')
@@ -63,6 +67,7 @@ export class BooksController extends BaseController {
   constructor(
     private titlesService: TitlesService,
     private booksService: BooksService,
+    private viewsService: ViewsService,
     config: ConfigService
   ) {
     super(config);
@@ -107,12 +112,15 @@ export class BooksController extends BaseController {
   @ApiOkResponse({
     type: TitleResponseDto
   })
+  @UseGuards(SoftAuthGuard)
   @Serialize(TitleResponseDto)
   @Get('titles/:slug')
   async getTitleBySlug(
     @Param('slug') slug: string,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
     @Cookies(CookieNames.RecentViews) recentViewsCookie: string,
-    @Res({ passthrough: true }) res: Response
+    @CurrentUser('id') userId?: string
   ): Promise<TitleResponseDto> {
     const title = await this.titlesService.getBySlug(slug);
 
@@ -121,6 +129,14 @@ export class BooksController extends BaseController {
       slug: title.slug
     };
     this.updateRecentViewsCookie(res, recentViewsCookie, newRecentView);
+
+    await this.viewsService.recordView(
+      ViewEntityTypes.Title,
+      title.id,
+      req,
+      res,
+      userId
+    );
 
     return title;
   }
