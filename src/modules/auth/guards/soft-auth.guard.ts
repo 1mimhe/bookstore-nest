@@ -15,8 +15,9 @@ export class SoftAuthGuard implements CanActivate {
     const request = context.switchToHttp().getRequest<Request>();
     const accessToken = this.extractBearerToken(request);
 
+    request.user = request.user ?? {};
+
     if (!accessToken) {
-      request.user = {};
       return true;
     }
 
@@ -25,17 +26,13 @@ export class SoftAuthGuard implements CanActivate {
       
       // If token is invalid or missing username, allow access but don't set user
       if (!payload?.username) {
-        request.user = {};
         return true;
       }
 
-      request.user = {
-        id: payload.sub!
-      };
+      request.user.id = payload.sub!;
       
       return true;
     } catch (error) {
-      request.user = {};
       return true;
     }
   }
