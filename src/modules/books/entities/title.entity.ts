@@ -39,6 +39,9 @@ export class Title extends BaseEntity {
   @Column('json')
   quotes: string[];
 
+  @Column({ default: 0 })
+  views: number;
+
   @ManyToMany(() => Character, (character) => character.titles)
   characters: Character[];
 

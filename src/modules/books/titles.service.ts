@@ -518,16 +518,16 @@ export class TitlesService {
   ): void {
     switch (by) {
       case SortBy.MostLiked:
-        qb.orderBy('rateCount', 'DESC');
+        qb.orderBy('book.rateCount', 'DESC');
         break;
       case SortBy.MostView:
-        // TODO
+        qb.orderBy('title.views', 'DESC');
         break;
       case SortBy.MostSale:
-        qb.orderBy('sold', 'DESC');
+        qb.orderBy('book.sold', 'DESC');
         break;
       default:
-        qb.orderBy('createdAt', 'DESC');
+        qb.orderBy('book.createdAt', 'DESC');
     }
   }
 }

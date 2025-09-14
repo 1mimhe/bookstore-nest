@@ -1,7 +1,7 @@
-import { ClassSerializerInterceptor, MiddlewareConsumer, Module, ValidationPipe } from '@nestjs/common';
+import { MiddlewareConsumer, Module, ValidationPipe } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
+import { APP_PIPE } from '@nestjs/core';
 import * as session from 'express-session';
 import { CacheModule } from '@nestjs/cache-manager';
 import { createKeyv } from '@keyv/redis';
@@ -21,6 +21,7 @@ import { CollectionsModule } from '../collections/collections.module';
 import { ReviewsModule } from '../reviews/reviews.module';
 import { StaffModule } from '../staffs/staffs.module';
 import { OrdersModule } from '../orders/orders.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -48,10 +49,13 @@ import { OrdersModule } from '../orders/orders.module';
       inject: [ConfigService],
       useFactory: async (config: ConfigService) => {
         return {
-          stores: [createKeyv(config.getOrThrow<string>('REDIS_URL'))]
+          stores: [
+            createKeyv(config.getOrThrow<string>('REDIS_URL')),
+          ]
         };
       },
     }),
+    ScheduleModule.forRoot(),
     UsersModule,
     AuthModule,
     AuthorsModule,
@@ -81,7 +85,7 @@ export class AppModule {
 
   async configure(consumer: MiddlewareConsumer) {
     const redisClient = await createClient({
-      url: this.config.getOrThrow<string>('REDIS_URL')
+      url: this.config.getOrThrow<string>('REDIS_SESSION_URL')
     }).connect();
 
     consumer

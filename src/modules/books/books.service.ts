@@ -123,6 +123,7 @@ export class BooksService {
       .createQueryBuilder('book')
       .leftJoinAndSelect('book.images', 'images')
       .leftJoin('book.title', 'title')
+      .addSelect('title.views')
       .where('book.publisherId = :publisherId', { publisherId });
 
     // Add tags filters
@@ -160,6 +161,7 @@ export class BooksService {
       .createQueryBuilder('book')
       .leftJoinAndSelect('book.images', 'images')
       .leftJoin('book.title', 'title')
+      .addSelect('title.views')
       .leftJoin('title.authors', 'authors')
       .leftJoin('book.translators', 'translators')
       .where(

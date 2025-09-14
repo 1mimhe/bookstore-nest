@@ -16,6 +16,7 @@ import { UsersModule } from '../users/users.module';
 import { TokenModule } from '../token/token.module';
 import { StaffModule } from '../staffs/staffs.module';
 import { TagsModule } from '../tags/tags.module';
+import { ViewsModule } from '../views/views.module';
 
 @Module({
   imports: [
@@ -31,7 +32,8 @@ import { TagsModule } from '../tags/tags.module';
     UsersModule,
     TokenModule,
     StaffModule,
-    forwardRef(() => TagsModule)
+    forwardRef(() => TagsModule),
+    ViewsModule
   ],
   controllers: [BooksController],
   providers: [LanguagesService, TitlesService, BooksService],
