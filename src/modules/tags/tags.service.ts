@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { DataSource, EntityManager, EntityNotFoundError, In, Repository } from 'typeorm';
 import { Tag, TagType } from './entities/tag.entity';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -168,5 +168,31 @@ export class TagsService {
       dbErrorHandler(error);
       throw error;
     });
+  }
+
+  async deleteRootTag(tagId: string): Promise<void> {
+    const rootTag = await this.rootTagRepo.findOne({ where: { tagId } });
+    if (!rootTag) {
+      throw new NotFoundException(`RootTag with tag id ${tagId} not found.`);
+    }
+
+    const deletedOrder = rootTag.order;
+
+    await this.rootTagRepo.delete({ tagId });
+
+    await this.reorderRootTagsAfterDeletion(deletedOrder);
+  }
+
+  private async reorderRootTagsAfterDeletion(deletedOrder: number): Promise<void> {
+    const rootTagsToUpdate = await this.rootTagRepo
+      .createQueryBuilder('rootTag')
+      .andWhere('rootTag.order > :deletedOrder', { deletedOrder })
+      .orderBy('rootTag.order', 'ASC')
+      .getMany();
+
+    for (const rt of rootTagsToUpdate) {
+      rt.order--;
+      await this.rootTagRepo.save(rt);
+    }
   }
 }

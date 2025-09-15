@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -131,5 +132,22 @@ export class TagsController {
     @Param('id', ParseUUIDPipe) id: string,
   ) {
     return this.tagsService.createRootTag(id);
+  }
+
+  @ApiOperation({
+    summary: 'Deletes a root tag by tag id',
+  })
+  @ApiBearerAuth()
+  @Serialize(TagResponseDto)
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequiredRoles(
+    RolesEnum.Admin,
+    RolesEnum.ContentManager,
+  )
+  @Delete(':id/root')
+  async deleteRootTag(
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.tagsService.deleteRootTag(id);
   }
 }
