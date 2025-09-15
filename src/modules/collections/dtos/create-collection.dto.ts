@@ -1,6 +1,6 @@
 import { Transform } from 'class-transformer';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { makeUnique } from 'src/common/utilities/make-unique';
+import { makeSlug } from 'src/common/utilities/make-unique';
 
 export class CreateCollectionDto {
   @IsNotEmpty()
@@ -8,9 +8,9 @@ export class CreateCollectionDto {
   name: string;
 
   @Transform(({ obj, value }) => {
-    if (value) return makeUnique(value);    
+    if (value) return makeSlug(value);    
     if (obj.name && obj.name.trim()) {
-      return makeUnique(obj.name);
+      return makeSlug(obj.name);
     }
     return undefined;
   })

@@ -1,7 +1,7 @@
 import { IsEnum, IsHexColor, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { TagType } from '../entities/tag.entity';
 import { Transform } from 'class-transformer';
-import { makeUnique } from 'src/common/utilities/make-unique';
+import { makeSlug } from 'src/common/utilities/make-unique';
 
 export class CreateTagDto {
   @IsNotEmpty()
@@ -9,9 +9,9 @@ export class CreateTagDto {
   name: string;
 
   @Transform(({ obj, value }) => {
-    if (value && value.trim()) return makeUnique(value);
+    if (value && value.trim()) return makeSlug(value);
     if (obj.name) {
-      return makeUnique(obj.name);
+      return makeSlug(obj.name);
     }
     return undefined;
   })
