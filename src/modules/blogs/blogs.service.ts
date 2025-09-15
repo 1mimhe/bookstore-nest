@@ -9,6 +9,7 @@ import { NotFoundMessages } from 'src/common/enums/error.messages';
 import { UpdateBlogDto } from './dtos/update-blog.dto';
 import { StaffsService } from '../staffs/staffs.service';
 import { EntityTypes, StaffActionTypes } from '../staffs/entities/staff-action.entity';
+import { BlogFilterDto } from './dtos/blog-filter.dto';
 
 @Injectable()
 export class BlogsService {
@@ -101,6 +102,24 @@ export class BlogsService {
         }
         throw error;
       });
+  }
+
+  async getAll(
+    {
+      page,
+      limit,
+      ...blogFilterDto
+    }: BlogFilterDto
+  ) {
+    const skip = (page - 1) * limit;
+    return this.blogRepo.find({
+      where: blogFilterDto,
+      skip,
+      take: limit,
+      order: {
+        createdAt: 'DESC'
+      }
+    });
   }
 
   async update(

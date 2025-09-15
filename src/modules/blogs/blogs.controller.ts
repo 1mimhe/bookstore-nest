@@ -8,6 +8,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
   Res,
   Session,
   UseGuards,
@@ -44,6 +45,8 @@ import { RecentView, RecentViewTypes } from 'src/common/types/recent-view.type';
 import { BaseController } from 'src/common/base.controller';
 import { ConfigService } from '@nestjs/config';
 import { Response } from 'express';
+import { BlogFilterDto } from './dtos/blog-filter.dto';
+import { ApiQueryPagination } from 'src/common/decorators/query.decorators';
 
 @Controller('blogs')
 @ApiTags('Blog')
@@ -122,6 +125,17 @@ export class BlogsController extends BaseController {
     this.updateRecentViewsCookie(res, recentViewsCookie, newRecentView);
 
     return blog;
+  }
+
+  @ApiOperation({
+    summary: 'Get all blogs',
+    description: 'You can get related blogs to an specific title, author or publisher'
+  })
+  @ApiQueryPagination()
+  @Serialize(BlogCompactResponseDto)
+  @Get()
+  async getAllBlogs(@Query() query: BlogFilterDto): Promise<BlogCompactResponseDto[]> {
+    return this.blogsService.getAll(query);
   }
 
   @ApiOperation({
