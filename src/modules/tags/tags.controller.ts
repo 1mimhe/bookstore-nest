@@ -10,13 +10,14 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Put,
   Query,
   Session,
   UseGuards,
 } from '@nestjs/common';
 import { TagsService } from './tags.service';
 import { CreateTagDto } from './dtos/create-tag.dto';
-import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiBadRequestResponse, ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { TagType } from './entities/tag.entity';
 import { UpdateTagDto } from './dtos/update-tag.dto';
 import { ApiQueryArray, ApiQueryPagination } from 'src/common/decorators/query.decorators';
@@ -28,6 +29,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { SessionData } from 'express-session';
 import { BookFilterDto } from '../books/dtos/book-filter.dto';
+import { ReorderRootTagsDto } from './dtos/reorder-root-tags.dto';
 
 @Controller('tags')
 @ApiTags('Tag')
@@ -138,7 +140,6 @@ export class TagsController {
     summary: 'Deletes a root tag by tag id',
   })
   @ApiBearerAuth()
-  @Serialize(TagResponseDto)
   @UseGuards(AuthGuard, RolesGuard)
   @RequiredRoles(
     RolesEnum.Admin,
@@ -149,5 +150,24 @@ export class TagsController {
     @Param('id', ParseUUIDPipe) id: string,
   ) {
     return this.tagsService.deleteRootTag(id);
+  }
+
+  @ApiOperation({
+    summary: 'Reorder root tags'
+  })
+  @ApiBadRequestResponse({
+    description: 'Bad request (e.g., invalid ID list, duplicate orders).'
+  })
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequiredRoles(
+    RolesEnum.Admin,
+    RolesEnum.ContentManager,
+  )
+  @Put('root/reorder')
+  async reorder(
+    @Body() reorderDto: ReorderRootTagsDto[],
+  ) {
+    return this.tagsService.reorderRootTags(reorderDto);
   }
 }

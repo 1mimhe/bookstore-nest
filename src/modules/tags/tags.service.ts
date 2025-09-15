@@ -195,4 +195,37 @@ export class TagsService {
       await this.rootTagRepo.save(rt);
     }
   }
+
+  async reorderRootTags(newOrderList: { tagId: string; order: number }[]): Promise<RootTag[]> {
+    const updatedRootTags: RootTag[] = [];
+
+    const existingRootTags = await this.rootTagRepo.find({});
+    const existingIds = new Set(existingRootTags.map(rt => rt.tagId));
+    const newOrderIds = new Set(newOrderList.map(item => item.tagId));
+
+    if (existingIds.size !== newOrderIds.size || !Array.from(newOrderIds).every(id => existingIds.has(id))) {
+        throw new BadRequestException('The provided list of IDs does not match the existing RootTags for this topic.');
+    }
+
+    // Check for duplicate orders
+    const orderSet = new Set(newOrderList.map(item => item.order));
+    if (orderSet.size !== newOrderList.length) {
+      throw new BadRequestException('New order list contains duplicate order numbers.');
+    }
+
+    await this.rootTagRepo.manager.transaction(async (transactionalEntityManager) => {
+      for (const item of newOrderList) {
+        const rootTag = existingRootTags.find(rt => rt.id === item.tagId);
+        if (rootTag) {
+          rootTag.order = item.order;
+          await transactionalEntityManager.save(rootTag);
+          updatedRootTags.push(rootTag);
+        } else {
+          throw new NotFoundException(`RootTag with tag id ${item.tagId} not found.`);
+        }
+      }
+    });
+
+    return updatedRootTags.sort((a, b) => a.order - b.order);
+  }
 }
