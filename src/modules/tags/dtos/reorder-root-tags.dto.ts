@@ -1,6 +1,6 @@
-import { IsInt, IsNotEmpty, IsUUID, Min } from 'class-validator';
+import { ArrayNotEmpty, IsInt, IsNotEmpty, IsUUID, Min } from 'class-validator';
 
-export class ReorderRootTagsDto {
+class ReorderRootTagsItemDto {
   @IsNotEmpty()
   @IsUUID()
   tagId: string;
@@ -9,4 +9,9 @@ export class ReorderRootTagsDto {
   @IsInt()
   @Min(1)
   order: number;
+}
+
+export class ReorderRootTagsDto {
+  @ArrayNotEmpty()
+  newRootTagsOrders: ReorderRootTagsItemDto[];
 }

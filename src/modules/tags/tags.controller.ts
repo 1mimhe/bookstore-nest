@@ -30,6 +30,7 @@ import { AuthGuard } from '../auth/guards/auth.guard';
 import { SessionData } from 'express-session';
 import { BookFilterDto } from '../books/dtos/book-filter.dto';
 import { ReorderRootTagsDto } from './dtos/reorder-root-tags.dto';
+import { CreateRootTagDto } from './dtos/create-root-tag.dto';
 
 @Controller('tags')
 @ApiTags('Tag')
@@ -85,6 +86,14 @@ export class TagsController {
   }
 
   @ApiOperation({
+    summary: 'Get all root tags'
+  })
+  @Get('root')
+  async getAllRootTags() {
+    return this.tagsService.getAllRootTags();
+  }
+
+  @ApiOperation({
     summary: 'Retrieves a tag by slug with its relations',
   })
   @ApiQueryPagination()
@@ -129,11 +138,11 @@ export class TagsController {
     RolesEnum.ContentManager,
   )
   @HttpCode(HttpStatus.CREATED)
-  @Post(':id/root')
+  @Post('root')
   async createRootTag(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: CreateRootTagDto
   ) {
-    return this.tagsService.createRootTag(id);
+    return this.tagsService.createRootTag(body);
   }
 
   @ApiOperation({
@@ -165,9 +174,9 @@ export class TagsController {
     RolesEnum.ContentManager,
   )
   @Put('root/reorder')
-  async reorder(
-    @Body() reorderDto: ReorderRootTagsDto[],
+  async reorderRootTags(
+    @Body() reorderDto: ReorderRootTagsDto,
   ) {
-    return this.tagsService.reorderRootTags(reorderDto);
+    return this.tagsService.reorderRootTags(reorderDto.newRootTagsOrders);
   }
 }

@@ -12,6 +12,7 @@ import { EntityTypes, StaffActionTypes } from '../staffs/entities/staff-action.e
 import { makeUnique } from 'src/common/utilities/make-unique';
 import { BookFilterDto } from '../books/dtos/book-filter.dto';
 import { RootTag } from './entities/root-tag.entity';
+import { CreateRootTagDto } from './dtos/create-root-tag.dto';
 
 @Injectable()
 export class TagsService {
@@ -148,7 +149,12 @@ export class TagsService {
     });
   }
 
-  async createRootTag(tagId: string): Promise<RootTag> {
+  async createRootTag(
+    {
+      tagId,
+      topic
+    }: CreateRootTagDto
+  ): Promise<RootTag> {
     const tag = await this.tagRepo.findOne({ where: { id: tagId } });
     if (!tag) {
       throw new NotFoundException(NotFoundMessages.Tag);
@@ -162,6 +168,7 @@ export class TagsService {
       tag,
       tagId,
       order: newOrder,
+      topic
     });
 
     return this.rootTagRepo.save(newRootTag).catch(error => {
@@ -204,7 +211,7 @@ export class TagsService {
     const newOrderIds = new Set(newOrderList.map(item => item.tagId));
 
     if (existingIds.size !== newOrderIds.size || !Array.from(newOrderIds).every(id => existingIds.has(id))) {
-        throw new BadRequestException('The provided list of IDs does not match the existing RootTags for this topic.');
+        throw new BadRequestException('The provided list of IDs does not match the existing RootTags.');
     }
 
     // Check for duplicate orders
@@ -215,7 +222,7 @@ export class TagsService {
 
     await this.rootTagRepo.manager.transaction(async (transactionalEntityManager) => {
       for (const item of newOrderList) {
-        const rootTag = existingRootTags.find(rt => rt.id === item.tagId);
+        const rootTag = existingRootTags.find(rt => rt.tagId === item.tagId);
         if (rootTag) {
           rootTag.order = item.order;
           await transactionalEntityManager.save(rootTag);
@@ -227,5 +234,32 @@ export class TagsService {
     });
 
     return updatedRootTags.sort((a, b) => a.order - b.order);
+  }
+
+  async getAllRootTags(): Promise<RootTag[]> {
+    const qb = this.rootTagRepo.createQueryBuilder('rootTag')
+      .leftJoinAndSelect('rootTag.tag', 'tag')
+      .leftJoinAndSelect('tag.titles', 'titles')
+      .leftJoinAndSelect('titles.defaultBook', 'defaultBook')
+      .leftJoinAndSelect('defaultBook.images', 'images');
+
+    // Rank titles by views within each tag.
+    const rankSubQuery = qb.subQuery()
+      .select('t.id', 't_id')
+      .from('titles', 't')
+      .leftJoin('t.tags', 'tags')
+      .addSelect('ROW_NUMBER() OVER (PARTITION BY tags.id ORDER BY t.views DESC)', 'rn')
+      .getQuery();
+
+    qb.innerJoin(
+      '(' + rankSubQuery + ')',
+      'ranked_titles',
+      'ranked_titles.t_id = titles.id AND ranked_titles.rn <= 10'
+    )
+      .where('rootTag.deletedAt IS NULL')
+      .orderBy('rootTag.order', 'ASC')
+      .addOrderBy('titles.views', 'DESC');
+
+    return qb.getMany();
   }
 }
