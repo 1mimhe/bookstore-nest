@@ -414,7 +414,7 @@ export class BooksController extends BaseController {
   })
   @ApiQueryComplete('books')
   @ApiQueryPagination()
-  @Serialize(CharacterCompactResponseDto)
+  @Serialize(CharacterResponseDto)
   @Get('characters/id/:id')
   async getBookCharacterById(
     @Param('id', ParseUUIDPipe) id: string,
@@ -433,7 +433,7 @@ export class BooksController extends BaseController {
   })
   @ApiQueryComplete('books')
   @ApiQueryPagination()
-  @Serialize(CharacterCompactResponseDto)
+  @Serialize(CharacterResponseDto)
   @Get('characters/slug/:slug')
   async getBookCharacterBySlug(
     @Param('slug') slug: string,

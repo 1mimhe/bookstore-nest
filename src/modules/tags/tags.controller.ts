@@ -73,11 +73,6 @@ export class TagsController {
     description: 'The type of tags to retrieve (optional).',
   })
   @Serialize(TagCompactResponseDto)
-  @UseGuards(AuthGuard, RolesGuard)
-  @RequiredRoles(
-    RolesEnum.Admin,
-    RolesEnum.ContentManager,
-  )
   @Get()
   async getAllTags(
     @Query('type', new ParseEnumPipe(TagType, { optional: true }))
