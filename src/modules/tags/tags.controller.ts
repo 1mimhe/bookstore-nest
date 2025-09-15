@@ -16,7 +16,7 @@ import {
 import { TagsService } from './tags.service';
 import { CreateTagDto } from './dtos/create-tag.dto';
 import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
-import { TagType } from './tag.entity';
+import { TagType } from './entities/tag.entity';
 import { UpdateTagDto } from './dtos/update-tag.dto';
 import { ApiQueryArray, ApiQueryPagination } from 'src/common/decorators/query.decorators';
 import { TagCompactResponseDto, TagResponseDto } from './dtos/tag-response.dto';
@@ -112,5 +112,24 @@ export class TagsController {
     @Session() session: SessionData
   ): Promise<TagCompactResponseDto> {
     return this.tagsService.update(id, body, session.staffId);
+  }
+
+  @ApiOperation({
+    summary: 'Create a root tag',
+    description: `This is useful for curating lists of important tags that need a specific
+      display order.`
+  })
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequiredRoles(
+    RolesEnum.Admin,
+    RolesEnum.ContentManager,
+  )
+  @HttpCode(HttpStatus.CREATED)
+  @Post(':id/root')
+  async createRootTag(
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.tagsService.createRootTag(id);
   }
 }

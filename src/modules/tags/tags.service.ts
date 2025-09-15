@@ -1,6 +1,6 @@
 import { forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { DataSource, EntityManager, EntityNotFoundError, In, Repository } from 'typeorm';
-import { Tag, TagType } from './tag.entity';
+import { Tag, TagType } from './entities/tag.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
 import { CreateTagDto } from './dtos/create-tag.dto';
@@ -11,11 +11,13 @@ import { StaffsService } from '../staffs/staffs.service';
 import { EntityTypes, StaffActionTypes } from '../staffs/entities/staff-action.entity';
 import { makeUnique } from 'src/common/utilities/make-unique';
 import { BookFilterDto } from '../books/dtos/book-filter.dto';
+import { RootTag } from './entities/root-tag.entity';
 
 @Injectable()
 export class TagsService {
   constructor(
     @InjectRepository(Tag) private tagRepo: Repository<Tag>,
+    @InjectRepository(RootTag) private rootTagRepo: Repository<RootTag>,
     private dataSource: DataSource,
     @Inject(forwardRef(() => TitlesService)) private titlesService:  TitlesService,
     private staffsService: StaffsService
@@ -141,6 +143,28 @@ export class TagsService {
 
       return dbTag;
     }).catch((error) => {
+      dbErrorHandler(error);
+      throw error;
+    });
+  }
+
+  async createRootTag(tagId: string): Promise<RootTag> {
+    const tag = await this.tagRepo.findOne({ where: { id: tagId } });
+    if (!tag) {
+      throw new NotFoundException(NotFoundMessages.Tag);
+    }
+
+    // Find the maximum order
+    const maxOrderRootTagOrder = await this.rootTagRepo.maximum('order');
+    const newOrder = maxOrderRootTagOrder ? maxOrderRootTagOrder + 1 : 1;
+
+    const newRootTag = this.rootTagRepo.create({
+      tag,
+      tagId,
+      order: newOrder,
+    });
+
+    return this.rootTagRepo.save(newRootTag).catch(error => {
       dbErrorHandler(error);
       throw error;
     });
