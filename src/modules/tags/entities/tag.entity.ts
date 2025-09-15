@@ -1,7 +1,7 @@
 import { BaseEntity } from 'src/common/base.entity';
 import { Title } from 'src/modules/books/entities/title.entity';
 import { Column, Entity, Index, JoinTable, ManyToMany, Unique } from 'typeorm';
-import { Blog } from '../blogs/blog.entity';
+import { Blog } from '../../blogs/blog.entity';
 
 export enum TagType {
   ThematicCategory = 'thematic_category',

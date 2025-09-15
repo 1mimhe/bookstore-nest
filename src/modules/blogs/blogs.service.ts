@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Blog } from './blog.entity';
 import { DataSource, EntityNotFoundError, FindOptionsWhere, In, Repository } from 'typeorm';
 import { CreateBlogDto } from './dtos/create-blog.dto';
-import { Tag } from '../tags/tag.entity';
+import { Tag } from '../tags//entities/tag.entity';
 import { dbErrorHandler } from 'src/common/utilities/error-handler';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
 import { UpdateBlogDto } from './dtos/update-blog.dto';

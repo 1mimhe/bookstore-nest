@@ -1,6 +1,6 @@
-import { forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { DataSource, EntityManager, EntityNotFoundError, In, Repository } from 'typeorm';
-import { Tag, TagType } from './tag.entity';
+import { Tag, TagType } from './entities/tag.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
 import { CreateTagDto } from './dtos/create-tag.dto';
@@ -11,11 +11,14 @@ import { StaffsService } from '../staffs/staffs.service';
 import { EntityTypes, StaffActionTypes } from '../staffs/entities/staff-action.entity';
 import { makeUnique } from 'src/common/utilities/make-unique';
 import { BookFilterDto } from '../books/dtos/book-filter.dto';
+import { RootTag } from './entities/root-tag.entity';
+import { CreateRootTagDto } from './dtos/create-root-tag.dto';
 
 @Injectable()
 export class TagsService {
   constructor(
     @InjectRepository(Tag) private tagRepo: Repository<Tag>,
+    @InjectRepository(RootTag) private rootTagRepo: Repository<RootTag>,
     private dataSource: DataSource,
     @Inject(forwardRef(() => TitlesService)) private titlesService:  TitlesService,
     private staffsService: StaffsService
@@ -144,5 +147,119 @@ export class TagsService {
       dbErrorHandler(error);
       throw error;
     });
+  }
+
+  async createRootTag(
+    {
+      tagId,
+      topic
+    }: CreateRootTagDto
+  ): Promise<RootTag> {
+    const tag = await this.tagRepo.findOne({ where: { id: tagId } });
+    if (!tag) {
+      throw new NotFoundException(NotFoundMessages.Tag);
+    }
+
+    // Find the maximum order
+    const maxOrderRootTagOrder = await this.rootTagRepo.maximum('order');
+    const newOrder = maxOrderRootTagOrder ? maxOrderRootTagOrder + 1 : 1;
+
+    const newRootTag = this.rootTagRepo.create({
+      tag,
+      tagId,
+      order: newOrder,
+      topic
+    });
+
+    return this.rootTagRepo.save(newRootTag).catch(error => {
+      dbErrorHandler(error);
+      throw error;
+    });
+  }
+
+  async deleteRootTag(tagId: string): Promise<void> {
+    const rootTag = await this.rootTagRepo.findOne({ where: { tagId } });
+    if (!rootTag) {
+      throw new NotFoundException(`RootTag with tag id ${tagId} not found.`);
+    }
+
+    const deletedOrder = rootTag.order;
+
+    await this.rootTagRepo.delete({ tagId });
+
+    await this.reorderRootTagsAfterDeletion(deletedOrder);
+  }
+
+  private async reorderRootTagsAfterDeletion(deletedOrder: number): Promise<void> {
+    const rootTagsToUpdate = await this.rootTagRepo
+      .createQueryBuilder('rootTag')
+      .andWhere('rootTag.order > :deletedOrder', { deletedOrder })
+      .orderBy('rootTag.order', 'ASC')
+      .getMany();
+
+    for (const rt of rootTagsToUpdate) {
+      rt.order--;
+      await this.rootTagRepo.save(rt);
+    }
+  }
+
+  async reorderRootTags(newOrderList: { tagId: string; order: number }[]): Promise<RootTag[]> {
+    const updatedRootTags: RootTag[] = [];
+
+    const existingRootTags = await this.rootTagRepo.find({});
+    const existingIds = new Set(existingRootTags.map(rt => rt.tagId));
+    const newOrderIds = new Set(newOrderList.map(item => item.tagId));
+
+    if (existingIds.size !== newOrderIds.size || !Array.from(newOrderIds).every(id => existingIds.has(id))) {
+        throw new BadRequestException('The provided list of IDs does not match the existing RootTags.');
+    }
+
+    // Check for duplicate orders
+    const orderSet = new Set(newOrderList.map(item => item.order));
+    if (orderSet.size !== newOrderList.length) {
+      throw new BadRequestException('New order list contains duplicate order numbers.');
+    }
+
+    await this.rootTagRepo.manager.transaction(async (transactionalEntityManager) => {
+      for (const item of newOrderList) {
+        const rootTag = existingRootTags.find(rt => rt.tagId === item.tagId);
+        if (rootTag) {
+          rootTag.order = item.order;
+          await transactionalEntityManager.save(rootTag);
+          updatedRootTags.push(rootTag);
+        } else {
+          throw new NotFoundException(`RootTag with tag id ${item.tagId} not found.`);
+        }
+      }
+    });
+
+    return updatedRootTags.sort((a, b) => a.order - b.order);
+  }
+
+  async getAllRootTags(): Promise<RootTag[]> {
+    const qb = this.rootTagRepo.createQueryBuilder('rootTag')
+      .leftJoinAndSelect('rootTag.tag', 'tag')
+      .leftJoinAndSelect('tag.titles', 'titles')
+      .leftJoinAndSelect('titles.defaultBook', 'defaultBook')
+      .leftJoinAndSelect('defaultBook.images', 'images');
+
+    // Rank titles by views within each tag.
+    const rankSubQuery = qb.subQuery()
+      .select('t.id', 't_id')
+      .from('titles', 't')
+      .leftJoin('t.tags', 'tags')
+      .addSelect('ROW_NUMBER() OVER (PARTITION BY tags.id ORDER BY t.views DESC)', 'rn')
+      .getQuery();
+
+    qb.innerJoin(
+      '(' + rankSubQuery + ')',
+      'ranked_titles',
+      'ranked_titles.t_id = titles.id AND ranked_titles.rn <= 10'
+    )
+      .where('rootTag.deletedAt IS NULL')
+      .orderBy('rootTag.order', 'ASC')
+      .addOrderBy('titles.views', 'DESC');
+
+    return qb.getMany();
   }
 }

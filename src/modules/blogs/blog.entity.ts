@@ -3,7 +3,7 @@ import { Column, Entity, Index, JoinColumn, ManyToMany, ManyToOne, OneToMany } f
 import { Publisher } from '../publishers/publisher.entity';
 import { Author } from '../authors/author.entity';
 import { Title } from '../books/entities/title.entity';
-import { Tag } from '../tags/tag.entity';
+import { Tag } from '../tags/entities/tag.entity';
 import { Review } from '../reviews/entities/review.entity';
 
 @Entity('blogs')

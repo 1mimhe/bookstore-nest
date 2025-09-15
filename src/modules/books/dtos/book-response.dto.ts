@@ -3,7 +3,7 @@ import { Language } from 'src/modules/languages/language.entity';
 import { Covers, Quartos } from '../entities/book.entity';
 
 export class BookCompactResponseDto {
-    @Expose()
+  @Expose()
   id: string;
 
   @Expose()

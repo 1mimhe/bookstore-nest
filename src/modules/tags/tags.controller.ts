@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -9,14 +10,15 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Put,
   Query,
   Session,
   UseGuards,
 } from '@nestjs/common';
 import { TagsService } from './tags.service';
 import { CreateTagDto } from './dtos/create-tag.dto';
-import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
-import { TagType } from './tag.entity';
+import { ApiBadRequestResponse, ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { TagType } from './entities/tag.entity';
 import { UpdateTagDto } from './dtos/update-tag.dto';
 import { ApiQueryArray, ApiQueryPagination } from 'src/common/decorators/query.decorators';
 import { TagCompactResponseDto, TagResponseDto } from './dtos/tag-response.dto';
@@ -27,6 +29,8 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { SessionData } from 'express-session';
 import { BookFilterDto } from '../books/dtos/book-filter.dto';
+import { ReorderRootTagsDto } from './dtos/reorder-root-tags.dto';
+import { CreateRootTagDto } from './dtos/create-root-tag.dto';
 
 @Controller('tags')
 @ApiTags('Tag')
@@ -82,6 +86,14 @@ export class TagsController {
   }
 
   @ApiOperation({
+    summary: 'Get all root tags'
+  })
+  @Get('root')
+  async getAllRootTags() {
+    return this.tagsService.getAllRootTags();
+  }
+
+  @ApiOperation({
     summary: 'Retrieves a tag by slug with its relations',
   })
   @ApiQueryPagination()
@@ -112,5 +124,59 @@ export class TagsController {
     @Session() session: SessionData
   ): Promise<TagCompactResponseDto> {
     return this.tagsService.update(id, body, session.staffId);
+  }
+
+  @ApiOperation({
+    summary: 'Create a root tag',
+    description: `This is useful for curating lists of important tags that need a specific
+      display order.`
+  })
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequiredRoles(
+    RolesEnum.Admin,
+    RolesEnum.ContentManager,
+  )
+  @HttpCode(HttpStatus.CREATED)
+  @Post('root')
+  async createRootTag(
+    @Body() body: CreateRootTagDto
+  ) {
+    return this.tagsService.createRootTag(body);
+  }
+
+  @ApiOperation({
+    summary: 'Deletes a root tag by tag id',
+  })
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequiredRoles(
+    RolesEnum.Admin,
+    RolesEnum.ContentManager,
+  )
+  @Delete(':id/root')
+  async deleteRootTag(
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.tagsService.deleteRootTag(id);
+  }
+
+  @ApiOperation({
+    summary: 'Reorder root tags'
+  })
+  @ApiBadRequestResponse({
+    description: 'Bad request (e.g., invalid ID list, duplicate orders).'
+  })
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequiredRoles(
+    RolesEnum.Admin,
+    RolesEnum.ContentManager,
+  )
+  @Put('root/reorder')
+  async reorderRootTags(
+    @Body() reorderDto: ReorderRootTagsDto,
+  ) {
+    return this.tagsService.reorderRootTags(reorderDto.newRootTagsOrders);
   }
 }
