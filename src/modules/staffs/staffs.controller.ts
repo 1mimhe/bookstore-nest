@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Param, Post, Session, UseGuards } from '@nestjs/common';
 import { StaffsService } from './staffs.service';
 import { SignupStaffDto, StaffRoles } from './dtos/signup-staff.dto';
 import { ApiBadRequestResponse, ApiBearerAuth, ApiConflictResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -8,6 +8,8 @@ import { AuthGuard } from '../auth/guards/auth.guard';
 import { RequiredRoles } from 'src/common/decorators/roles.decorator';
 import { RolesEnum } from '../users/entities/role.entity';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import { SessionData } from 'express-session';
 
 @Controller('staffs')
 @ApiTags('Staff')
@@ -49,7 +51,11 @@ export class StaffsController {
     RolesEnum.ContentManager,
   )
   @Delete('reviews/:id')
-  async deleteReview(@Param('id') reviewId: string) {
-    return this.staffsService.deleteReview(reviewId);
+  async deleteReview(
+    @Param('id') reviewId: string,
+    @Session() session: SessionData,
+    @CurrentUser('id') userId: string
+  ) {
+    return this.staffsService.deleteReview(reviewId, userId, session.staffId);
   }
 }

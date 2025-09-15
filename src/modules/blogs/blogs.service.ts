@@ -9,6 +9,7 @@ import { NotFoundMessages } from 'src/common/enums/error.messages';
 import { UpdateBlogDto } from './dtos/update-blog.dto';
 import { StaffsService } from '../staffs/staffs.service';
 import { EntityTypes, StaffActionTypes } from '../staffs/entities/staff-action.entity';
+import { BlogFilterDto } from './dtos/blog-filter.dto';
 
 @Injectable()
 export class BlogsService {
@@ -23,6 +24,7 @@ export class BlogsService {
       tags,
       ...blogDto
     }: CreateBlogDto,
+    userId: string,
     staffId?: string
   ): Promise<Blog | never> {
     return this.dataSource.transaction(async (manager) => {
@@ -40,13 +42,15 @@ export class BlogsService {
 
       const dbBlog = await manager.save(Blog, blog);
 
-      if (staffId) {
+      if (userId) {
         await this.staffsService.createAction(
           {
+            userId,
             staffId,
             type: StaffActionTypes.BlogCreated,
             entityId: dbBlog.id,
-            entityType: EntityTypes.Blog
+            entityType: EntityTypes.Blog,
+            newValue: JSON.stringify(blog)
           },
           manager
         );
@@ -103,12 +107,31 @@ export class BlogsService {
       });
   }
 
+  async getAll(
+    {
+      page,
+      limit,
+      ...blogFilterDto
+    }: BlogFilterDto
+  ) {
+    const skip = (page - 1) * limit;
+    return this.blogRepo.find({
+      where: blogFilterDto,
+      skip,
+      take: limit,
+      order: {
+        createdAt: 'DESC'
+      }
+    });
+  }
+
   async update(
     id: string,
     {
       tags,
       ...blogDto
     }: UpdateBlogDto,
+    userId: string,
     staffId?: string
   ): Promise<Blog | never> {
     return this.dataSource.transaction(async (manager) => {
@@ -139,13 +162,16 @@ export class BlogsService {
 
       const dbBlog = await manager.save(Blog, updatedBlog);
 
-      if (staffId) {
+      if (userId) {
         await this.staffsService.createAction(
           {
-          staffId,
-          type: StaffActionTypes.BlogUpdated,
-          entityId: dbBlog.id,
-          entityType: EntityTypes.Blog
+            userId,
+            staffId,
+            type: StaffActionTypes.BlogUpdated,
+            entityId: dbBlog.id,
+            entityType: EntityTypes.Blog,
+            oldValue: JSON.stringify(existingBlog),
+            newValue: JSON.stringify(updatedBlog)
           },
           manager
         );

@@ -22,19 +22,22 @@ export class CollectionsService {
 
   async create(
     collectionRepo: CreateCollectionDto,
+    userId: string,
     staffId?: string
   ): Promise<Collection | never> {
     return this.dataSource.transaction(async manager => {
       const collection =  manager.create(Collection, collectionRepo);
       const dbCollection = await manager.save(Collection, collection);
 
-      if (staffId) {
+      if (userId) {
         await this.staffsService.createAction(
           {
-          staffId,
-          type: StaffActionTypes.CollectionCreated,
-          entityId: dbCollection.id,
-          entityType: EntityTypes.Collection
+            userId,
+            staffId,
+            type: StaffActionTypes.CollectionCreated,
+            entityId: dbCollection.id,
+            entityType: EntityTypes.Collection,
+            newValue: JSON.stringify(dbCollection)
           },
           manager
         );
@@ -94,6 +97,7 @@ export class CollectionsService {
   async createCollectionBook(
     collectionId: string,
     cbDto: CreateCollectionBookDto,
+    userId: string,
     staffId?: string
   ): Promise<CollectionBook | never> {
     return this.dataSource.transaction(async manager => {
@@ -112,13 +116,15 @@ export class CollectionsService {
       });
       const dbCB = await manager.save(CollectionBook, cb);
 
-      if (staffId) {
+      if (userId) {
         await this.staffsService.createAction(
           {
-          staffId,
-          type: StaffActionTypes.CollectionUpdated,
-          entityId: dbCB.id,
-          entityType: EntityTypes.Collection
+            userId,
+            staffId,
+            type: StaffActionTypes.CollectionUpdated,
+            entityId: dbCB.id,
+            entityType: EntityTypes.Collection,
+            newValue: JSON.stringify(dbCB)
           },
           manager
         );

@@ -1,6 +1,6 @@
 import { Transform } from 'class-transformer';
 import { IsNotEmpty, IsOptional, IsString, IsUrl } from 'class-validator';
-import { makeSlug } from 'src/common/utilities/make-unique';
+import { makeSlug } from 'src/common/utilities/make-slug';
 import { SignupUserDto } from 'src/modules/auth/dtos/sign-up.dto';
 
 export class SignupPublisherDto extends SignupUserDto {

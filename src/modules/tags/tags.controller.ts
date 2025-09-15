@@ -31,6 +31,7 @@ import { SessionData } from 'express-session';
 import { BookFilterDto } from '../books/dtos/book-filter.dto';
 import { ReorderRootTagsDto } from './dtos/reorder-root-tags.dto';
 import { CreateRootTagDto } from './dtos/create-root-tag.dto';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 
 @Controller('tags')
 @ApiTags('Tag')
@@ -67,9 +68,10 @@ export class TagsController {
   @Post()
   async createTag(
     @Body() body: CreateTagDto,
-    @Session() session: SessionData
+    @Session() session: SessionData,
+    @CurrentUser('id') userId: string
   ): Promise<TagCompactResponseDto> {
-    return this.tagsService.create(body, session.staffId);
+    return this.tagsService.create(body, userId, session.staffId);
   }
 
   @ApiOperation({
@@ -126,9 +128,10 @@ export class TagsController {
   async updateTag(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: UpdateTagDto,
-    @Session() session: SessionData
+    @Session() session: SessionData,
+    @CurrentUser('id') userId: string
   ): Promise<TagCompactResponseDto> {
-    return this.tagsService.update(id, body, session.staffId);
+    return this.tagsService.update(id, body, userId, session.staffId);
   }
 
   @ApiOperation({

@@ -50,6 +50,7 @@ import { Cookies } from 'src/common/decorators/cookies.decorator';
 import { CookieNames } from 'src/common/enums/cookie.names';
 import { RecentView, RecentViewTypes } from 'src/common/types/recent-view.type';
 import { Response } from 'express';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 
 @Controller('authors')
 @ApiTags('Author')
@@ -77,9 +78,10 @@ export class AuthorsController extends BaseController {
   @Post()
   async createAuthor(
     @Body() body: CreateAuthorDto,
-    @Session() session: SessionData
+    @Session() session: SessionData,
+    @CurrentUser('id') userId: string
   ): Promise<AuthorResponseDto> {
-    return this.authorsService.create(body, session.staffId);
+    return this.authorsService.create(body, userId, session.staffId);
   }
 
   @ApiOperation({
@@ -162,9 +164,10 @@ export class AuthorsController extends BaseController {
   async updateAuthor(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: UpdateAuthorDto,
-    @Session() session: SessionData
+    @Session() session: SessionData,
+    @CurrentUser('id') userId: string
   ): Promise<AuthorCompactResponseDto> {
-    return this.authorsService.update(id, body, session.staffId);
+    return this.authorsService.update(id, body, userId, session.staffId);
   }
 
   @ApiOperation({
@@ -180,8 +183,9 @@ export class AuthorsController extends BaseController {
   @Delete(':id')
   async deleteAuthor(
     @Param('id', ParseUUIDPipe) id: string,
-    @Session() session: SessionData
+    @Session() session: SessionData,
+    @CurrentUser('id') userId: string
   ): Promise<AuthorCompactResponseDto> {
-    return this.authorsService.delete(id, session.staffId);
+    return this.authorsService.delete(id, userId, session.staffId);
   }
 }

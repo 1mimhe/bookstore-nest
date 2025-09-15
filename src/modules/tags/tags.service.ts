@@ -9,7 +9,7 @@ import { UpdateTagDto } from './dtos/update-tag.dto';
 import { dbErrorHandler } from 'src/common/utilities/error-handler';
 import { StaffsService } from '../staffs/staffs.service';
 import { EntityTypes, StaffActionTypes } from '../staffs/entities/staff-action.entity';
-import { makeSlug } from 'src/common/utilities/make-unique';
+import { makeSlug } from 'src/common/utilities/make-slug';
 import { BookFilterDto } from '../books/dtos/book-filter.dto';
 import { RootTag } from './entities/root-tag.entity';
 import { CreateRootTagDto } from './dtos/create-root-tag.dto';
@@ -26,19 +26,22 @@ export class TagsService {
 
   async create(
     tagDto: CreateTagDto,
+    userId: string,
     staffId?: string
   ): Promise<Tag | never> {
     return this.dataSource.transaction(async manager => {
       const tag = this.tagRepo.create(tagDto);
       const dbTag = await this.tagRepo.save(tag);
 
-      if (staffId) {
+      if (userId) {
         await this.staffsService.createAction(
           {
-          staffId,
-          type: StaffActionTypes.TagCreated,
-          entityId: dbTag.id,
-          entityType: EntityTypes.Tag
+            userId,
+            staffId,
+            type: StaffActionTypes.TagCreated,
+            entityId: dbTag.id,
+            entityType: EntityTypes.Tag,
+            newValue: JSON.stringify(dbTag)
           },
           manager
         );
@@ -123,6 +126,7 @@ export class TagsService {
   async update(
     id: string,
     tagDto: UpdateTagDto,
+    userId: string,
     staffId?: string
   ): Promise<Tag | never> {
     return this.dataSource.transaction(async manager => {
@@ -130,13 +134,16 @@ export class TagsService {
       Object.assign(tag, tagDto);
       const dbTag = await this.tagRepo.save(tag);
 
-      if (staffId) {
+      if (userId) {
         await this.staffsService.createAction(
           {
-          staffId,
-          type: StaffActionTypes.TagUpdated,
-          entityId: dbTag.id,
-          entityType: EntityTypes.Tag
+            userId,
+            staffId,
+            type: StaffActionTypes.TagUpdated,
+            entityId: dbTag.id,
+            entityType: EntityTypes.Tag,
+            oldValue: JSON.stringify(tag),
+            newValue: JSON.stringify(dbTag)
           },
           manager
         );

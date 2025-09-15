@@ -44,6 +44,7 @@ export class TitlesService {
       characterIds,
       ...titleDto
     }: CreateTitleDto,
+    userId: string,
     staffId?: string
   ): Promise<Title | never> {
     return this.dataSource.transaction(async (manager) => {
@@ -78,13 +79,15 @@ export class TitlesService {
 
       const dbTitle = await manager.save(Title, title);
 
-      if (staffId) {
+      if (userId) {
         await this.staffsService.createAction(
           {
+            userId,
             staffId,
             type: StaffActionTypes.TitleCreated,
             entityId: dbTitle.id,
-            entityType: EntityTypes.Title
+            entityType: EntityTypes.Title,
+            newValue: JSON.stringify(dbTitle)
           },
           manager
         );
@@ -107,6 +110,7 @@ export class TitlesService {
       characterIds,
       ...titleDto
     }: UpdateTitleDto,
+    userId: string,
     staffId?: string
   ): Promise<Title | never> {
     return this.dataSource.transaction(async (manager) => {
@@ -163,13 +167,16 @@ export class TitlesService {
 
       const dbTitle = await manager.save(Title, updatedTitle);
 
-      if (staffId) {
+      if (userId) {
         await this.staffsService.createAction(
           {
+            userId,
             staffId,
             type: StaffActionTypes.TitleUpdated,
             entityId: dbTitle.id,
-            entityType: EntityTypes.Title
+            entityType: EntityTypes.Title,
+            oldValue: JSON.stringify(existingTitle),
+            newValue: JSON.stringify(dbTitle)
           },
           manager
         );
@@ -185,9 +192,10 @@ export class TitlesService {
   async setDefaultBook(
     titleId: string,
     bookId: string,
+    userId: string,
     staffId?: string
   ): Promise<Title | never> {
-    const title = await this.titleRepo.findOneOrFail({
+    const existingTitle = await this.titleRepo.findOneOrFail({
       where: { id: titleId }
     }).catch((error: Error) => {
       if (error instanceof EntityNotFoundError) {
@@ -210,20 +218,25 @@ export class TitlesService {
     }
 
     return this.dataSource.transaction(async manager => {
-      if (staffId) {
+      existingTitle.defaultBookId = bookId;
+      const dbTitle = await manager.save(Title, existingTitle);
+
+      if (userId) {
         await this.staffsService.createAction(
           {
+            userId,
             staffId,
             type: StaffActionTypes.TitleUpdated,
-            entityId: title.id,
-            entityType: EntityTypes.Title
+            entityId: existingTitle.id,
+            entityType: EntityTypes.Title,
+            oldValue: JSON.stringify(existingTitle),
+            newValue: JSON.stringify(dbTitle)
           },
           manager
         );
       }
 
-      title.defaultBookId = bookId;
-      return manager.save(Title, title);
+      return dbTitle;
     });
   }
 
@@ -370,19 +383,22 @@ export class TitlesService {
 
   async createCharacter(
     characterDto: CreateCharacterDto,
+    userId: string,
     staffId?: string
   ): Promise<Character | never> {
     return this.dataSource.transaction(async manager => {
       const character = manager.create(Character, characterDto);
       const dbCharacter = await manager.save(Character, character);
 
-      if (staffId) {
+      if (userId) {
         await this.staffsService.createAction(
           {
+            userId,
             staffId,
             type: StaffActionTypes.CharacterCreated,
             entityId: dbCharacter.id,
-            entityType: EntityTypes.Character
+            entityType: EntityTypes.Character,
+            newValue: JSON.stringify(dbCharacter)
           },
           manager
         );
@@ -433,6 +449,7 @@ export class TitlesService {
   async updateCharacter(
     id: string,
     characterDto: UpdateCharacterDto,
+    userId: string,
     staffId?: string
   ): Promise<Character | never> {
     return this.dataSource.transaction(async manager => {
@@ -441,13 +458,16 @@ export class TitlesService {
 
       const dbCharacter = await manager.save(character);
 
-      if (staffId) {
+      if (userId) {
         await this.staffsService.createAction(
           {
+            userId,
             staffId,
             type: StaffActionTypes.CharacterUpdated,
             entityId: dbCharacter.id,
-            entityType: EntityTypes.Character
+            entityType: EntityTypes.Character,
+            oldValue: JSON.stringify(character),
+            newValue: JSON.stringify(dbCharacter)
           },
           manager
         );

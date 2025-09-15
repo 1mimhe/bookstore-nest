@@ -1,6 +1,6 @@
 import { Transform } from 'class-transformer';
 import { IsDateString, IsNotEmpty, IsOptional, IsString, IsUrl } from 'class-validator';
-import { makeSlug } from 'src/common/utilities/make-unique';
+import { makeSlug } from 'src/common/utilities/make-slug';
 
 export class CreateAuthorDto {
   @IsNotEmpty()
@@ -20,7 +20,7 @@ export class CreateAuthorDto {
   picUrl?: string;
 
   @IsOptional()
-  @Transform(({ obj, value }) => {
+  @Transform(({ obj, value }) => {    
     if (value && value.trim()) return makeSlug(value);
     if (obj.firstName) {
       return makeSlug(`${obj.firstName}-${obj.lastName ? obj.lastName : ''}`);

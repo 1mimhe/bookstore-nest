@@ -1,5 +1,5 @@
 import { IsOptional, IsString, IsUrl } from 'class-validator';
-import { makeSlug } from 'src/common/utilities/make-unique';
+import { makeSlug } from 'src/common/utilities/make-slug';
 import { Transform } from 'class-transformer';
 
 export class UpdatePublisherDto {

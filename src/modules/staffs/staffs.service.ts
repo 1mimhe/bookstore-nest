@@ -46,10 +46,13 @@ export class StaffsService {
 
   async createAction(
     actionDto: {
-      staffId: string,
+      userId: string,
+      staffId?: string,
       type: StaffActionTypes,
       entityId: string,
       entityType: EntityTypes,
+      oldValue?: any,
+      newValue?: any
     },
     manager: EntityManager
   ): Promise<StaffAction | never> {
@@ -60,9 +63,28 @@ export class StaffsService {
     });
   }
 
-  async deleteReview(reviewId: string) {
-    return this.dataSource.getRepository(Review).softDelete({
-      id: reviewId
+  async deleteReview(
+    reviewId: string,
+    userId: string,
+    staffId?: string
+  ) {
+    return this.dataSource.transaction(async manager => {
+      if (userId) {
+        await this.createAction(
+          {
+            userId,
+            staffId,
+            type: StaffActionTypes.ReviewDeleted,
+            entityId: reviewId,
+            entityType: EntityTypes.Review,
+          },
+          manager
+        );
+      }
+
+      return manager.getRepository(Review).softDelete({
+        id: reviewId
+      });
     });
   }
 }

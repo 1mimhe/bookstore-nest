@@ -98,9 +98,10 @@ export class BooksController extends BaseController {
   @Post('titles')
   async createTitle(
     @Body() body: CreateTitleDto,
-    @Session() session: SessionData
+    @Session() session: SessionData,
+    @CurrentUser('id') userId: string
   ): Promise<TitleCompactResponseDto> {
-    return this.titlesService.create(body, session.staffId);
+    return this.titlesService.create(body, userId, session.staffId);
   }
 
   @ApiOperation({
@@ -218,9 +219,10 @@ export class BooksController extends BaseController {
   async updateTitle(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: UpdateTitleDto,
-    @Session() session: SessionData
+    @Session() session: SessionData,
+    @CurrentUser('id') userId: string
   ): Promise<TitleCompactResponseDto> {
-    return this.titlesService.update(id, body, session.staffId);
+    return this.titlesService.update(id, body, userId, session.staffId);
   }
 
   @ApiOperation({
@@ -246,9 +248,10 @@ export class BooksController extends BaseController {
   async setDefaultBook(
     @Param('titleId', ParseUUIDPipe) titleId: string,
     @Param('bookId', ParseUUIDPipe) bookId: string,
-    @Session() session: SessionData
+    @Session() session: SessionData,
+    @CurrentUser('id') userId: string
   ): Promise<TitleCompactResponseDto> {
-    return this.titlesService.setDefaultBook(titleId, bookId, session.staffId);
+    return this.titlesService.setDefaultBook(titleId, bookId, userId, session.staffId);
   }
 
   @ApiOperation({
@@ -320,9 +323,10 @@ export class BooksController extends BaseController {
   @Post()
   async createBook(
     @Body() body: CreateBookDto,
-    @Session() session: SessionData
+    @Session() session: SessionData,
+    @CurrentUser('id') userId: string
   ): Promise<BookResponseDto> {
-    return this.booksService.create(body, session.staffId);
+    return this.booksService.create(body, userId, session.staffId);
   }
 
   @ApiOperation({
@@ -359,9 +363,10 @@ export class BooksController extends BaseController {
   async updateBook(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: UpdateBookDto,
-    @Session() session: SessionData
+    @Session() session: SessionData,
+    @CurrentUser('id') userId: string
   ): Promise<BookResponseDto> {
-    return this.booksService.update(id, body, session.staffId);
+    return this.booksService.update(id, body, userId, session.staffId);
   }
 
   @ApiOperation({
@@ -379,9 +384,9 @@ export class BooksController extends BaseController {
   )
   @Delete('images/:id')
   async deleteBookImage(
-    @Param('id', ParseUUIDPipe) id: string
+    @Param('id', ParseUUIDPipe) id: string,
   ): Promise<ImageResponseDto> {
-    return this.booksService.deleteImage(id);
+    return this.booksService.deleteImage(id,);
   }
 
   @ApiOperation({
@@ -401,9 +406,10 @@ export class BooksController extends BaseController {
   @Post('characters')
   async createBookCharacter(
     @Body() body: CreateCharacterDto,
-    @Session() session: SessionData
+    @Session() session: SessionData,
+    @CurrentUser('id') userId: string
   ): Promise<CharacterCompactResponseDto> {
-    return this.titlesService.createCharacter(body, session.staffId);
+    return this.titlesService.createCharacter(body, userId, session.staffId);
   }
 
   @ApiOperation({
@@ -474,9 +480,10 @@ export class BooksController extends BaseController {
   async updateBookCharacter(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: UpdateCharacterDto,
-    @Session() session: SessionData
+    @Session() session: SessionData,
+    @CurrentUser('id') userId: string
   ): Promise<CharacterCompactResponseDto> {
-    return this.titlesService.updateCharacter(id, body, session.staffId);
+    return this.titlesService.updateCharacter(id, body, userId, session.staffId);
   }
 
   @ApiOperation({

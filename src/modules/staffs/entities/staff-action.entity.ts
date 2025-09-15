@@ -133,10 +133,13 @@ export enum StaffActionStatus {
 @Entity('staff_actions')
 export class StaffAction extends BaseEntity {
   @Column('uuid')
-  staffId: string;
+  userId: string;
+
+  @Column('uuid', { nullable: true })
+  staffId?: string;
   @ManyToOne(() => Staff, (staff) => staff.actions)
   @JoinColumn()
-  staff: Staff;
+  staff?: Staff;
 
   @Column({
     type: 'enum',
@@ -162,6 +165,12 @@ export class StaffAction extends BaseEntity {
 
   @Column('text', { nullable: true })
   description?: string;
+
+  @Column('json', { nullable: true })
+  oldValue?: any;
+
+  @Column('json', { nullable: true })
+  newValue?: any;
 
   @Column('json', { nullable: true })
   metadata?: Object;
