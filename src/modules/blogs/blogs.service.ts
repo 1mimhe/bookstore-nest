@@ -24,6 +24,7 @@ export class BlogsService {
       tags,
       ...blogDto
     }: CreateBlogDto,
+    userId: string,
     staffId?: string
   ): Promise<Blog | never> {
     return this.dataSource.transaction(async (manager) => {
@@ -41,13 +42,15 @@ export class BlogsService {
 
       const dbBlog = await manager.save(Blog, blog);
 
-      if (staffId) {
+      if (userId) {
         await this.staffsService.createAction(
           {
+            userId,
             staffId,
             type: StaffActionTypes.BlogCreated,
             entityId: dbBlog.id,
-            entityType: EntityTypes.Blog
+            entityType: EntityTypes.Blog,
+            newValue: JSON.stringify(blog)
           },
           manager
         );
@@ -128,6 +131,7 @@ export class BlogsService {
       tags,
       ...blogDto
     }: UpdateBlogDto,
+    userId: string,
     staffId?: string
   ): Promise<Blog | never> {
     return this.dataSource.transaction(async (manager) => {
@@ -158,13 +162,16 @@ export class BlogsService {
 
       const dbBlog = await manager.save(Blog, updatedBlog);
 
-      if (staffId) {
+      if (userId) {
         await this.staffsService.createAction(
           {
-          staffId,
-          type: StaffActionTypes.BlogUpdated,
-          entityId: dbBlog.id,
-          entityType: EntityTypes.Blog
+            userId,
+            staffId,
+            type: StaffActionTypes.BlogUpdated,
+            entityId: dbBlog.id,
+            entityType: EntityTypes.Blog,
+            oldValue: JSON.stringify(existingBlog),
+            newValue: JSON.stringify(updatedBlog)
           },
           manager
         );

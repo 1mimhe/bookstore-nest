@@ -1,6 +1,6 @@
 import { Transform } from 'class-transformer';
 import { IsString, IsUUID, IsArray, IsNotEmpty, IsOptional, IsAlphanumeric, ArrayMinSize, IsBoolean } from 'class-validator';
-import { makeSlug } from 'src/common/utilities/make-unique';
+import { makeSlug } from 'src/common/utilities/make-slug';
 
 export class CreateBlogDto {
   @IsString()

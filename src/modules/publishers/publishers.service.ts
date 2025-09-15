@@ -135,10 +135,13 @@ export class PublishersService {
       throw error;
     });
 
-    return this.booksService.create({
-      publisherId,
-      ...bookDto
-    });
+    return this.booksService.create(
+      {
+        publisherId,
+        ...bookDto
+      },
+      userId
+    );
   }
 
   async createBlog(
@@ -157,10 +160,13 @@ export class PublishersService {
       throw error;
     });
 
-    return this.blogsService.create({
-      publisherId,
-      ...blogDto
-    });
+    return this.blogsService.create(
+      {
+        publisherId,
+        ...blogDto
+      },
+      userId
+    );
   }
 
   async updateBlog(
@@ -185,6 +191,6 @@ export class PublishersService {
       throw new BadRequestException(BadRequestMessages.CannotUpdateBlog);
     }
 
-    return this.blogsService.update(blogId, blogDto);
+    return this.blogsService.update(blogId, blogDto, userId);
   }
 }

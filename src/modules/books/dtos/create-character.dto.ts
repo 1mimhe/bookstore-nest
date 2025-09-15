@@ -1,6 +1,6 @@
 import { Transform } from 'class-transformer';
 import { IsString, IsUrl, IsOptional, IsNotEmpty } from 'class-validator';
-import { makeSlug } from 'src/common/utilities/make-unique';
+import { makeSlug } from 'src/common/utilities/make-slug';
 
 export class CreateCharacterDto {
   @IsNotEmpty()

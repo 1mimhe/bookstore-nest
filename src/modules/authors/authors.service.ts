@@ -22,7 +22,11 @@ export class AuthorsService {
     private staffsService: StaffsService
   ) {}
 
-  async create(authorDto: CreateAuthorDto, staffId?: string): Promise<Author | never> {
+  async create(
+    authorDto: CreateAuthorDto,
+    userId: string,
+    staffId?: string
+  ): Promise<Author | never> {
     return this.dataSource.transaction(async manager => {
       const author = manager.create(Author, authorDto);
       const dbAuthor = await manager.save(Author, author).catch((error) => {
@@ -32,13 +36,15 @@ export class AuthorsService {
         throw error;
       });
 
-      if (staffId) {
+      if (userId) {
         await this.staffsService.createAction(
           {
+            userId,
             staffId,
             type: StaffActionTypes.AuthorCreated,
             entityId: dbAuthor.id,
-            entityType: EntityTypes.Author
+            entityType: EntityTypes.Author,
+            newValue: JSON.stringify(author)
           },
           manager
         );
@@ -119,6 +125,7 @@ export class AuthorsService {
   async update(
     id: string,
     authorDto: UpdateAuthorDto,
+    userId: string,
     staffId?: string
   ): Promise<Author | never> {
     return this.dataSource.transaction(async manager => {
@@ -126,13 +133,16 @@ export class AuthorsService {
       Object.assign(author, authorDto);
       const dbAuthor = await manager.save(Author, author);
 
-      if (staffId) {
+      if (userId) {
         await this.staffsService.createAction(
           {
+            userId,
             staffId,
             type: StaffActionTypes.AuthorUpdated,
             entityId: dbAuthor.id,
-            entityType: EntityTypes.Author
+            entityType: EntityTypes.Author,
+            oldValue: JSON.stringify(author),
+            newValue: JSON.stringify(dbAuthor)
           },
           manager
         );
@@ -147,19 +157,22 @@ export class AuthorsService {
 
   async delete(
     id: string,
+    userId: string,
     staffId?: string
   ): Promise<Author | never> {
     return this.dataSource.transaction(async manager => {
       const author = await this.getById(id, manager);
       const result = await manager.softRemove(Author, author);
 
-      if (staffId) {
+      if (userId) {
         await this.staffsService.createAction(
           {
+            userId,
             staffId,
             type: StaffActionTypes.AuthorDeleted,
             entityId: result.id,
-            entityType: EntityTypes.Author
+            entityType: EntityTypes.Author,
+            oldValue: JSON.stringify(author)
           },
           manager
         );

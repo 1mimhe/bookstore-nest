@@ -47,6 +47,7 @@ import { ConfigService } from '@nestjs/config';
 import { Response } from 'express';
 import { BlogFilterDto } from './dtos/blog-filter.dto';
 import { ApiQueryPagination } from 'src/common/decorators/query.decorators';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 
 @Controller('blogs')
 @ApiTags('Blog')
@@ -84,9 +85,10 @@ export class BlogsController extends BaseController {
   @Post()
   async createBlog(
     @Body() body: CreateBlogDto,
-    @Session() session: SessionData
+    @Session() session: SessionData,
+    @CurrentUser('id') userId: string
   ): Promise<BlogCompactResponseDto> {
-    return this.blogsService.create(body, session.staffId);
+    return this.blogsService.create(body, userId, session.staffId);
   }
 
   @ApiOperation({
@@ -164,8 +166,9 @@ export class BlogsController extends BaseController {
   async updateBlog(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: UpdateBlogDto,
-    @Session() session: SessionData
+    @Session() session: SessionData,
+    @CurrentUser('id') userId: string
   ): Promise<BlogCompactResponseDto> {
-    return this.blogsService.update(id, body, session.staffId);
+    return this.blogsService.update(id, body, userId, session.staffId);
   }
 }

@@ -46,6 +46,7 @@ export class BooksService {
       translatorIds,
       ...bookDto
     }: CreateBookDto,
+    userId: string,
     staffId?: string
   ): Promise<Book | never> {
     return this.dataSource.transaction(async (manager) => {
@@ -88,13 +89,15 @@ export class BooksService {
         await manager.save(Title, title);
       }
 
-      if (staffId) {
+      if (userId) {
         await this.staffsService.createAction(
           {
+            userId,
             staffId,
             type: StaffActionTypes.BookCreated,
             entityId: dbBook.id,
-            entityType: EntityTypes.Book
+            entityType: EntityTypes.Book,
+            newValue: JSON.stringify(dbBook)
           },
           manager
         );
@@ -232,6 +235,7 @@ export class BooksService {
       images,
       ...bookDto
     }: UpdateBookDto,
+    userId: string,
     staffId?: string
   ): Promise<Book | never> {
     return this.dataSource.transaction(async (manager) => {
@@ -284,13 +288,16 @@ export class BooksService {
 
       const dbBook = await manager.save(Book, updatedBook);
 
-      if (staffId) {
+      if (userId) {
         await this.staffsService.createAction(
           {
+            userId,
             staffId,
             type: StaffActionTypes.BookUpdated,
             entityId: dbBook.id,
-            entityType: EntityTypes.Book
+            entityType: EntityTypes.Book,
+            oldValue: JSON.stringify(existingBook),
+            newValue: JSON.stringify(dbBook),
           },
           manager
         );

@@ -1,7 +1,7 @@
 import { IsEnum, IsHexColor, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { TagType } from '../entities/tag.entity';
 import { Transform } from 'class-transformer';
-import { makeSlug } from 'src/common/utilities/make-unique';
+import { makeSlug } from 'src/common/utilities/make-slug';
 
 export class CreateTagDto {
   @IsNotEmpty()

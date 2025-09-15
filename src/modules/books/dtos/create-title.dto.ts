@@ -1,6 +1,6 @@
 import { Transform } from "class-transformer";
 import { ArrayMinSize, IsAlphanumeric, IsArray, IsDateString, IsNotEmpty, IsOptional, IsString, IsUUID, MinLength } from "class-validator";
-import { makeSlug } from "src/common/utilities/make-unique";
+import { makeSlug } from "src/common/utilities/make-slug";
 
 export class CreateTitleDto {
   @IsNotEmpty()

@@ -38,6 +38,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { RequiredRoles } from 'src/common/decorators/roles.decorator';
 import { RolesEnum } from '../users/entities/role.entity';
 import { SessionData } from 'express-session';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 
 @Controller('collections')
 @ApiTags('Collection')
@@ -55,9 +56,10 @@ export class CollectionsController {
   @Post()
   async createCollection(
     @Body() body: CreateCollectionDto,
-    @Session() session: SessionData
+    @Session() session: SessionData,
+    @CurrentUser('id') userId: string
   ): Promise<CollectionCompactResponseDto> {
-    return this.collectionsService.create(body, session.staffId);
+    return this.collectionsService.create(body, userId, session.staffId);
   }
 
   @ApiOperation({
@@ -133,9 +135,10 @@ export class CollectionsController {
   async createCollectionBook(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: CreateCollectionBookDto,
-    @Session() session: SessionData
+    @Session() session: SessionData,
+    @CurrentUser('id') userId: string
   ): Promise<CollectionBookCompactResponseDto> {
-    return this.collectionsService.createCollectionBook(id, body, session.staffId);
+    return this.collectionsService.createCollectionBook(id, body, userId, session.staffId);
   }
 
   @ApiOperation({
