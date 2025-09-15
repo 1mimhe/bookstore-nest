@@ -4,7 +4,7 @@ import { Cache } from 'cache-manager';
 import { AddBookToCartDto } from './dto/add-book.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Book } from '../books/entities/book.entity';
-import { DataSource, EntityNotFoundError, Repository } from 'typeorm';
+import { DataSource, EntityNotFoundError, In, LessThan, Repository } from 'typeorm';
 import { dbErrorHandler } from 'src/common/utilities/error-handler';
 import { AuthMessages, NotFoundMessages, UnprocessableEntityMessages } from 'src/common/enums/error.messages';
 import { Cart } from './orders.types';
@@ -19,6 +19,7 @@ import { OrderBook } from './entities/order-book.entity';
 import { Address } from '../users/entities/address.entity';
 import { SubmitOrderDto } from './dto/submit-order.dto';
 import { OrderBookDto } from './dto/order-response.dto';
+import { Cron } from '@nestjs/schedule';
 
 @Injectable()
 export class OrdersService {
@@ -303,6 +304,45 @@ export class OrdersService {
       take: limit
     });
   }
+
+  // Cron job for cleaning unpaid orders
+  @Cron('*/10 * * * *')
+  async handlePendingOrderCleanup(): Promise<void> {
+    console.log('Starting pending order cleanup job...');
+
+    const fifteenMinutesAgo = new Date();
+    fifteenMinutesAgo.setMinutes(fifteenMinutesAgo.getMinutes() - 15);
+
+    // Find pending orders created more than 15 minutes ago
+    const expiredOrders = await this.orderRepo.find({
+      where: {
+        paymentStatus: PaymentStatuses.Pending,
+        createdAt: LessThan(fifteenMinutesAgo),
+      },
+    });
+
+    if (expiredOrders.length === 0) {
+      console.log('No expired pending orders found.');
+      return;
+    }
+
+    console.log(`Found ${expiredOrders.length} expired pending orders.`);
+
+    // Update orders to unpaid status
+    const orderIds = expiredOrders.map(order => order.id);
+    const updateResult = await this.orderRepo.update(
+      { id: In(orderIds) },
+      { 
+        paymentStatus: PaymentStatuses.Unpaid,
+        orderStatus: OrderStatuses.Canceled
+      },
+    );
+
+    console.log(
+      `Successfully updated ${updateResult.affected} orders to \`unpaid\` status.`,
+    );
+  }
+
 
   private async processOrder(order: Order): Promise<Order> {
     const updatedOrder = await this.dataSource.transaction(async manager => {

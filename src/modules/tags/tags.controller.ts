@@ -50,6 +50,11 @@ export class TagsController {
       - literature_award => e.g. Nobel Literature, Man Booker, Pulitzer Fiction, Goncourt Prize, etc.\n
       - nation_literature => e.g. Iranian, American, French, Japanese, Russian, German, English, Canadian Literature\n
       - system_tags => e.g. Festival Sales, Recommended Books, Bestsellers, New Releases, Signed Editions, etc.\n
+      - collection => e.g. The Adventures of Tintin, The lord of the rings, etc.
+      - age_group => e.g. Teenagers, Young Adults (YA), Middle Grade, Children (6-12), etc.\n
+      - time_period => e.g. Ancient Times, Medieval, Renaissance, 18th Century, 19th Century, etc.\n
+      - content_warnings => e.g. Violence, Sexual Content, Strong Language, Substance Abuse, etc.\n
+      - difficulty_level => e.g. Light Reading, Challenging, Complex Narrative, etc.
     `,
   })
   @ApiBearerAuth()

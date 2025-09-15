@@ -9,7 +9,7 @@ import { UpdateTagDto } from './dtos/update-tag.dto';
 import { dbErrorHandler } from 'src/common/utilities/error-handler';
 import { StaffsService } from '../staffs/staffs.service';
 import { EntityTypes, StaffActionTypes } from '../staffs/entities/staff-action.entity';
-import { makeUnique } from 'src/common/utilities/make-unique';
+import { makeSlug } from 'src/common/utilities/make-unique';
 import { BookFilterDto } from '../books/dtos/book-filter.dto';
 import { RootTag } from './entities/root-tag.entity';
 import { CreateRootTagDto } from './dtos/create-root-tag.dto';
@@ -69,7 +69,7 @@ export class TagsService {
       const newTags = tagsToCreate.map(tagName => 
         this.tagRepo.create({
           name: tagName,
-          slug: makeUnique(tagName)
+          slug: makeSlug(tagName)
         })
       );
       

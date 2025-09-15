@@ -1,6 +1,6 @@
 import { Transform } from 'class-transformer';
 import { IsNotEmpty, IsOptional, IsString, IsUrl } from 'class-validator';
-import { makeUnique } from 'src/common/utilities/make-unique';
+import { makeSlug } from 'src/common/utilities/make-unique';
 import { SignupUserDto } from 'src/modules/auth/dtos/sign-up.dto';
 
 export class SignupPublisherDto extends SignupUserDto {
@@ -9,9 +9,9 @@ export class SignupPublisherDto extends SignupUserDto {
   publisherName: string;
 
   @Transform(({ obj, value }) => {
-    if (value) return makeUnique(value);
+    if (value) return makeSlug(value);
     if (obj.publisherName && obj.publisherName.trim()) {
-      return makeUnique(obj.publisherName);
+      return makeSlug(obj.publisherName);
     }
     return undefined;
   })

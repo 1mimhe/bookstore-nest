@@ -2,7 +2,7 @@
   "name": "bookstore-nest",
   "version": "0.0.1",
   "description": "",
-  "author": "",
+  "author": "Mohammad Hosseini",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
@@ -18,7 +18,9 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "cross-env NODE_ENV=test jest --config ./test/jest-e2e.json",
-    "seed": "ts-node --files .\\src\\modules\\languages\\language-seed.ts"
+    "seed:languages": "ts-node --files ./src/modules/languages/languages.seed.ts",
+    "seed:tags": "ts-node --files ./src/modules/tags/tags.seed.ts",
+    "seed": "concurrently npm:seed:*"
   },
   "dependencies": {
     "@2toad/profanity": "^3.1.1",

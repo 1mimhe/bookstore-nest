@@ -1,6 +1,6 @@
 import { Transform } from "class-transformer";
 import { ArrayMinSize, IsAlphanumeric, IsArray, IsDateString, IsNotEmpty, IsOptional, IsString, IsUUID, MinLength } from "class-validator";
-import { makeUnique } from "src/common/utilities/make-unique";
+import { makeSlug } from "src/common/utilities/make-unique";
 
 export class CreateTitleDto {
   @IsNotEmpty()
@@ -8,9 +8,9 @@ export class CreateTitleDto {
   name: string;
 
   @Transform(({ obj, value }) => {
-    if (value) return makeUnique(value);
+    if (value) return makeSlug(value);
     if (obj.name && obj.name.trim()) {
-      return makeUnique(obj.name);
+      return makeSlug(obj.name);
     }
     return undefined;
   })

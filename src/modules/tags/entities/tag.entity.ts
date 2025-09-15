@@ -9,7 +9,13 @@ export enum TagType {
   FeaturedBooks = 'featured_books',
   LiteratureAward = 'literature_award',
   NationLiterature = 'nation_literature',
-  SystemTags = 'system_tags'
+  SystemTags = 'system_tags',
+  Collection = 'collection',
+  AgeGroup = 'age_group',
+  MoodTheme = 'mood_theme',
+  TimePeriod = 'time_period',
+  ContentWarnings = 'content_warnings',
+  DifficultyLevel = 'difficulty_level'
 }
 
 @Entity('tags')

@@ -1,6 +1,6 @@
 import { Transform } from 'class-transformer';
 import { IsString, IsUUID, IsArray, IsNotEmpty, IsOptional, IsAlphanumeric, ArrayMinSize, IsBoolean } from 'class-validator';
-import { makeUnique } from 'src/common/utilities/make-unique';
+import { makeSlug } from 'src/common/utilities/make-unique';
 
 export class CreateBlogDto {
   @IsString()
@@ -12,12 +12,12 @@ export class CreateBlogDto {
   otherSubject?: string;
 
   @Transform(({ obj, value }) => {
-    if (value) return makeUnique(value);    
+    if (value) return makeSlug(value);    
     if (obj.otherSubject && obj.otherSubject.trim()) {
-      return makeUnique(obj.otherSubject);
+      return makeSlug(obj.otherSubject);
     }
     if (obj.subject && obj.subject.trim()) {
-      return makeUnique(obj.subject);
+      return makeSlug(obj.subject);
     }
     return undefined;
   })

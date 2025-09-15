@@ -173,10 +173,10 @@ async function safeDeleteLanguages(languageRepository: Repository<Language>) {
 // Run the seeder
 seedLanguages()
   .then(() => {
-    console.log('✨ Seeding process finished');
+    console.log('✨ Languages seeding process finished');
     process.exit(0);
   })
   .catch((error) => {
-    console.error('💥 Seeding process failed:', error);
-    process.exit(1);
+    console.error('💥 Languages seeding process failed:', error);
+    process.exit(0);
   });

@@ -1,5 +1,5 @@
 import { IsOptional, IsString, IsUrl } from 'class-validator';
-import { makeUnique } from 'src/common/utilities/make-unique';
+import { makeSlug } from 'src/common/utilities/make-unique';
 import { Transform } from 'class-transformer';
 
 export class UpdatePublisherDto {
@@ -8,9 +8,9 @@ export class UpdatePublisherDto {
   publisherName?: string;
 
   @Transform(({ obj, value }) => {
-    if (value) return makeUnique(value);
+    if (value) return makeSlug(value);
     if (obj.publisherName && obj.publisherName.trim()) {
-      return makeUnique(obj.publisherName);
+      return makeSlug(obj.publisherName);
     }
     return undefined;
   })

@@ -1,6 +1,6 @@
 import { Transform } from 'class-transformer';
 import { IsString, IsUrl, IsOptional, IsNotEmpty } from 'class-validator';
-import { makeUnique } from 'src/common/utilities/make-unique';
+import { makeSlug } from 'src/common/utilities/make-unique';
 
 export class CreateCharacterDto {
   @IsNotEmpty()
@@ -12,9 +12,9 @@ export class CreateCharacterDto {
   nickName?: string;
 
   @Transform(({ obj, value }) => {
-    if (value) return makeUnique(value);
+    if (value) return makeSlug(value);
     if (obj.fullName && obj.fullName.trim()) {
-      return makeUnique(obj.fullName.trim());
+      return makeSlug(obj.fullName.trim());
     }
     return undefined;
   })
