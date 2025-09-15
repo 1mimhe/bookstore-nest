@@ -7,12 +7,12 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Title } from './entities/title.entity';
-import { Between, DataSource, EntityManager, EntityNotFoundError, FindOperator, FindOptionsWhere, In, Repository, SelectQueryBuilder } from 'typeorm';
+import { DataSource, EntityManager, EntityNotFoundError, FindOptionsWhere, In, Repository, SelectQueryBuilder } from 'typeorm';
 import { CreateTitleDto } from './dtos/create-title.dto';
 import { Author } from '../authors/author.entity';
 import { BadRequestMessages, NotFoundMessages } from 'src/common/enums/error.messages';
 import { UpdateTitleDto } from './dtos/update-title.dto';
-import { Tag } from '../tags/tag.entity';
+import { Tag } from '../tags/entities/tag.entity';
 import { Character } from './entities/characters.entity';
 import { CreateCharacterDto } from './dtos/create-character.dto';
 import { UpdateCharacterDto } from './dtos/update-character.dto';
