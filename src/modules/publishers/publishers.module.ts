@@ -7,6 +7,7 @@ import { AuthModule } from '../auth/auth.module';
 import { BooksModule } from '../books/books.module';
 import { TokenModule } from '../token/token.module';
 import { BlogsModule } from '../blogs/blogs.module';
+import { ViewsModule } from '../views/views.module';
 
 @Module({
   imports: [
@@ -14,7 +15,8 @@ import { BlogsModule } from '../blogs/blogs.module';
     AuthModule,
     BooksModule,
     TokenModule,
-    BlogsModule
+    BlogsModule,
+    ViewsModule
   ],
   providers: [PublishersService],
   controllers: [PublishersController]

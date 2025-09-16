@@ -12,6 +12,7 @@ import {
   Patch,
   Post,
   Query,
+  Req,
   Res,
   UseGuards,
 } from '@nestjs/common';
@@ -49,16 +50,19 @@ import { UpdateBlogDto } from '../blogs/dtos/update-blog.dto';
 import { ConfigService } from '@nestjs/config';
 import { BaseController } from 'src/common/base.controller';
 import { Cookies } from 'src/common/decorators/cookies.decorator';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { CookieNames } from 'src/common/enums/cookie.names';
 import { RecentView, RecentViewTypes } from 'src/common/types/recent-view.type';
+import { ViewsService } from '../views/views.service';
+import { ViewEntityTypes } from '../views/views.types';
 
 @Controller('publishers')
 @ApiTags('Publisher')
 export class PublishersController extends BaseController {
   constructor(
     private publishersService: PublishersService,
-    config: ConfigService
+    config: ConfigService,
+    private viewsService: ViewsService
   ) {
     super(config);
   }
@@ -148,10 +152,12 @@ export class PublishersController extends BaseController {
   async getPublisherBySlug(
     @Param('slug') slug: string,
     @Cookies(CookieNames.RecentViews) recentViewsCookie: string,
+    @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
     @Query('complete', new ParseBoolPipe({ optional: true })) complete?: boolean,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
+    @CurrentUser('id') userId?: string
   ): Promise<PublisherResponseDto> {
     const publisher = await this.publishersService.get({ slug }, page, limit, complete);
 
@@ -161,6 +167,14 @@ export class PublishersController extends BaseController {
     };
     this.updateRecentViewsCookie(res, recentViewsCookie, newRecentView);
 
+    await this.viewsService.recordView(
+      ViewEntityTypes.Publisher,
+      publisher.id,
+      req,
+      res,
+      userId
+    );
+    
     return publisher;
   }
 
