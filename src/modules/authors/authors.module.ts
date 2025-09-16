@@ -6,6 +6,7 @@ import { Author } from './author.entity';
 import { BooksModule } from '../books/books.module';
 import { TokenModule } from '../token/token.module';
 import { StaffModule } from '../staffs/staffs.module';
+import { ViewsModule } from '../views/views.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { StaffModule } from '../staffs/staffs.module';
     BooksModule,
     TokenModule,
     StaffModule,
+    ViewsModule
   ],
   providers: [AuthorsService],
   controllers: [AuthorsController]

@@ -52,4 +52,7 @@ export class Author extends BaseEntity {
 
   @OneToMany(() => Blog, (blog) => blog.author)
   blogs?: Blog[];
+
+  @Column({ default: 0 })
+  views: number;
 }
