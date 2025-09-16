@@ -19,6 +19,9 @@ export class TagCompactResponseDto {
   type: TagType;
 
   @Expose()
+  views: number;
+
+  @Expose()
   createdAt: Date;
 
   @Expose()
