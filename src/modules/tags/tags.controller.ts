@@ -1,12 +1,14 @@
 import {
   Body,
   Controller,
+  DefaultValuePipe,
   Delete,
   Get,
   HttpCode,
   HttpStatus,
   Param,
   ParseEnumPipe,
+  ParseIntPipe,
   ParseUUIDPipe,
   Patch,
   Post,
@@ -34,7 +36,7 @@ import { BookFilterDto } from '../books/dtos/book-filter.dto';
 import { ReorderRootTagsDto } from './dtos/reorder-root-tags.dto';
 import { CreateRootTagDto } from './dtos/create-root-tag.dto';
 import { ViewsService } from '../views/views.service';
-import { ViewEntityTypes } from '../views/views.types';
+import { TrendingPeriod, ViewEntityTypes } from '../views/views.types';
 import { Request, Response } from 'express';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 
@@ -133,6 +135,18 @@ export class TagsController {
     );
 
     return tag;
+  }
+
+  @ApiOperation({
+    summary: 'Retrieves trending tags (Based on views)',
+  })
+  @Serialize(TagCompactResponseDto)
+  @Get('trending/:period')
+  async getTrendingTitles(
+    @Param('period', new ParseEnumPipe(TrendingPeriod)) period: TrendingPeriod,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number = 20
+  ): Promise<TagCompactResponseDto[]> {
+    return this.tagsService.getTrending(period, limit);
   }
 
   @ApiOperation({

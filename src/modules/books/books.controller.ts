@@ -160,7 +160,7 @@ export class BooksController extends BaseController {
   }
 
   @ApiOperation({
-    summary: 'Retrieves trending titles',
+    summary: 'Retrieves trending titles (Based on views)',
   })
   @Serialize(TitleResponseDto)
   @Get('titles/trending/:period')
