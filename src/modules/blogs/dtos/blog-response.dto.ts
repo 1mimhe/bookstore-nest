@@ -35,6 +35,9 @@ export class BlogCompactResponseDto {
   @Expose()
   @Type(() => TagCompactResponseDto)
   tags?: TagCompactResponseDto[];
+
+  @Expose()
+  views: number;
 }
 
 export class BlogResponseDto extends BlogCompactResponseDto {
