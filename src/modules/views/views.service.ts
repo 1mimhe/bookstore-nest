@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { ViewEntityTypes, ViewResult } from './views.types';
+import { TrendingPeriod, ViewEntityTypes, ViewResult } from './views.types';
 import { Request, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { CookieNames } from 'src/common/enums/cookie.names';
@@ -93,7 +93,7 @@ export class ViewsService {
 
   async getTrendingEntities(
     entityType: ViewEntityTypes,
-    period: 'day' | 'week' | 'month' = 'week',
+    period: TrendingPeriod = TrendingPeriod.Week,
     limit: number = 20
   ): Promise<Array<{ entityId: string; views: number }>> {
     const cacheKey = `trending:${entityType}:${period}`;
