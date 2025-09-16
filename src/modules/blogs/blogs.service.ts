@@ -9,13 +9,16 @@ import { NotFoundMessages } from 'src/common/enums/error.messages';
 import { UpdateBlogDto } from './dtos/update-blog.dto';
 import { StaffsService } from '../staffs/staffs.service';
 import { EntityTypes, StaffActionTypes } from '../staffs/entities/staff-action.entity';
+import { TrendingPeriod, ViewEntityTypes } from '../views/views.types';
+import { ViewsService } from '../views/views.service';
 
 @Injectable()
 export class BlogsService {
   constructor(
     @InjectRepository(Blog) private blogRepo: Repository<Blog>,
     private dataSource: DataSource,
-    private staffsService: StaffsService
+    private staffsService: StaffsService,
+    private viewsService: ViewsService
   ) {}
 
   async create(
@@ -101,6 +104,34 @@ export class BlogsService {
         }
         throw error;
       });
+  }
+
+  async getTrending(
+    period: TrendingPeriod,
+    limit?: number
+  ): Promise<Blog[]> {
+    const trendingData = await this.viewsService.getTrendingEntities(
+      ViewEntityTypes.Blog,
+      period,
+      limit
+    );
+
+    if (!trendingData || trendingData.length === 0) {
+      return [];
+    }
+
+    const blogIds = trendingData.map(item => item.entityId);
+    const blogs = await this.blogRepo.find({
+      where: {
+        id: In(blogIds)
+      }
+    });
+
+    const entityMap = new Map(blogs.map(entity => [entity.id, entity]));
+    return trendingData.map(t => (
+      entityMap.get(t.entityId)
+    ))
+    .filter(e => e !== undefined);
   }
 
   async update(
