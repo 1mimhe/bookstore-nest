@@ -162,7 +162,7 @@ export class AuthorsController extends BaseController {
   }
 
   @ApiOperation({
-    summary: 'Retrieves trending authors',
+    summary: 'Retrieves trending authors (Based on views)',
   })
   @Serialize(AuthorCompactResponseDto)
   @Get('trending/:period')

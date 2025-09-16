@@ -144,7 +144,7 @@ export class BlogsController extends BaseController {
   }
 
   @ApiOperation({
-    summary: 'Retrieves trending blogs',
+    summary: 'Retrieves trending blogs (Based on views)',
   })
   @Serialize(BlogResponseDto)
   @Get('trending/:period')

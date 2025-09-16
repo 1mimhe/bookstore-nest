@@ -13,6 +13,8 @@ import { makeSlug } from 'src/common/utilities/make-unique';
 import { BookFilterDto } from '../books/dtos/book-filter.dto';
 import { RootTag } from './entities/root-tag.entity';
 import { CreateRootTagDto } from './dtos/create-root-tag.dto';
+import { TrendingPeriod, ViewEntityTypes } from '../views/views.types';
+import { ViewsService } from '../views/views.service';
 
 @Injectable()
 export class TagsService {
@@ -21,7 +23,8 @@ export class TagsService {
     @InjectRepository(RootTag) private rootTagRepo: Repository<RootTag>,
     private dataSource: DataSource,
     @Inject(forwardRef(() => TitlesService)) private titlesService:  TitlesService,
-    private staffsService: StaffsService
+    private staffsService: StaffsService,
+    private viewsService: ViewsService
   ) {}
 
   async create(
@@ -118,6 +121,34 @@ export class TagsService {
       ...tag,
       titles
     };
+  }
+
+  async getTrending(
+    period: TrendingPeriod,
+    limit?: number
+  ): Promise<Tag[]> {
+    const trendingData = await this.viewsService.getTrendingEntities(
+      ViewEntityTypes.Tag,
+      period,
+      limit
+    );
+
+    if (!trendingData || trendingData.length === 0) {
+      return [];
+    }
+
+    const tagIds = trendingData.map(item => item.entityId);
+    const tags = await this.tagRepo.find({
+      where: {
+        id: In(tagIds)
+      },
+    });
+
+    const entityMap = new Map(tags.map(entity => [entity.id, entity]));
+    return trendingData.map(t => (
+      entityMap.get(t.entityId)
+    ))
+    .filter(e => e !== undefined);
   }
 
   async update(
