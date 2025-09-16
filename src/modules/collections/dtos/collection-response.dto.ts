@@ -45,6 +45,9 @@ export class CollectionCompactResponseDto {
 
   @Expose()
   description?: string;
+  
+  @Expose()
+  views: number;
 
   @Expose()
   createdAt: Date;

@@ -13,6 +13,8 @@ import {
   Patch,
   Post,
   Query,
+  Req,
+  Res,
   Session,
   UseGuards,
 } from '@nestjs/common';
@@ -38,11 +40,18 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { RequiredRoles } from 'src/common/decorators/roles.decorator';
 import { RolesEnum } from '../users/entities/role.entity';
 import { SessionData } from 'express-session';
+import { ViewsService } from '../views/views.service';
+import { ViewEntityTypes } from '../views/views.types';
+import { Request, Response } from 'express';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 
 @Controller('collections')
 @ApiTags('Collection')
 export class CollectionsController {
-  constructor(private collectionsService: CollectionsService) {}
+  constructor(
+    private collectionsService: CollectionsService,
+    private viewsService: ViewsService
+  ) {}
 
   @ApiOperation({
     summary: 'Create an empty collection',
@@ -101,10 +110,23 @@ export class CollectionsController {
   @Get('slug/:slug')
   async getCollectionBySlug(
     @Param('slug') slug: string,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
     @Query('complete', new ParseBoolPipe({ optional: true }))
     complete?: boolean,
+    @CurrentUser('id') userId?: string
   ): Promise<CollectionResponseDto> {
-    return this.collectionsService.get({ slug }, complete);
+    const collection = await this.collectionsService.get({ slug }, complete);
+
+    await this.viewsService.recordView(
+      ViewEntityTypes.Collection,
+      collection.id,
+      req,
+      res,
+      userId
+    );
+
+    return collection;
   }
 
   @ApiOperation({

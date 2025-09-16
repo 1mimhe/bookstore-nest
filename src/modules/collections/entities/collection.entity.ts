@@ -19,4 +19,7 @@ export class Collection extends BaseEntity {
 
   @OneToMany(() => CollectionBook, (collectionBook) => collectionBook.collection)
   collectionBooks: CollectionBook[];
+
+  @Column({ default: 0 })
+  views: number;
 }
