@@ -1,10 +1,13 @@
 import {
   Body,
   Controller,
+  DefaultValuePipe,
   Get,
   HttpCode,
   HttpStatus,
   Param,
+  ParseEnumPipe,
+  ParseIntPipe,
   ParseUUIDPipe,
   Patch,
   Post,
@@ -45,11 +48,9 @@ import { CookieNames } from 'src/common/enums/cookie.names';
 import { RecentView, RecentViewTypes } from 'src/common/types/recent-view.type';
 import { BaseController } from 'src/common/base.controller';
 import { ConfigService } from '@nestjs/config';
-import { BlogFilterDto } from './dtos/blog-filter.dto';
-import { ApiQueryPagination } from 'src/common/decorators/query.decorators';
 import { Request, Response } from 'express';
 import { ViewsService } from '../views/views.service';
-import { ViewEntityTypes } from '../views/views.types';
+import { TrendingPeriod, ViewEntityTypes } from '../views/views.types';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 
 @Controller('blogs')
@@ -144,14 +145,15 @@ export class BlogsController extends BaseController {
   }
 
   @ApiOperation({
-    summary: 'Get all blogs',
-    description: 'You can get related blogs to an specific title, author or publisher'
+    summary: 'Retrieves trending blogs',
   })
-  @ApiQueryPagination()
-  @Serialize(BlogCompactResponseDto)
-  @Get()
-  async getAllBlogs(@Query() query: BlogFilterDto): Promise<BlogCompactResponseDto[]> {
-    return this.blogsService.getAll(query);
+  @Serialize(BlogResponseDto)
+  @Get('trending/:period')
+  async getTrendingTitles(
+    @Param('period', new ParseEnumPipe(TrendingPeriod)) period: TrendingPeriod,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number = 20
+  ): Promise<BlogResponseDto[]> {
+    return this.blogsService.getTrending(period, limit);
   }
 
   @ApiOperation({
