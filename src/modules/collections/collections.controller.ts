@@ -8,6 +8,7 @@ import {
   HttpStatus,
   Param,
   ParseBoolPipe,
+  ParseEnumPipe,
   ParseIntPipe,
   ParseUUIDPipe,
   Patch,
@@ -41,7 +42,7 @@ import { RequiredRoles } from 'src/common/decorators/roles.decorator';
 import { RolesEnum } from '../users/entities/role.entity';
 import { SessionData } from 'express-session';
 import { ViewsService } from '../views/views.service';
-import { ViewEntityTypes } from '../views/views.types';
+import { TrendingPeriod, ViewEntityTypes } from '../views/views.types';
 import { Request, Response } from 'express';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 
@@ -141,6 +142,18 @@ export class CollectionsController {
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
   ): Promise<CollectionCompactResponseDto[]> {
     return this.collectionsService.getCollectionsByTitleId(id, page, limit);
+  }
+
+  @ApiOperation({
+    summary: 'Retrieves trending collections',
+  })
+  @Serialize(CollectionCompactResponseDto)
+  @Get('trending/:period')
+  async getTrendingTitles(
+    @Param('period', new ParseEnumPipe(TrendingPeriod)) period: TrendingPeriod,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number = 20
+  ): Promise<CollectionCompactResponseDto[]> {
+    return this.collectionsService.getTrending(period, limit);
   }
 
   @ApiOperation({

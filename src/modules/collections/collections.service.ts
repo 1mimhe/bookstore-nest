@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CollectionBook } from './entities/collection-book.entity';
-import { DataSource, EntityManager, EntityNotFoundError, FindOptionsRelations, FindOptionsWhere, Repository } from 'typeorm';
+import { DataSource, EntityManager, EntityNotFoundError, FindOptionsRelations, FindOptionsWhere, In, Repository } from 'typeorm';
 import { Collection } from './entities/collection.entity';
 import { CreateCollectionDto } from './dtos/create-collection.dto';
 import { CreateCollectionBookDto } from './dtos/create-collection-book.dto';
@@ -10,6 +10,8 @@ import { NotFoundMessages } from 'src/common/enums/error.messages';
 import { UpdateCollectionBookDto } from './dtos/update-collection-book.dto';
 import { StaffsService } from '../staffs/staffs.service';
 import { EntityTypes, StaffActionTypes } from '../staffs/entities/staff-action.entity';
+import { TrendingPeriod, ViewEntityTypes } from '../views/views.types';
+import { ViewsService } from '../views/views.service';
 
 @Injectable()
 export class CollectionsService {
@@ -17,7 +19,8 @@ export class CollectionsService {
     @InjectRepository(Collection) private collectionRepo: Repository<Collection>,
     @InjectRepository(CollectionBook) private collectionBookRepo: Repository<CollectionBook>,
     private dataSource: DataSource,
-    private staffsService: StaffsService
+    private staffsService: StaffsService,
+    private viewsService: ViewsService
   ) {}
 
   async create(
@@ -89,6 +92,34 @@ export class CollectionsService {
       }
       throw error;
     });
+  }
+
+  async getTrending(
+    period: TrendingPeriod,
+    limit?: number
+  ): Promise<Collection[]> {
+    const trendingData = await this.viewsService.getTrendingEntities(
+      ViewEntityTypes.Collection,
+      period,
+      limit
+    );
+
+    if (!trendingData || trendingData.length === 0) {
+      return [];
+    }
+
+    const collectionIds = trendingData.map(item => item.entityId);
+    const collections = await this.collectionRepo.find({
+      where: {
+        id: In(collectionIds)
+      }
+    });
+
+    const entityMap = new Map(collections.map(entity => [entity.id, entity]));
+    return trendingData.map(t => (
+      entityMap.get(t.entityId)
+    ))
+    .filter(e => e !== undefined);
   }
 
   async createCollectionBook(
