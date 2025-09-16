@@ -8,7 +8,7 @@ import { TokenModule } from '../token/token.module';
 import { StaffModule } from '../staffs/staffs.module';
 import { Title } from '../books/entities/title.entity';
 import { RootTag } from './entities/root-tag.entity';
-import { ViewsService } from '../views/views.service';
+import { ViewsModule } from '../views/views.module';
 
 @Module({
   imports: [
@@ -20,7 +20,7 @@ import { ViewsService } from '../views/views.service';
     TokenModule,
     StaffModule,
     forwardRef(() => BooksModule),
-    ViewsService
+    ViewsModule
   ],
   providers: [TagsService],
   controllers: [TagsController],
