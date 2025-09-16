@@ -8,6 +8,12 @@ export enum ViewEntityTypes {
   Collection = 'collection',
 }
 
+export enum TrendingPeriod {
+  Day = 'day',
+  Week = 'week',
+  Month = 'month'
+}
+
 export interface ViewResult {
   counted: boolean;
 }

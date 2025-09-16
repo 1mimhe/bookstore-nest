@@ -23,6 +23,8 @@ import { TagsService } from '../tags/tags.service';
 import { BookFilterDto, SortBy } from './dtos/book-filter.dto';
 import { getDateRange } from 'src/common/utilities/decade.utils';
 import { Book } from './entities/book.entity';
+import { ViewsService } from '../views/views.service';
+import { TrendingPeriod, ViewEntityTypes } from '../views/views.types';
 
 @Injectable()
 export class TitlesService {
@@ -33,6 +35,7 @@ export class TitlesService {
     private dataSource: DataSource,
     private staffsService: StaffsService,
     @Inject(forwardRef(() => TagsService)) private tagsService:  TagsService,
+    private viewsService: ViewsService
   ) {}
 
   async create(
@@ -350,6 +353,39 @@ export class TitlesService {
       .orderBy('commonTagsCount', 'DESC')
       .limit(limit)
       .getMany();
+  }
+
+  async getTrending(
+    period: TrendingPeriod,
+    limit?: number
+  ): Promise<Title[]> {
+    const trendingData = await this.viewsService.getTrendingEntities(
+      ViewEntityTypes.Title,
+      period,
+      limit
+    );
+
+    if (!trendingData || trendingData.length === 0) {
+      return [];
+    }
+
+    const titleIds = trendingData.map(item => item.entityId);
+    const titles = await this.titleRepo.find({
+      where: {
+        id: In(titleIds)
+      },
+      relations: {
+        defaultBook: {
+          images: true
+        }
+      }
+    });
+
+    const entityMap = new Map(titles.map(entity => [entity.id, entity]));
+    return trendingData.map(t => (
+      entityMap.get(t.entityId)
+    ))
+    .filter(e => e !== undefined);
   }
 
   async deleteTagFromTitle(titleId: string, tagId: string): Promise<void> {

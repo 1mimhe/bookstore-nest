@@ -8,6 +8,7 @@ import {
   HttpStatus,
   Param,
   ParseBoolPipe,
+  ParseEnumPipe,
   ParseIntPipe,
   ParseUUIDPipe,
   Patch,
@@ -58,7 +59,7 @@ import { Cookies } from 'src/common/decorators/cookies.decorator';
 import { CookieNames } from 'src/common/enums/cookie.names';
 import { RecentView, RecentViewTypes } from 'src/common/types/recent-view.type';
 import { ViewsService } from '../views/views.service';
-import { ViewEntityTypes } from '../views/views.types';
+import { TrendingPeriod, ViewEntityTypes } from '../views/views.types';
 import { SoftAuthGuard } from '../auth/guards/soft-auth.guard';
 
 @Controller('books')
@@ -155,6 +156,18 @@ export class BooksController extends BaseController {
     @Query('limit', new DefaultValuePipe(10), new ParseIntPipe({ optional: true })) limit: number = 10,
   ): Promise<TitleResponseDto[]> {
     return this.titlesService.getSimilarTitles(id, limit);
+  }
+
+  @ApiOperation({
+    summary: 'Retrieves trending titles',
+  })
+  @Serialize(TitleResponseDto)
+  @Get('titles/trending/:period')
+  async getTrendingTitles(
+    @Param('period', new ParseEnumPipe(TrendingPeriod)) period: TrendingPeriod,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number = 20
+  ): Promise<TitleResponseDto[]> {
+    return this.titlesService.getTrending(period, limit);
   }
 
   @ApiOperation({
