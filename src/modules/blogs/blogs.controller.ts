@@ -8,6 +8,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Req,
   Res,
   Session,
   UseGuards,
@@ -43,14 +44,18 @@ import { CookieNames } from 'src/common/enums/cookie.names';
 import { RecentView, RecentViewTypes } from 'src/common/types/recent-view.type';
 import { BaseController } from 'src/common/base.controller';
 import { ConfigService } from '@nestjs/config';
-import { Response } from 'express';
+import { Request, Response } from 'express';
+import { ViewsService } from '../views/views.service';
+import { ViewEntityTypes } from '../views/views.types';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 
 @Controller('blogs')
 @ApiTags('Blog')
 export class BlogsController extends BaseController {
   constructor(
     private blogsService: BlogsService,
-    config: ConfigService
+    config: ConfigService,
+    private viewsService: ViewsService
   ) {
     super(config);
   }
@@ -111,7 +116,9 @@ export class BlogsController extends BaseController {
   async getBlogBySlug(
     @Param('slug') slug: string,
     @Cookies(CookieNames.RecentViews) recentViewsCookie: string,
-    @Res({ passthrough: true }) res: Response
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+    @CurrentUser('id') userId?: string
   ): Promise<BlogResponseDto> {
     const blog = await this.blogsService.get({ slug });
 
@@ -120,6 +127,14 @@ export class BlogsController extends BaseController {
       slug: blog.slug
     };
     this.updateRecentViewsCookie(res, recentViewsCookie, newRecentView);
+
+    await this.viewsService.recordView(
+      ViewEntityTypes.Blog,
+      blog.id,
+      req,
+      res,
+      userId
+    );
 
     return blog;
   }

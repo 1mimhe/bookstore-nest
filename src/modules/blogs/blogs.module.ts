@@ -6,6 +6,7 @@ import { Blog } from './blog.entity';
 import { Review } from '../reviews/entities/review.entity';
 import { TokenModule } from '../token/token.module';
 import { StaffModule } from '../staffs/staffs.module';
+import { ViewsModule } from '../views/views.module';
 
 @Module({
   imports: [
@@ -14,7 +15,8 @@ import { StaffModule } from '../staffs/staffs.module';
       Review
     ]),
     TokenModule,
-    StaffModule
+    StaffModule,
+    ViewsModule
   ],
   controllers: [BlogsController],
   providers: [BlogsService],
