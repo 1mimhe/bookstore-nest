@@ -26,6 +26,9 @@ export class Publisher extends BaseEntity {
   })
   logoUrl?: string;
 
+  @Column({ default: 0 })
+  views: number;
+
   @Column('uuid')
   userId: string;
   @OneToOne(() => User, (user) => user.publisher)
