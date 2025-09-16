@@ -8,6 +8,7 @@ import {
   HttpStatus,
   Param,
   ParseBoolPipe,
+  ParseEnumPipe,
   ParseIntPipe,
   ParseUUIDPipe,
   Patch,
@@ -52,7 +53,7 @@ import { CookieNames } from 'src/common/enums/cookie.names';
 import { RecentView, RecentViewTypes } from 'src/common/types/recent-view.type';
 import { Request, Response } from 'express';
 import { ViewsService } from '../views/views.service';
-import { ViewEntityTypes } from '../views/views.types';
+import { TrendingPeriod, ViewEntityTypes } from '../views/views.types';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 
 @Controller('authors')
@@ -159,6 +160,18 @@ export class AuthorsController extends BaseController {
     );
 
     return author;
+  }
+
+  @ApiOperation({
+    summary: 'Retrieves trending authors',
+  })
+  @Serialize(AuthorCompactResponseDto)
+  @Get('trending/:period')
+  async getTrendingTitles(
+    @Param('period', new ParseEnumPipe(TrendingPeriod)) period: TrendingPeriod,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number = 20
+  ): Promise<AuthorCompactResponseDto[]> {
+    return this.authorsService.getTrending(period, limit);
   }
 
   @ApiOperation({
