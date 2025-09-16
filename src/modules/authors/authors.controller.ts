@@ -8,11 +8,13 @@ import {
   HttpStatus,
   Param,
   ParseBoolPipe,
+  ParseEnumPipe,
   ParseIntPipe,
   ParseUUIDPipe,
   Patch,
   Post,
   Query,
+  Req,
   Res,
   Session,
   UseGuards,
@@ -49,7 +51,9 @@ import { ConfigService } from '@nestjs/config';
 import { Cookies } from 'src/common/decorators/cookies.decorator';
 import { CookieNames } from 'src/common/enums/cookie.names';
 import { RecentView, RecentViewTypes } from 'src/common/types/recent-view.type';
-import { Response } from 'express';
+import { Request, Response } from 'express';
+import { ViewsService } from '../views/views.service';
+import { TrendingPeriod, ViewEntityTypes } from '../views/views.types';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 
 @Controller('authors')
@@ -57,7 +61,8 @@ import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 export class AuthorsController extends BaseController {
   constructor(
     private authorsService: AuthorsService,
-    config: ConfigService
+    config: ConfigService,
+    private viewsService: ViewsService
   ) {
     super(config);
   }
@@ -130,11 +135,13 @@ export class AuthorsController extends BaseController {
   async getPublisherBySlug(
     @Param('slug') slug: string,
     @Cookies(CookieNames.RecentViews) recentViewsCookie: string,
+    @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
     @Query('complete', new ParseBoolPipe({ optional: true }))
     complete?: boolean,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
+    @CurrentUser('id') userId?: string
   ): Promise<AuthorResponseDto> {
     const author = await this.authorsService.get({ slug }, page, limit, complete);
 
@@ -144,7 +151,27 @@ export class AuthorsController extends BaseController {
     };
     this.updateRecentViewsCookie(res, recentViewsCookie, newRecentView);
 
+    await this.viewsService.recordView(
+      ViewEntityTypes.Author,
+      author.id,
+      req,
+      res,
+      userId
+    );
+
     return author;
+  }
+
+  @ApiOperation({
+    summary: 'Retrieves trending authors (Based on views)',
+  })
+  @Serialize(AuthorCompactResponseDto)
+  @Get('trending/:period')
+  async getTrendingTitles(
+    @Param('period', new ParseEnumPipe(TrendingPeriod)) period: TrendingPeriod,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number = 20
+  ): Promise<AuthorCompactResponseDto[]> {
+    return this.authorsService.getTrending(period, limit);
   }
 
   @ApiOperation({

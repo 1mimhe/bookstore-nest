@@ -1,14 +1,18 @@
 import {
   Body,
   Controller,
+  DefaultValuePipe,
   Get,
   HttpCode,
   HttpStatus,
   Param,
+  ParseEnumPipe,
+  ParseIntPipe,
   ParseUUIDPipe,
   Patch,
   Post,
   Query,
+  Req,
   Res,
   Session,
   UseGuards,
@@ -44,9 +48,9 @@ import { CookieNames } from 'src/common/enums/cookie.names';
 import { RecentView, RecentViewTypes } from 'src/common/types/recent-view.type';
 import { BaseController } from 'src/common/base.controller';
 import { ConfigService } from '@nestjs/config';
-import { Response } from 'express';
-import { BlogFilterDto } from './dtos/blog-filter.dto';
-import { ApiQueryPagination } from 'src/common/decorators/query.decorators';
+import { Request, Response } from 'express';
+import { ViewsService } from '../views/views.service';
+import { TrendingPeriod, ViewEntityTypes } from '../views/views.types';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 
 @Controller('blogs')
@@ -54,7 +58,8 @@ import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 export class BlogsController extends BaseController {
   constructor(
     private blogsService: BlogsService,
-    config: ConfigService
+    config: ConfigService,
+    private viewsService: ViewsService
   ) {
     super(config);
   }
@@ -116,7 +121,9 @@ export class BlogsController extends BaseController {
   async getBlogBySlug(
     @Param('slug') slug: string,
     @Cookies(CookieNames.RecentViews) recentViewsCookie: string,
-    @Res({ passthrough: true }) res: Response
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+    @CurrentUser('id') userId?: string
   ): Promise<BlogResponseDto> {
     const blog = await this.blogsService.get({ slug });
 
@@ -126,18 +133,27 @@ export class BlogsController extends BaseController {
     };
     this.updateRecentViewsCookie(res, recentViewsCookie, newRecentView);
 
+    await this.viewsService.recordView(
+      ViewEntityTypes.Blog,
+      blog.id,
+      req,
+      res,
+      userId
+    );
+
     return blog;
   }
 
   @ApiOperation({
-    summary: 'Get all blogs',
-    description: 'You can get related blogs to an specific title, author or publisher'
+    summary: 'Retrieves trending blogs (Based on views)',
   })
-  @ApiQueryPagination()
-  @Serialize(BlogCompactResponseDto)
-  @Get()
-  async getAllBlogs(@Query() query: BlogFilterDto): Promise<BlogCompactResponseDto[]> {
-    return this.blogsService.getAll(query);
+  @Serialize(BlogResponseDto)
+  @Get('trending/:period')
+  async getTrendingTitles(
+    @Param('period', new ParseEnumPipe(TrendingPeriod)) period: TrendingPeriod,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number = 20
+  ): Promise<BlogResponseDto[]> {
+    return this.blogsService.getTrending(period, limit);
   }
 
   @ApiOperation({

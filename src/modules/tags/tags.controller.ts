@@ -1,17 +1,21 @@
 import {
   Body,
   Controller,
+  DefaultValuePipe,
   Delete,
   Get,
   HttpCode,
   HttpStatus,
   Param,
   ParseEnumPipe,
+  ParseIntPipe,
   ParseUUIDPipe,
   Patch,
   Post,
   Put,
   Query,
+  Req,
+  Res,
   Session,
   UseGuards,
 } from '@nestjs/common';
@@ -31,12 +35,18 @@ import { SessionData } from 'express-session';
 import { BookFilterDto } from '../books/dtos/book-filter.dto';
 import { ReorderRootTagsDto } from './dtos/reorder-root-tags.dto';
 import { CreateRootTagDto } from './dtos/create-root-tag.dto';
+import { ViewsService } from '../views/views.service';
+import { TrendingPeriod, ViewEntityTypes } from '../views/views.types';
+import { Request, Response } from 'express';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 
 @Controller('tags')
 @ApiTags('Tag')
 export class TagsController {
-  constructor(private tagsService: TagsService) {}
+  constructor(
+    private tagsService: TagsService,
+    private viewsService: ViewsService
+  ) {}
 
   @ApiOperation({
     summary: 'Create a new tag',
@@ -109,9 +119,34 @@ export class TagsController {
   @Get(':slug')
   async getTagByName(
     @Param('slug') slug: string,
-    @Query() query: BookFilterDto
+    @Query() query: BookFilterDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+    @CurrentUser('id') userId?: string
   ): Promise<TagResponseDto> {
-    return this.tagsService.getBySlug(slug, query);
+    const tag = await this.tagsService.getBySlug(slug, query);
+
+    await this.viewsService.recordView(
+      ViewEntityTypes.Tag,
+      tag.id,
+      req,
+      res,
+      userId
+    );
+
+    return tag;
+  }
+
+  @ApiOperation({
+    summary: 'Retrieves trending tags (Based on views)',
+  })
+  @Serialize(TagCompactResponseDto)
+  @Get('trending/:period')
+  async getTrendingTitles(
+    @Param('period', new ParseEnumPipe(TrendingPeriod)) period: TrendingPeriod,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number = 20
+  ): Promise<TagCompactResponseDto[]> {
+    return this.tagsService.getTrending(period, limit);
   }
 
   @ApiOperation({

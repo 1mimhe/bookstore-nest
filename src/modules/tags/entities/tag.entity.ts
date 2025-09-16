@@ -61,4 +61,7 @@ export class Tag extends BaseEntity {
     inverseJoinColumn: { name: 'blogId', referencedColumnName: 'id' }
   })
   blogs: Blog[];
+
+  @Column({ default: 0 })
+  views: number;
 }

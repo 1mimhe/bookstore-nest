@@ -1,7 +1,7 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Publisher } from './publisher.entity';
-import { EntityManager, EntityNotFoundError, FindOptionsWhere, Repository } from 'typeorm';
+import { EntityManager, EntityNotFoundError, FindOptionsWhere, In, Repository } from 'typeorm';
 import { RolesEnum } from '../users/entities/role.entity';
 import { User } from '../users/entities/user.entity';
 import { SignupPublisherDto } from './dtos/create-publisher.dto';
@@ -17,6 +17,8 @@ import { CreateBookDto } from '../books/dtos/create-book.dto';
 import { BlogsService } from '../blogs/blogs.service';
 import { CreateBlogDto } from '../blogs/dtos/create-blog.dto';
 import { UpdateBlogDto } from '../blogs/dtos/update-blog.dto';
+import { TrendingPeriod, ViewEntityTypes } from '../views/views.types';
+import { ViewsService } from '../views/views.service';
 
 @Injectable()
 export class PublishersService {
@@ -24,7 +26,8 @@ export class PublishersService {
     @InjectRepository(Publisher) private publisherRepo: Repository<Publisher>,
     private authService: AuthService,
     private booksService: BooksService,
-    private blogsService: BlogsService
+    private blogsService: BlogsService,
+    private viewsService: ViewsService
   ) {}
 
   async signup(
@@ -106,6 +109,34 @@ export class PublishersService {
       ...publisher,
       books
     };
+  }
+
+  async getTrending(
+    period: TrendingPeriod,
+    limit?: number
+  ): Promise<Publisher[]> {
+    const trendingData = await this.viewsService.getTrendingEntities(
+      ViewEntityTypes.Publisher,
+      period,
+      limit
+    );
+
+    if (!trendingData || trendingData.length === 0) {
+      return [];
+    }
+
+    const publisherIds = trendingData.map(item => item.entityId);
+    const publishers = await this.publisherRepo.find({
+      where: {
+        id: In(publisherIds)
+      },
+    });
+
+    const entityMap = new Map(publishers.map(entity => [entity.id, entity]));
+    return trendingData.map(t => (
+      entityMap.get(t.entityId)
+    ))
+    .filter(e => e !== undefined);
   }
 
   async update(id: string, publisherDto: UpdatePublisherDto): Promise<Publisher | never> {

@@ -77,4 +77,7 @@ export class Blog extends BaseEntity {
 
   @OneToMany(() => Review, (review) => review.book)
   reviews: Review[];
+
+  @Column({ default: 0 })
+  views: number;
 }

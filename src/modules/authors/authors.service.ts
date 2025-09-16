@@ -1,7 +1,7 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Author } from './author.entity';
-import { DataSource, EntityManager, EntityNotFoundError, FindOptionsWhere, Repository } from 'typeorm';
+import { DataSource, EntityManager, EntityNotFoundError, FindOptionsWhere, In, Repository } from 'typeorm';
 import { CreateAuthorDto } from './dtos/create-author.dto';
 import { ConflictMessages } from 'src/common/enums/error.messages';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
@@ -12,6 +12,8 @@ import { Book } from '../books/entities/book.entity';
 import { StaffsService } from '../staffs/staffs.service';
 import { EntityTypes, StaffActionTypes } from '../staffs/entities/staff-action.entity';
 import { dbErrorHandler } from 'src/common/utilities/error-handler';
+import { TrendingPeriod, ViewEntityTypes } from '../views/views.types';
+import { ViewsService } from '../views/views.service';
 
 @Injectable()
 export class AuthorsService {
@@ -19,7 +21,8 @@ export class AuthorsService {
     @InjectRepository(Author) private authorRepo: Repository<Author>,
     private dataSource: DataSource,
     private booksService: BooksService,
-    private staffsService: StaffsService
+    private staffsService: StaffsService,
+    private viewsService: ViewsService
   ) {}
 
   async create(
@@ -120,6 +123,34 @@ export class AuthorsService {
       ...author,
       books
     };
+  }
+
+  async getTrending(
+    period: TrendingPeriod,
+    limit?: number
+  ): Promise<Author[]> {
+    const trendingData = await this.viewsService.getTrendingEntities(
+      ViewEntityTypes.Author,
+      period,
+      limit
+    );
+
+    if (!trendingData || trendingData.length === 0) {
+      return [];
+    }
+
+    const authorIds = trendingData.map(item => item.entityId);
+    const authors = await this.authorRepo.find({
+      where: {
+        id: In(authorIds)
+      }
+    });
+
+    const entityMap = new Map(authors.map(entity => [entity.id, entity]));
+    return trendingData.map(t => (
+      entityMap.get(t.entityId)
+    ))
+    .filter(e => e !== undefined);
   }
 
   async update(

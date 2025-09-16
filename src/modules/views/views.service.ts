@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { ViewEntityTypes, ViewResult } from './views.types';
+import { TrendingPeriod, ViewEntityTypes, ViewResult } from './views.types';
 import { Request, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { CookieNames } from 'src/common/enums/cookie.names';
@@ -7,8 +7,12 @@ import { v4 as uuidv4 } from 'uuid';
 import Redis from 'ioredis';
 import { REDIS_CLIENT } from '../app/redis.module';
 import { Cron } from '@nestjs/schedule';
-import { DataSource } from 'typeorm';
+import { Collection, DataSource } from 'typeorm';
 import { Title } from '../books/entities/title.entity';
+import { Author } from '../authors/author.entity';
+import { Publisher } from '../publishers/publisher.entity';
+import { Blog } from '../blogs/blog.entity';
+import { Tag } from '../tags/entities/tag.entity';
 
 @Injectable()
 export class ViewsService {
@@ -89,7 +93,7 @@ export class ViewsService {
 
   async getTrendingEntities(
     entityType: ViewEntityTypes,
-    period: 'day' | 'week' | 'month' = 'week',
+    period: TrendingPeriod = TrendingPeriod.Week,
     limit: number = 20
   ): Promise<Array<{ entityId: string; views: number }>> {
     const cacheKey = `trending:${entityType}:${period}`;
@@ -164,6 +168,11 @@ export class ViewsService {
   private async incrementEntityViews(compositeId: string, additionalViews: number): Promise<void> {
     const MODEL_MAP = {
       [ViewEntityTypes.Title]: Title,
+      [ViewEntityTypes.Author]: Author,
+      [ViewEntityTypes.Publisher]: Publisher,
+      [ViewEntityTypes.Blog]: Blog,
+      [ViewEntityTypes.Collection]: Collection,
+      [ViewEntityTypes.Tag]: Tag,
     } as const;
     const [entityType, entityId] = compositeId.split(':', 2);
 
