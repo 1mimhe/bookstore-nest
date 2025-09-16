@@ -7,6 +7,7 @@ import {
   HttpStatus,
   Param,
   ParseBoolPipe,
+  ParseEnumPipe,
   ParseIntPipe,
   ParseUUIDPipe,
   Patch,
@@ -54,7 +55,7 @@ import { Request, Response } from 'express';
 import { CookieNames } from 'src/common/enums/cookie.names';
 import { RecentView, RecentViewTypes } from 'src/common/types/recent-view.type';
 import { ViewsService } from '../views/views.service';
-import { ViewEntityTypes } from '../views/views.types';
+import { TrendingPeriod, ViewEntityTypes } from '../views/views.types';
 
 @Controller('publishers')
 @ApiTags('Publisher')
@@ -176,6 +177,18 @@ export class PublishersController extends BaseController {
     );
     
     return publisher;
+  }
+
+  @ApiOperation({
+    summary: 'Retrieves trending publishers (Based on views)',
+  })
+  @Serialize(PublisherCompactResponseDto)
+  @Get('trending/:period')
+  async getTrendingTitles(
+    @Param('period', new ParseEnumPipe(TrendingPeriod)) period: TrendingPeriod,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number = 20
+  ): Promise<PublisherCompactResponseDto[]> {
+    return this.publishersService.getTrending(period, limit);
   }
 
   @ApiOperation({
