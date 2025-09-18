@@ -30,6 +30,9 @@ export class AuthorFilterDto {
   @IsString()
   search?: string;
 
+  @ApiPropertyOptional({
+    default: 'newest'
+  })
   @IsOptional()
   @IsEnum(SortBy)
   sortBy?: SortBy;

@@ -30,6 +30,9 @@ export class PublisherFilterDto {
   @IsString()
   search?: string;
 
+  @ApiPropertyOptional({
+    default: 'newest'
+  })
   @IsOptional()
   @IsEnum(SortBy)
   sortBy?: SortBy;

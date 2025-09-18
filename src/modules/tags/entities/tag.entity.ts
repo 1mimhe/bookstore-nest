@@ -39,9 +39,6 @@ export class Tag extends BaseEntity {
 
   @Column({ nullable: true })
   color?: string;
-  
-  @Column({ default: 0 })
-  usageCount: number;
 
   @Column({ default: true })
   isActive: boolean;

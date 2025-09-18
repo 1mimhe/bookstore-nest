@@ -62,6 +62,9 @@ export class BookFilterDto {
   })
   decades?: string[];
 
+  @ApiPropertyOptional({
+    default: 'newest'
+  })
   @IsOptional()
   @IsEnum(SortBy)
   sortBy?: SortBy;

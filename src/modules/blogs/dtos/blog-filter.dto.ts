@@ -50,6 +50,9 @@ export class BlogFilterDto {
   })
   tags?: string[];
 
+  @ApiPropertyOptional({
+    default: 'newest'
+  })
   @IsOptional()
   @IsEnum(SortBy)
   sortBy?: SortBy;

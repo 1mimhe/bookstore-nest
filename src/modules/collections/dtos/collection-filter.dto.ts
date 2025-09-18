@@ -1,5 +1,6 @@
 import { IsEnum, IsNumber, IsOptional, IsPositive, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export enum SortBy {
   Newest = 'newest',
@@ -26,7 +27,10 @@ export class CollectionFilterDto {
   @IsString()
   search?: string;
 
+  @ApiPropertyOptional({
+     default: 'newest'
+  })
   @IsOptional()
   @IsEnum(SortBy)
-  sortBy?: SortBy = SortBy.Newest;
+  sortBy?: SortBy;
 }
