@@ -116,6 +116,7 @@ export class BlogsService {
       limit,
       sortBy,
       tags,
+      search,
       ...filters
     }: BlogFilterDto
   ): Promise<Blog[]> {
@@ -125,6 +126,15 @@ export class BlogsService {
     // Apply filters
     this.applyFilters(qb, filters);
     this.buildTagsConditions(qb, tags);
+
+    // Search filter
+    if (search) {
+      qb.andWhere(
+        '(LOWER(book.subject) LIKE LOWER(:search) OR ' +
+        '(LOWER(book.otherSubject) LIKE LOWER(:search) OR ',
+        { search: `%${search}%` }
+      );
+    }
 
     // Apply sorting
     this.buildOrderBy(qb, sortBy);

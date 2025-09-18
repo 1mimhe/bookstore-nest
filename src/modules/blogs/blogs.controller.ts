@@ -100,7 +100,7 @@ export class BlogsController extends BaseController {
 
   @ApiOperation({
     summary: 'Get all blogs',
-    description: 'With pagination, different filtering and sorting'
+    description: 'With pagination, different filtering, search and sorting'
   })
   @ApiQueryPagination()
   @Serialize(BlogResponseDto)

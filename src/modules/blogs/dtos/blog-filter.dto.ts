@@ -1,3 +1,4 @@
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsArray, IsEnum, IsInt, IsOptional, IsPositive, IsString, IsUUID } from 'class-validator';
 
@@ -19,6 +20,13 @@ export class BlogFilterDto {
   @IsPositive()
   limit = 10;
   
+  @ApiPropertyOptional({
+    description: 'Just a simple search in subjects'
+  })
+  @IsOptional()
+  @IsString()
+  search?: string;
+
   @IsOptional()
   @IsUUID()
   titleId?: string;
