@@ -110,14 +110,15 @@ export class BooksService {
     });
   }
 
-  async getByPublisherId(
-    publisherId: string,
+  async getAll(
     {
       page = 1,
       limit = 10,
       tags = [],
       decades = [],
-      sortBy
+      sortBy,
+      authorId,
+      publisherId
     }: BookFilterDto
   ): Promise<Book[]> {
     const skip = (page - 1) * limit;
@@ -126,60 +127,24 @@ export class BooksService {
       .createQueryBuilder('book')
       .leftJoinAndSelect('book.images', 'images')
       .leftJoin('book.title', 'title')
-      .addSelect('title.views')
-      .where('book.publisherId = :publisherId', { publisherId });
+      .addSelect('title.views');
+
+    // Add publisherId filter
+    if (authorId) {
+      qb.andWhere('blog.authorId = :authorId', { authorId });
+    }
+
+    // Add publisherId filter
+    if (publisherId) {
+      qb.andWhere('blog.publisherId = :publisherId', { publisherId });
+    }
 
     // Add tags filters
     if (tags.length > 0) {
       this.titleService.buildTagsConditions(qb, tags);
     }
 
-    // Add tags filters
-    if (decades.length > 0) {
-      this.titleService.buildDecadeConditions(qb, decades);
-    }
-
-    // Sorting
-    this.titleService.buildOrderBy(qb, sortBy);
-
-    return qb
-      .skip(skip)
-      .take(limit)
-      .getMany();
-  }
-
-  async getByAuthorId(
-    authorId: string,
-    {
-      page = 1,
-      limit = 10,
-      tags = [],
-      decades = [],
-      sortBy
-    }: BookFilterDto
-  ): Promise<Book[]> {
-    const skip = (page - 1) * limit;
-    
-    const qb = this.bookRepo
-      .createQueryBuilder('book')
-      .leftJoinAndSelect('book.images', 'images')
-      .leftJoin('book.title', 'title')
-      .addSelect('title.views')
-      .leftJoin('title.authors', 'authors')
-      .leftJoin('book.translators', 'translators')
-      .where(
-        new Brackets((qb) => {
-          qb.where('authors.id = :authorId', { authorId })
-            .orWhere('translators.id = :authorId', { authorId });
-        })
-      );
-
-    // Add tags filters
-    if (tags.length > 0) {
-      this.titleService.buildTagsConditions(qb, tags);
-    }
-
-    // Add tags filters
+    // Add decades filters
     if (decades.length > 0) {
       this.titleService.buildDecadeConditions(qb, decades);
     }

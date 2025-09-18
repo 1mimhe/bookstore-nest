@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer';
-import { IsArray, IsEnum, IsInt, IsOptional, IsPositive, IsString } from 'class-validator';
+import { IsArray, IsEnum, IsInt, IsOptional, IsPositive, IsString, IsUUID } from 'class-validator';
 
 export enum SortBy {
   MostLiked = 'mostliked',
@@ -20,6 +20,14 @@ export class BookFilterDto {
   @IsInt()
   @IsPositive()
   limit = 10;
+
+  @IsOptional()
+  @IsUUID()
+  authorId?: string;
+  
+  @IsOptional()
+  @IsUUID()
+  publisherId?: string;
 
   @IsOptional()
   @IsArray()
