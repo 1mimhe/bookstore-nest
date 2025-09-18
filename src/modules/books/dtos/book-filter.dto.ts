@@ -1,5 +1,6 @@
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsArray, IsEnum, IsInt, IsOptional, IsPositive, IsString } from 'class-validator';
+import { IsArray, IsEnum, IsInt, IsOptional, IsPositive, IsString, IsUUID } from 'class-validator';
 
 export enum SortBy {
   MostLiked = 'mostliked',
@@ -13,13 +14,28 @@ export class BookFilterDto {
   @IsOptional()
   @IsInt()
   @IsPositive()
-  page = 1;
+  page?: number;
 
   @Transform(({ value }) => Number(value))
   @IsOptional()
   @IsInt()
   @IsPositive()
-  limit = 10;
+  limit?: number;
+
+  @ApiPropertyOptional({
+    description: 'Just a simple search in names'
+  })
+  @IsOptional()
+  @IsString()
+  search?: string;
+
+  @IsOptional()
+  @IsUUID()
+  authorId?: string;
+  
+  @IsOptional()
+  @IsUUID()
+  publisherId?: string;
 
   @IsOptional()
   @IsArray()
@@ -32,6 +48,9 @@ export class BookFilterDto {
   })
   tags?: string[];
 
+  @ApiPropertyOptional({
+    examples: ['1900s', '1380s', '800s', '1900', '1380']
+  })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
@@ -41,8 +60,11 @@ export class BookFilterDto {
     }
     return value;
   })
-  decades?: string[]; // e.g., ["1900s", "1380s", "800s"]
+  decades?: string[];
 
+  @ApiPropertyOptional({
+    default: 'newest'
+  })
   @IsOptional()
   @IsEnum(SortBy)
   sortBy?: SortBy;

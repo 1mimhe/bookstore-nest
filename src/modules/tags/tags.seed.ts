@@ -42,9 +42,6 @@ class Tag {
 
   @Column({ nullable: true })
   color?: string;
-  
-  @Column({ default: 0 })
-  usageCount: number;
 
   @Column({ default: true })
   isActive: boolean;
@@ -899,7 +896,6 @@ async function seedTags() {
         description: tagData.description,
         type: tagData.type,
         color: tagData.color,
-        usageCount: 0,
         isActive: true,
       });
       
@@ -976,7 +972,6 @@ async function upsertTags(tagRepository: Repository<Tag>) {
           description: tagData.description,
           type: tagData.type,
           color: tagData.color,
-          usageCount: 0,
           isActive: true,
         });
         

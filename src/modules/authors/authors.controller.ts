@@ -55,6 +55,7 @@ import { Request, Response } from 'express';
 import { ViewsService } from '../views/views.service';
 import { TrendingPeriod, ViewEntityTypes } from '../views/views.types';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import { AuthorFilterDto } from './dtos/author-filter.dto';
 
 @Controller('authors')
 @ApiTags('Author')
@@ -91,15 +92,15 @@ export class AuthorsController extends BaseController {
 
   @ApiOperation({
     summary: 'Retrieves all authors',
+    description: 'With pagination, different filtering, search and sorting'
   })
   @ApiQueryPagination()
   @Serialize(AuthorPlusCountResDto)
   @Get()
   async getAllAuthors(
-    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
-    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
+    @Query() query: AuthorFilterDto
   ): Promise<AuthorPlusCountResDto[]> {
-    return this.authorsService.getAll(page, limit);
+    return this.authorsService.getAll(query);
   }
 
   @ApiOperation({

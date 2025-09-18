@@ -144,7 +144,7 @@ export class BooksController extends BaseController {
   }
 
   @ApiOperation({
-    summary: 'Get titles similar to a specific title',
+    summary: 'Retrieves titles similar to a specific title',
     description: 'Retrieves titles that have the most common tags with the title.'
   })
   @ApiOkResponse({
@@ -172,35 +172,16 @@ export class BooksController extends BaseController {
   }
 
   @ApiOperation({
-    summary: 'Retrieves all books by its publisher id',
-  })
-  @ApiNotFoundResponse({
-    description: NotFoundMessages.Publisher,
+    summary: 'Retrieves all books',
+    description: 'With pagination, different filtering and sorting'
   })
   @ApiQueryPagination()
   @Serialize(BookResponseDto)
-  @Get('publisher/:id')
-  async getBooksByPublisherId(
-    @Param('id', ParseUUIDPipe) id: string,
+  @Get()
+  async getAllBooks(
     @Query() query: BookFilterDto
   ): Promise<BookResponseDto[]> {
-    return this.booksService.getByPublisherId(id, query);
-  }
-
-  @ApiOperation({
-    summary: 'Retrieves all books by its author and translator id',
-  })
-  @ApiNotFoundResponse({
-    description: NotFoundMessages.Publisher,
-  })
-  @ApiQueryPagination()
-  @Serialize(BookResponseDto)
-  @Get('author/:id')
-  async getBooksByAuthorId(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Query() query: BookFilterDto
-  ): Promise<BookResponseDto[]> {
-    return this.booksService.getByAuthorId(id, query);
+    return this.booksService.getAll(query);
   }
 
   @ApiOperation({

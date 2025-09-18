@@ -1,7 +1,7 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Publisher } from './publisher.entity';
-import { EntityManager, EntityNotFoundError, FindOptionsWhere, In, Repository } from 'typeorm';
+import { EntityManager, EntityNotFoundError, FindOptionsWhere, In, Repository, SelectQueryBuilder } from 'typeorm';
 import { RolesEnum } from '../users/entities/role.entity';
 import { User } from '../users/entities/user.entity';
 import { SignupPublisherDto } from './dtos/create-publisher.dto';
@@ -19,6 +19,7 @@ import { CreateBlogDto } from '../blogs/dtos/create-blog.dto';
 import { UpdateBlogDto } from '../blogs/dtos/update-blog.dto';
 import { TrendingPeriod, ViewEntityTypes } from '../views/views.types';
 import { ViewsService } from '../views/views.service';
+import { PublisherFilterDto, SortBy } from './dtos/publisher-filter.dto';
 
 @Injectable()
 export class PublishersService {
@@ -59,21 +60,64 @@ export class PublishersService {
     );
   }
 
-  async getAll(page = 1, limit = 10): Promise<(Publisher & { bookCount: number })[]> {
+  async getAll(
+    {
+      page = 1,
+      limit = 10,
+      search,
+      sortBy
+    }: PublisherFilterDto
+  ): Promise<(Publisher & { bookCount: number })[]> {
     const skip = (page - 1) * limit;
-    const publishers = await this.publisherRepo
-      .createQueryBuilder('author')
+    const qb = this.publisherRepo
+      .createQueryBuilder('publisher')
       .leftJoin('publisher.books', 'books')
       .select(['publisher', 'COUNT(books.id) as bookCount'])
-      .groupBy('publisher.id')
+      .groupBy('publisher.id');
+
+    // Search filter
+    if (search) {
+      qb.andWhere(
+        '(LOWER(publisher.publisherName) LIKE LOWER(:search)',
+        { search: `%${search}%` }
+      );
+    }
+
+    // Sorting
+    this.buildOrderBy(qb, sortBy);
+
+    const publishers = await qb
       .skip(skip)
       .limit(limit)
       .getRawAndEntities();
-
-    return publishers.entities.map((author, index) => ({
-      ...author,
+    return publishers.entities.map((publisher, index) => ({
+      ...publisher,
       bookCount: parseInt(publishers.raw[index].bookCount, 10),
     }));
+  }
+
+  private buildOrderBy(
+    qb: SelectQueryBuilder<Publisher>,
+    sortBy: SortBy = SortBy.Newest
+  ): void {
+    switch (sortBy) {
+      case SortBy.NameAsc:
+        qb.orderBy('publisher.publisherName', 'ASC');
+        break;
+      case SortBy.NameDesc:
+        qb.orderBy('publisher.publisherName', 'DESC');
+        break;
+      case SortBy.MostBooks:
+        qb.orderBy('bookCount', 'DESC');
+        break;
+      case SortBy.MostView:
+        qb.orderBy('publisher.views', 'DESC');
+        break;
+      case SortBy.Newest:
+      default:
+        qb.orderBy('publisher.createdAt', 'DESC');
+        break;
+    }
   }
 
   async get(
@@ -102,7 +146,11 @@ export class PublishersService {
 
     let books: Book[] = [];
     if (complete) {
-      books = await this.booksService.getByPublisherId(publisher.id, { page, limit });
+      books = await this.booksService.getAll({
+        publisherId: publisher.id,
+        page,
+        limit
+      });
     }
 
     return {

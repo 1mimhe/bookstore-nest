@@ -1,5 +1,5 @@
 import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { DataSource, EntityManager, EntityNotFoundError, In, Repository } from 'typeorm';
+import { DataSource, EntityManager, EntityNotFoundError, In, Repository, SelectQueryBuilder } from 'typeorm';
 import { Tag, TagType } from './entities/tag.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
@@ -15,6 +15,7 @@ import { RootTag } from './entities/root-tag.entity';
 import { CreateRootTagDto } from './dtos/create-root-tag.dto';
 import { TrendingPeriod, ViewEntityTypes } from '../views/views.types';
 import { ViewsService } from '../views/views.service';
+import { SortBy, TagFilterDto } from './dtos/tag-filter.dto';
 
 @Injectable()
 export class TagsService {
@@ -86,8 +87,59 @@ export class TagsService {
     return [...existingTags, ...createdTags];
   }
 
-  async getAll(type?: TagType): Promise<Tag[]> {
-    return this.tagRepo.find({ where: { type } });
+  async getAll(
+    {
+      search,
+      sortBy
+    }: TagFilterDto
+  ): Promise<(Tag & { titleCount: number })[]> {
+    const qb = this.tagRepo
+      .createQueryBuilder('tag')
+      .leftJoin('tag.titles', 'titles')
+      .select(['tag', 'COUNT(titles.id) as titleCount'])
+      .where('tag.isActive = :isActive', { isActive: true })
+      .groupBy('tag.id');
+
+    // Search filter
+    if (search) {
+      qb.andWhere(
+        '(LOWER(tag.name) LIKE LOWER(:search) OR ' +
+        'LOWER(tag.description) LIKE LOWER(:search))',
+        { search: `%${search}%` }
+      );
+    }
+
+    // Sorting
+    this.buildOrderBy(qb, sortBy);
+
+    const tags = await qb
+      .getRawAndEntities();
+    
+    return tags.entities.map((tag, index) => ({
+      ...tag,
+      titleCount: parseInt(tags.raw[index].titleCount, 10),
+    }));
+  }
+
+  private buildOrderBy(
+    qb: SelectQueryBuilder<Tag>,
+    sortBy: SortBy = SortBy.MostBooks
+  ): void {
+    switch (sortBy) {
+      case SortBy.NameAsc:
+        qb.orderBy('tag.name', 'ASC');
+        break;
+      case SortBy.NameDesc:
+        qb.orderBy('tag.name', 'DESC');
+        break;
+      case SortBy.MostView:
+        qb.orderBy('tag.views', 'DESC');
+        break;
+      case SortBy.MostBooks:
+      default:
+        qb.orderBy('titleCount', 'DESC');
+        break;
+    }
   }
 
   async getById(

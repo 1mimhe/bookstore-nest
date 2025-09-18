@@ -569,51 +569,35 @@ export class TitlesService {
     }
   }
 
-  buildOrderBy(qb: SelectQueryBuilder<Book>, by?: SortBy): void;
-  buildOrderBy(qb: SelectQueryBuilder<Title>, by?: SortBy): void;
-  buildOrderBy(qb: SelectQueryBuilder<Book | Title>, by: SortBy = SortBy.Newest): void {
-    const entityType = qb.expressionMap.mainAlias?.metadata?.targetName;
-
-    if (entityType === 'Book') {
-      switch (by) {
-        case SortBy.MostLiked:
-          qb.orderBy('book.rateCount', 'DESC');
-          break;
-        case SortBy.MostView:
-          qb.orderBy('title.views', 'DESC');
-          break;
-        case SortBy.MostSale:
-          qb.orderBy('book.sold', 'DESC');
-          break;
-        default:
-          qb.orderBy('book.createdAt', 'DESC');
-      }
-    } else if (entityType === 'Title') {
-      switch (by) {
-        case SortBy.MostLiked:
-          const rateCountSubQuery = this.titleRepo.createQueryBuilder('sub_title')
-            .select('SUM(sub_book.rateCount)', 'totalRateCount')
-            .leftJoin('sub_title.books', 'sub_book')
-            .where('sub_title.id = title.id')
-            .getQuery();
-            qb.addSelect(`(${rateCountSubQuery})`, 'title_rateCount');
-            qb.orderBy('title_rateCount', 'DESC');
-          break;
-        case SortBy.MostSale:
-          const soldSubQuery = this.titleRepo.createQueryBuilder('sub_title')
-            .select('SUM(sub_book.sold)', 'totalSold')
-            .leftJoin('sub_title.books', 'sub_book')
-            .where('sub_title.id = title.id')
-            .getQuery();
-          qb.addSelect(`(${soldSubQuery})`, 'title_sold');
-          qb.orderBy('title_sold', 'DESC')
-          break;
-        case SortBy.MostView:
-          qb.orderBy('title.views', 'DESC');
-          break;
-        default:
-          qb.orderBy('title.createdAt', 'DESC');
-      }
+  private buildOrderBy(
+    qb: SelectQueryBuilder<Title>,
+    by: SortBy = SortBy.Newest
+  ): void {
+    switch (by) {
+      case SortBy.MostLiked:
+        const rateCountSubQuery = this.titleRepo.createQueryBuilder('sub_title')
+          .select('SUM(sub_book.rateCount)', 'totalRateCount')
+          .leftJoin('sub_title.books', 'sub_book')
+          .where('sub_title.id = title.id')
+          .getQuery();
+          qb.addSelect(`(${rateCountSubQuery})`, 'title_rateCount');
+          qb.orderBy('title_rateCount', 'DESC');
+        break;
+      case SortBy.MostSale:
+        const soldSubQuery = this.titleRepo.createQueryBuilder('sub_title')
+          .select('SUM(sub_book.sold)', 'totalSold')
+          .leftJoin('sub_title.books', 'sub_book')
+          .where('sub_title.id = title.id')
+          .getQuery();
+        qb.addSelect(`(${soldSubQuery})`, 'title_sold');
+        qb.orderBy('title_sold', 'DESC')
+        break;
+      case SortBy.MostView:
+        qb.orderBy('title.views', 'DESC');
+        break;
+      case SortBy.Newest:
+      default:
+        qb.orderBy('title.createdAt', 'DESC');
     }
   }
 }

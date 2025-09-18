@@ -45,6 +45,7 @@ import { ViewsService } from '../views/views.service';
 import { TrendingPeriod, ViewEntityTypes } from '../views/views.types';
 import { Request, Response } from 'express';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import { CollectionFilterDto } from './dtos/collection-filter.dto';
 
 @Controller('collections')
 @ApiTags('Collection')
@@ -73,15 +74,15 @@ export class CollectionsController {
 
   @ApiOperation({
     summary: 'Retrieves all collections',
+    description: 'With pagination, different filtering, search and sorting.'
   })
   @ApiQueryPagination()
   @Serialize(CollectionCompactResponseDto)
   @Get()
   async getAllCollections(
-    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
-    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
+    @Query() query: CollectionFilterDto
   ): Promise<CollectionCompactResponseDto[]> {
-    return this.collectionsService.getAll(page, limit);
+    return this.collectionsService.getAll(query);
   }
 
   @ApiOperation({

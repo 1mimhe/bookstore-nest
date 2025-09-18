@@ -52,6 +52,8 @@ import { Request, Response } from 'express';
 import { ViewsService } from '../views/views.service';
 import { TrendingPeriod, ViewEntityTypes } from '../views/views.types';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import { BlogFilterDto } from './dtos/blog-filter.dto';
+import { ApiQueryPagination } from 'src/common/decorators/query.decorators';
 
 @Controller('blogs')
 @ApiTags('Blog')
@@ -94,6 +96,19 @@ export class BlogsController extends BaseController {
     @CurrentUser('id') userId: string
   ): Promise<BlogCompactResponseDto> {
     return this.blogsService.create(body, userId, session.staffId);
+  }
+
+  @ApiOperation({
+    summary: 'Get all blogs',
+    description: 'With pagination, different filtering, search and sorting'
+  })
+  @ApiQueryPagination()
+  @Serialize(BlogResponseDto)
+  @Get()
+  async getAllBlogs(
+    @Query() query: BlogFilterDto,
+  ): Promise<BlogResponseDto[]> {
+    return this.blogsService.getAll(query);
   }
 
   @ApiOperation({

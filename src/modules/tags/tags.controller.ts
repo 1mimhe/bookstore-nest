@@ -39,6 +39,7 @@ import { ViewsService } from '../views/views.service';
 import { TrendingPeriod, ViewEntityTypes } from '../views/views.types';
 import { Request, Response } from 'express';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import { TagFilterDto } from './dtos/tag-filter.dto';
 
 @Controller('tags')
 @ApiTags('Tag')
@@ -86,20 +87,14 @@ export class TagsController {
 
   @ApiOperation({
     summary: 'Retrieves all tags',
-  })
-  @ApiQuery({
-    name: 'type',
-    enum: TagType,
-    required: false,
-    description: 'The type of tags to retrieve (optional).',
+    description: 'With filtering, search and sorting'
   })
   @Serialize(TagCompactResponseDto)
   @Get()
   async getAllTags(
-    @Query('type', new ParseEnumPipe(TagType, { optional: true }))
-    type?: TagType,
+    @Query() query: TagFilterDto
   ): Promise<TagCompactResponseDto[]> {
-    return this.tagsService.getAll(type);
+    return this.tagsService.getAll(query);
   }
 
   @ApiOperation({

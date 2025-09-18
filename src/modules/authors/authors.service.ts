@@ -1,7 +1,7 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Author } from './author.entity';
-import { DataSource, EntityManager, EntityNotFoundError, FindOptionsWhere, In, Repository } from 'typeorm';
+import { Brackets, DataSource, EntityManager, EntityNotFoundError, FindOptionsWhere, In, Repository, SelectQueryBuilder } from 'typeorm';
 import { CreateAuthorDto } from './dtos/create-author.dto';
 import { ConflictMessages } from 'src/common/enums/error.messages';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
@@ -14,6 +14,7 @@ import { EntityTypes, StaffActionTypes } from '../staffs/entities/staff-action.e
 import { dbErrorHandler } from 'src/common/utilities/error-handler';
 import { TrendingPeriod, ViewEntityTypes } from '../views/views.types';
 import { ViewsService } from '../views/views.service';
+import { AuthorFilterDto, SortBy } from './dtos/author-filter.dto';
 
 @Injectable()
 export class AuthorsService {
@@ -72,22 +73,67 @@ export class AuthorsService {
     });
   }
 
-  async getAll(page = 1, limit = 10): Promise<(Author & { bookCount: number })[]> {
+  async getAll(
+    {
+      page = 1,
+      limit = 10,
+      search,
+      sortBy
+    }: AuthorFilterDto
+  ): Promise<(Author & { bookCount: number })[]> {
     const skip = (page - 1) * limit;
-    const authors = await this.authorRepo
+    const qb = this.authorRepo
       .createQueryBuilder('author')
       .leftJoin('author.titles', 'titles')
       .leftJoin('author.books', 'books')
       .select(['author', 'COUNT(books.id) + COUNT(titles.id) as bookCount'])
-      .groupBy('author.id')
+      .groupBy('author.id');
+
+    // Search filter across combined names
+    if (search) {
+      const searchPattern = `%${search.toLowerCase().replace(/\s+/g, '%')}%`;    
+      qb.andWhere('LOWER(CONCAT(author.firstName, \' \', author.lastName, \' \', author.nickName)) LIKE LOWER(:search)')
+      .setParameter('search', searchPattern);
+    }
+
+    // Sorting
+    this.buildOrderBy(qb, sortBy);
+
+    const authors = await qb
       .skip(skip)
       .limit(limit)
       .getRawAndEntities();
     
     return authors.entities.map((author, index) => ({
       ...author,
-      bookCount: parseInt(authors.raw[index].bookCount),
+      bookCount: parseInt(authors.raw[index].bookCount, 10),
     }));
+  }
+
+  private buildOrderBy(
+    qb: SelectQueryBuilder<Author>,
+    sortBy: SortBy = SortBy.Newest
+  ): void {
+    switch (sortBy) {
+      case SortBy.NameAsc:
+        qb.orderBy('author.firstName', 'ASC')
+          .addOrderBy('author.lastName', 'ASC');
+        break;
+      case SortBy.NameDesc:
+        qb.orderBy('author.firstName', 'DESC')
+          .addOrderBy('author.lastName', 'DESC');
+        break;
+      case SortBy.MostBooks:
+        qb.orderBy('bookCount', 'DESC');
+        break;
+      case SortBy.MostView:
+        qb.orderBy('author.views', 'DESC');
+        break;
+      case SortBy.Newest:
+      default:
+        qb.orderBy('author.createdAt', 'DESC');
+        break;
+    }
   }
 
   async get(
@@ -116,7 +162,11 @@ export class AuthorsService {
 
     let books: Book[] = [];
     if (complete) {
-      books = await this.booksService.getByAuthorId(author.id, { page, limit });
+      books = await this.booksService.getAll({
+        authorId: author.id,
+        page,
+        limit
+      });
     }
 
     return {

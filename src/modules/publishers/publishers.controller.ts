@@ -56,6 +56,7 @@ import { CookieNames } from 'src/common/enums/cookie.names';
 import { RecentView, RecentViewTypes } from 'src/common/types/recent-view.type';
 import { ViewsService } from '../views/views.service';
 import { TrendingPeriod, ViewEntityTypes } from '../views/views.types';
+import { PublisherFilterDto } from './dtos/publisher-filter.dto';
 
 @Controller('publishers')
 @ApiTags('Publisher')
@@ -98,26 +99,15 @@ export class PublishersController extends BaseController {
 
   @ApiOperation({ 
     summary: 'Retrieves all publishers',
+    description: 'With pagination, different filtering, search and sorting'
   })
-  @ApiQuery({
-    name: 'page',
-    type: Number,
-    required: false,
-    description: 'Page number for paginated relations (default: 1)',
-  })
-  @ApiQuery({
-    name: 'limit',
-    type: Number,
-    required: false,
-    description: 'Number of titles per page (default: 10)',
-  })
+  @ApiQueryPagination()
   @Serialize(PublisherPlusResDto)
   @Get()
-  async getAllAuthors(
-    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
-    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
+  async getAllPublishers(
+    @Query() query: PublisherFilterDto,
   ): Promise<PublisherPlusResDto[]> {
-    return this.publishersService.getAll(page, limit);
+    return this.publishersService.getAll(query);
   }
 
   @ApiOperation({

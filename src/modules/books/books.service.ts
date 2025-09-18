@@ -1,18 +1,15 @@
 import {
   BadRequestException,
-  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Book } from './entities/book.entity';
-import { Brackets, DataSource, EntityManager, EntityNotFoundError, In, Repository, SelectQueryBuilder } from 'typeorm';
+import { DataSource, EntityManager, EntityNotFoundError, In, Repository, SelectQueryBuilder } from 'typeorm';
 import { CreateBookDto } from './dtos/create-book.dto';
 import { Title } from './entities/title.entity';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
 import { Publisher } from '../publishers/publisher.entity';
-import { DBErrors } from 'src/common/enums/db.errors';
-import { ConflictMessages } from 'src/common/enums/error.messages';
 import { Author } from '../authors/author.entity';
 import { UpdateBookDto } from './dtos/update-book.dto';
 import { BookImage, BookImageTypes } from './entities/book-image.entity';
@@ -23,8 +20,7 @@ import { dbErrorHandler } from 'src/common/utilities/error-handler';
 import { StaffsService } from '../staffs/staffs.service';
 import { EntityTypes, StaffActionTypes } from '../staffs/entities/staff-action.entity';
 import { CartBook } from './books.types';
-import { BookFilterDto } from './dtos/book-filter.dto';
-import { getDateRange } from 'src/common/utilities/decade.utils';
+import { BookFilterDto, SortBy } from './dtos/book-filter.dto';
 import { TitlesService } from './titles.service';
 
 @Injectable()
@@ -110,14 +106,16 @@ export class BooksService {
     });
   }
 
-  async getByPublisherId(
-    publisherId: string,
+  async getAll(
     {
       page = 1,
       limit = 10,
       tags = [],
       decades = [],
-      sortBy
+      sortBy,
+      authorId,
+      publisherId,
+      search
     }: BookFilterDto
   ): Promise<Book[]> {
     const skip = (page - 1) * limit;
@@ -126,21 +124,39 @@ export class BooksService {
       .createQueryBuilder('book')
       .leftJoinAndSelect('book.images', 'images')
       .leftJoin('book.title', 'title')
-      .addSelect('title.views')
-      .where('book.publisherId = :publisherId', { publisherId });
+      .addSelect('title.views');
+
+    // Add publisherId filter
+    if (authorId) {
+      qb.andWhere('blog.authorId = :authorId', { authorId });
+    }
+
+    // Add publisherId filter
+    if (publisherId) {
+      qb.andWhere('blog.publisherId = :publisherId', { publisherId });
+    }
 
     // Add tags filters
     if (tags.length > 0) {
       this.titleService.buildTagsConditions(qb, tags);
     }
 
-    // Add tags filters
+    // Add decades filters
     if (decades.length > 0) {
       this.titleService.buildDecadeConditions(qb, decades);
     }
 
+    // Search filter
+    if (search) {
+      qb.andWhere(
+        '(LOWER(book.name) LIKE LOWER(:search) OR ' +
+        '(LOWER(book.anotherName) LIKE LOWER(:search) OR ',
+        { search: `%${search}%` }
+      );
+    }
+
     // Sorting
-    this.titleService.buildOrderBy(qb, sortBy);
+    this.buildOrderBy(qb, sortBy);
 
     return qb
       .skip(skip)
@@ -148,49 +164,24 @@ export class BooksService {
       .getMany();
   }
 
-  async getByAuthorId(
-    authorId: string,
-    {
-      page = 1,
-      limit = 10,
-      tags = [],
-      decades = [],
-      sortBy
-    }: BookFilterDto
-  ): Promise<Book[]> {
-    const skip = (page - 1) * limit;
-    
-    const qb = this.bookRepo
-      .createQueryBuilder('book')
-      .leftJoinAndSelect('book.images', 'images')
-      .leftJoin('book.title', 'title')
-      .addSelect('title.views')
-      .leftJoin('title.authors', 'authors')
-      .leftJoin('book.translators', 'translators')
-      .where(
-        new Brackets((qb) => {
-          qb.where('authors.id = :authorId', { authorId })
-            .orWhere('translators.id = :authorId', { authorId });
-        })
-      );
-
-    // Add tags filters
-    if (tags.length > 0) {
-      this.titleService.buildTagsConditions(qb, tags);
+  private buildOrderBy(
+    qb: SelectQueryBuilder<Book>,
+    by: SortBy = SortBy.Newest
+  ): void {
+    switch (by) {
+      case SortBy.MostLiked:
+        qb.orderBy('book.rateCount', 'DESC');
+        break;
+      case SortBy.MostView:
+        qb.orderBy('title.views', 'DESC');
+        break;
+      case SortBy.MostSale:
+        qb.orderBy('book.sold', 'DESC');
+        break;
+      case SortBy.Newest:
+      default:
+        qb.orderBy('book.createdAt', 'DESC');
     }
-
-    // Add tags filters
-    if (decades.length > 0) {
-      this.titleService.buildDecadeConditions(qb, decades);
-    }
-
-    // Sorting
-    this.titleService.buildOrderBy(qb, sortBy);
-
-    return qb
-      .skip(skip)
-      .take(limit)
-      .getMany();
   }
 
   async getMultipleById(ids: string[]): Promise<CartBook[]> {
