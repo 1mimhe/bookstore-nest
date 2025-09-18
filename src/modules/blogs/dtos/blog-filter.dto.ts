@@ -1,5 +1,10 @@
 import { Transform } from 'class-transformer';
-import { IsInt, IsOptional, IsPositive, IsUUID } from 'class-validator';
+import { IsArray, IsEnum, IsInt, IsOptional, IsPositive, IsString, IsUUID } from 'class-validator';
+
+export enum SortBy {
+  MostView = 'mostview',
+  Newest = 'newest'
+}
 
 export class BlogFilterDto {
   @Transform(({ value }) => Number(value))
@@ -20,9 +25,24 @@ export class BlogFilterDto {
 
   @IsOptional()
   @IsUUID()
-  authorID?: string;
+  authorId?: string;
 
   @IsOptional()
   @IsUUID()
   publisherId?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      return value.split(',').map(item => item.trim()).filter(item => item.length > 0);
+    }
+    return value;
+  })
+  tags?: string[];
+
+  @IsOptional()
+  @IsEnum(SortBy)
+  sortBy?: SortBy;
 }

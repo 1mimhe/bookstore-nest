@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Blog } from './blog.entity';
-import { DataSource, EntityNotFoundError, FindOptionsWhere, In, Repository } from 'typeorm';
+import { DataSource, EntityNotFoundError, FindOptionsWhere, In, Repository, SelectQueryBuilder } from 'typeorm';
 import { CreateBlogDto } from './dtos/create-blog.dto';
 import { Tag } from '../tags//entities/tag.entity';
 import { dbErrorHandler } from 'src/common/utilities/error-handler';
@@ -9,7 +9,7 @@ import { NotFoundMessages } from 'src/common/enums/error.messages';
 import { UpdateBlogDto } from './dtos/update-blog.dto';
 import { StaffsService } from '../staffs/staffs.service';
 import { EntityTypes, StaffActionTypes } from '../staffs/entities/staff-action.entity';
-import { BlogFilterDto } from './dtos/blog-filter.dto';
+import { BlogFilterDto, SortBy } from './dtos/blog-filter.dto';
 import { TrendingPeriod, ViewEntityTypes } from '../views/views.types';
 import { ViewsService } from '../views/views.service';
 
@@ -114,18 +114,81 @@ export class BlogsService {
     {
       page,
       limit,
-      ...blogFilterDto
+      sortBy,
+      tags,
+      ...filters
     }: BlogFilterDto
-  ) {
+  ): Promise<Blog[]> {
     const skip = (page - 1) * limit;
-    return this.blogRepo.find({
-      where: blogFilterDto,
-      skip,
-      take: limit,
-      order: {
-        createdAt: 'DESC'
+    const qb = this.blogRepo.createQueryBuilder('blog');
+
+    // Apply filters
+    this.applyFilters(qb, filters);
+    this.buildTagsConditions(qb, tags);
+
+    // Apply sorting
+    this.buildOrderBy(qb, sortBy);
+
+    return qb
+      .skip(skip)
+      .take(limit)
+      .getMany();
+  }
+
+  private applyFilters(
+    qb: SelectQueryBuilder<Blog>,
+    filters: Omit<BlogFilterDto, 'page' | 'limit' | 'sortBy'>
+  ): void {
+    if (filters.titleId) {
+      qb.andWhere('blog.titleId = :titleId', { titleId: filters.titleId });
+    }
+
+    if (filters.authorId) {
+      qb.andWhere('blog.authorId = :authorId', { authorId: filters.authorId });
+    }
+
+    if (filters.publisherId) {
+      qb.andWhere('blog.publisherId = :publisherId', { publisherId: filters.publisherId });
+    }
+  }
+
+  private buildTagsConditions(
+    qb: SelectQueryBuilder<Blog>,
+    tags: string[] = []
+  ): void {
+    qb.andWhere(
+      qb => {
+        const subQuery = qb
+          .subQuery()
+          .select('1')
+          .from('blog_tag', 'bt')
+          .innerJoin('tags', 't', 'bt.tagId = t.id')
+          .where('bt.blogId = blog.id')
+          .andWhere('t.slug IN (:...tags)')
+          .getQuery();
+        return `EXISTS (${subQuery})`;
       }
-    });
+    )
+    .setParameter('tags', tags);
+  }
+
+  private buildOrderBy(
+    qb: SelectQueryBuilder<Blog>,
+    by: SortBy = SortBy.Newest
+  ): void {
+    const entityType = qb.expressionMap.mainAlias?.metadata?.targetName;
+
+    if (entityType === 'Blog') {
+      switch (by) {
+        case SortBy.MostView:
+          qb.orderBy('blog.views', 'DESC');
+          break;
+        case SortBy.Newest:
+        default:
+          qb.orderBy('blog.createdAt', 'DESC');
+          break;
+      }
+    }
   }
 
   async getTrending(
