@@ -14,13 +14,13 @@ export class BookFilterDto {
   @IsOptional()
   @IsInt()
   @IsPositive()
-  page = 1;
+  page?: number;
 
   @Transform(({ value }) => Number(value))
   @IsOptional()
   @IsInt()
   @IsPositive()
-  limit = 10;
+  limit?: number;
 
   @ApiPropertyOptional({
     description: 'Just a simple search in names'

@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CollectionBook } from './entities/collection-book.entity';
-import { DataSource, EntityManager, EntityNotFoundError, FindOptionsRelations, FindOptionsWhere, In, Repository } from 'typeorm';
+import { DataSource, EntityManager, EntityNotFoundError, FindOptionsRelations, FindOptionsWhere, In, Repository, SelectQueryBuilder } from 'typeorm';
 import { Collection } from './entities/collection.entity';
 import { CreateCollectionDto } from './dtos/create-collection.dto';
 import { CreateCollectionBookDto } from './dtos/create-collection-book.dto';
@@ -12,6 +12,7 @@ import { StaffsService } from '../staffs/staffs.service';
 import { EntityTypes, StaffActionTypes } from '../staffs/entities/staff-action.entity';
 import { TrendingPeriod, ViewEntityTypes } from '../views/views.types';
 import { ViewsService } from '../views/views.service';
+import { CollectionFilterDto, SortBy } from './dtos/collection-filter.dto';
 
 @Injectable()
 export class CollectionsService {
@@ -53,11 +54,66 @@ export class CollectionsService {
     });
   }
 
-  async getAll(page = 1, limit = 10): Promise<Collection[]> {
+  async getAll(
+    {
+      page = 1,
+      limit = 10,
+      search,
+      sortBy
+    }: CollectionFilterDto
+  ): Promise<(Collection & { bookCount: number })[]> {
     const skip = (page - 1) * limit;
-    return this.collectionRepo.find({
-      skip, take: limit
-    });
+    const qb = this.collectionRepo
+      .createQueryBuilder('collection')
+      .leftJoin('collection.collectionBooks', 'collectionBooks')
+      .select(['collection', 'COUNT(collectionBooks.id) as bookCount'])
+      .groupBy('collection.id');
+
+    // Search filter
+    if (search) {
+      qb.andWhere(
+        '(LOWER(collection.name) LIKE LOWER(:search) OR ' +
+        'LOWER(collection.description) LIKE LOWER(:search))',
+        { search: `%${search}%` }
+      );
+    }
+
+    // Sorting
+    this.buildOrderBy(qb, sortBy);
+
+    const collections = await qb
+      .skip(skip)
+      .limit(limit)
+      .getRawAndEntities();
+    
+    return collections.entities.map((collection, index) => ({
+      ...collection,
+      bookCount: parseInt(collections.raw[index].bookCount, 10),
+    }));
+  }
+
+  private buildOrderBy(
+    qb: SelectQueryBuilder<Collection>,
+    sortBy: SortBy = SortBy.Newest
+  ): void {
+    switch (sortBy) {
+      case SortBy.NameAsc:
+        qb.orderBy('collection.name', 'ASC');
+        break;
+      case SortBy.NameDesc:
+        qb.orderBy('collection.name', 'DESC');
+        break;
+      case SortBy.MostBooks:
+        qb.orderBy('bookCount', 'DESC');
+        break;
+      case SortBy.MostView:
+        qb.orderBy('collection.views', 'DESC');
+        break;
+      case SortBy.Newest:
+      default:
+        qb.orderBy('collection.createdAt', 'DESC');
+        break;
+    }
   }
 
   async get(

@@ -112,8 +112,8 @@ export class BlogsService {
 
   async getAll(
     {
-      page,
-      limit,
+      page = 1,
+      limit = 10,
       sortBy,
       tags,
       search,

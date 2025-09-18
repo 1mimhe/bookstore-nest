@@ -62,8 +62,8 @@ export class PublishersService {
 
   async getAll(
     {
-      page,
-      limit,
+      page = 1,
+      limit = 10,
       search,
       sortBy
     }: PublisherFilterDto
