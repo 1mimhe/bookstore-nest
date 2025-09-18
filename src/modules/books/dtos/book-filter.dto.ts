@@ -22,6 +22,13 @@ export class BookFilterDto {
   @IsPositive()
   limit = 10;
 
+  @ApiPropertyOptional({
+    description: 'Just a simple search in names'
+  })
+  @IsOptional()
+  @IsString()
+  search?: string;
+
   @IsOptional()
   @IsUUID()
   authorId?: string;

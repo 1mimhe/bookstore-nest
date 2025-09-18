@@ -114,7 +114,8 @@ export class BooksService {
       decades = [],
       sortBy,
       authorId,
-      publisherId
+      publisherId,
+      search
     }: BookFilterDto
   ): Promise<Book[]> {
     const skip = (page - 1) * limit;
@@ -124,6 +125,15 @@ export class BooksService {
       .leftJoinAndSelect('book.images', 'images')
       .leftJoin('book.title', 'title')
       .addSelect('title.views');
+
+    // Search filter
+    if (search) {
+      qb.andWhere(
+        '(LOWER(book.name) LIKE LOWER(:search) OR ' +
+        '(LOWER(book.anotherName) LIKE LOWER(:search) OR ',
+        { search: `%${search}%` }
+      );
+    }
 
     // Add publisherId filter
     if (authorId) {
