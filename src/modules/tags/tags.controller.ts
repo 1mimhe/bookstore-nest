@@ -25,7 +25,7 @@ import { ApiBadRequestResponse, ApiBearerAuth, ApiOperation, ApiQuery, ApiTags }
 import { TagType } from './entities/tag.entity';
 import { UpdateTagDto } from './dtos/update-tag.dto';
 import { ApiQueryArray, ApiQueryPagination } from 'src/common/decorators/query.decorators';
-import { TagCompactResponseDto, TagResponseDto } from './dtos/tag-response.dto';
+import { TagCompactPlusResponseDto, TagCompactResponseDto, TagResponseDto } from './dtos/tag-response.dto';
 import { Serialize } from 'src/common/serialize.interceptor';
 import { RolesEnum } from '../users/entities/role.entity';
 import { RequiredRoles } from 'src/common/decorators/roles.decorator';
@@ -87,13 +87,13 @@ export class TagsController {
 
   @ApiOperation({
     summary: 'Retrieves all tags',
-    description: 'With filtering, search and sorting'
+    description: 'With filtering, search and sorting.'
   })
-  @Serialize(TagCompactResponseDto)
+  @Serialize(TagCompactPlusResponseDto)
   @Get()
   async getAllTags(
     @Query() query: TagFilterDto
-  ): Promise<TagCompactResponseDto[]> {
+  ): Promise<TagCompactPlusResponseDto[]> {
     return this.tagsService.getAll(query);
   }
 

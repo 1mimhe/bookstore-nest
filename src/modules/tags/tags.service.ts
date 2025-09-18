@@ -104,6 +104,7 @@ export class TagsService {
     if (search) {
       qb.andWhere(
         '(LOWER(tag.name) LIKE LOWER(:search) OR ' +
+        '(LOWER(tag.slug) LIKE LOWER(:search) OR ' +
         'LOWER(tag.description) LIKE LOWER(:search))',
         { search: `%${search}%` }
       );

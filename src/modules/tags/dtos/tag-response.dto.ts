@@ -31,6 +31,11 @@ export class TagCompactResponseDto {
   deletedAt: Date;
 }
 
+export class TagCompactPlusResponseDto extends TagCompactResponseDto {
+  @Expose()
+  titleCount: number;
+}
+
 export class TagResponseDto extends TagCompactResponseDto {
   @Expose()
   @Type(() => TitleCompactResponseDto)

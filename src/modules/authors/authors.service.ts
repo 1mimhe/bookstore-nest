@@ -91,9 +91,11 @@ export class AuthorsService {
 
     // Search filter across combined names
     if (search) {
-      const searchPattern = `%${search.toLowerCase().replace(/\s+/g, '%')}%`;    
-      qb.andWhere('LOWER(CONCAT(author.firstName, \' \', author.lastName, \' \', author.nickName)) LIKE LOWER(:search)')
-      .setParameter('search', searchPattern);
+      qb.andWhere(
+        'LOWER(CONCAT(author.firstName, \' \', author.lastName, \' \', author.nickName)) LIKE LOWER(:search) OR ' +
+        '(LOWER(author.slug) LIKE LOWER(:search) OR ',
+        { search: `%${search}%` }
+      );
     }
 
     // Sorting

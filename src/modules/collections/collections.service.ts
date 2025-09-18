@@ -73,6 +73,7 @@ export class CollectionsService {
     if (search) {
       qb.andWhere(
         '(LOWER(collection.name) LIKE LOWER(:search) OR ' +
+        '(LOWER(collection.slug) LIKE LOWER(:search) OR ' +
         'LOWER(collection.description) LIKE LOWER(:search))',
         { search: `%${search}%` }
       );

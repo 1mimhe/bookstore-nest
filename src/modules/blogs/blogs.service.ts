@@ -131,7 +131,9 @@ export class BlogsService {
     if (search) {
       qb.andWhere(
         '(LOWER(book.subject) LIKE LOWER(:search) OR ' +
-        '(LOWER(book.otherSubject) LIKE LOWER(:search) OR ',
+        '(LOWER(book.otherSubject) LIKE LOWER(:search) OR ' +
+        '(LOWER(book.slug) LIKE LOWER(:search) OR ' +
+        '(LOWER(book.summary) LIKE LOWER(:search)',
         { search: `%${search}%` }
       );
     }
