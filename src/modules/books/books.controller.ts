@@ -144,7 +144,7 @@ export class BooksController extends BaseController {
   }
 
   @ApiOperation({
-    summary: 'Get titles similar to a specific title',
+    summary: 'Retrieves titles similar to a specific title',
     description: 'Retrieves titles that have the most common tags with the title.'
   })
   @ApiOkResponse({

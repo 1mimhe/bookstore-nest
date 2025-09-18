@@ -1,3 +1,4 @@
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsArray, IsEnum, IsInt, IsOptional, IsPositive, IsString, IsUUID } from 'class-validator';
 
@@ -40,6 +41,9 @@ export class BookFilterDto {
   })
   tags?: string[];
 
+  @ApiPropertyOptional({
+    examples: ['1900s', '1380s', '800s', '1900', '1380']
+  })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
@@ -49,7 +53,7 @@ export class BookFilterDto {
     }
     return value;
   })
-  decades?: string[]; // e.g., ["1900s", "1380s", "800s"]
+  decades?: string[];
 
   @IsOptional()
   @IsEnum(SortBy)

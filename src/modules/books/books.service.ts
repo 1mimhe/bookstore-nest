@@ -1,18 +1,15 @@
 import {
   BadRequestException,
-  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Book } from './entities/book.entity';
-import { Brackets, DataSource, EntityManager, EntityNotFoundError, In, Repository, SelectQueryBuilder } from 'typeorm';
+import { DataSource, EntityManager, EntityNotFoundError, In, Repository, SelectQueryBuilder } from 'typeorm';
 import { CreateBookDto } from './dtos/create-book.dto';
 import { Title } from './entities/title.entity';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
 import { Publisher } from '../publishers/publisher.entity';
-import { DBErrors } from 'src/common/enums/db.errors';
-import { ConflictMessages } from 'src/common/enums/error.messages';
 import { Author } from '../authors/author.entity';
 import { UpdateBookDto } from './dtos/update-book.dto';
 import { BookImage, BookImageTypes } from './entities/book-image.entity';
@@ -23,8 +20,7 @@ import { dbErrorHandler } from 'src/common/utilities/error-handler';
 import { StaffsService } from '../staffs/staffs.service';
 import { EntityTypes, StaffActionTypes } from '../staffs/entities/staff-action.entity';
 import { CartBook } from './books.types';
-import { BookFilterDto } from './dtos/book-filter.dto';
-import { getDateRange } from 'src/common/utilities/decade.utils';
+import { BookFilterDto, SortBy } from './dtos/book-filter.dto';
 import { TitlesService } from './titles.service';
 
 @Injectable()
@@ -150,12 +146,32 @@ export class BooksService {
     }
 
     // Sorting
-    this.titleService.buildOrderBy(qb, sortBy);
+    this.buildOrderBy(qb, sortBy);
 
     return qb
       .skip(skip)
       .take(limit)
       .getMany();
+  }
+
+  private buildOrderBy(
+    qb: SelectQueryBuilder<Book>,
+    by: SortBy = SortBy.Newest
+  ): void {
+    switch (by) {
+      case SortBy.MostLiked:
+        qb.orderBy('book.rateCount', 'DESC');
+        break;
+      case SortBy.MostView:
+        qb.orderBy('title.views', 'DESC');
+        break;
+      case SortBy.MostSale:
+        qb.orderBy('book.sold', 'DESC');
+        break;
+      case SortBy.Newest:
+      default:
+        qb.orderBy('book.createdAt', 'DESC');
+    }
   }
 
   async getMultipleById(ids: string[]): Promise<CartBook[]> {
