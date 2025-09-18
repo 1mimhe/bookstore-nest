@@ -126,15 +126,6 @@ export class BooksService {
       .leftJoin('book.title', 'title')
       .addSelect('title.views');
 
-    // Search filter
-    if (search) {
-      qb.andWhere(
-        '(LOWER(book.name) LIKE LOWER(:search) OR ' +
-        '(LOWER(book.anotherName) LIKE LOWER(:search) OR ',
-        { search: `%${search}%` }
-      );
-    }
-
     // Add publisherId filter
     if (authorId) {
       qb.andWhere('blog.authorId = :authorId', { authorId });
@@ -153,6 +144,15 @@ export class BooksService {
     // Add decades filters
     if (decades.length > 0) {
       this.titleService.buildDecadeConditions(qb, decades);
+    }
+
+    // Search filter
+    if (search) {
+      qb.andWhere(
+        '(LOWER(book.name) LIKE LOWER(:search) OR ' +
+        '(LOWER(book.anotherName) LIKE LOWER(:search) OR ',
+        { search: `%${search}%` }
+      );
     }
 
     // Sorting
