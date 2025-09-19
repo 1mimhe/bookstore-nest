@@ -11,6 +11,7 @@ import { CreateDiscountCodeDto } from './dtos/create-discount-code.dto';
 import { DiscountCodeType } from './discount-code.entity';
 import { dbErrorHandler } from 'src/common/utilities/error-handler';
 import { DiscountCodeQueryDto } from './dtos/discount-code-query.dto';
+import { NotFoundMessages } from 'src/common/enums/error.messages';
 
 @Injectable()
 export class DiscountCodesService {
@@ -103,5 +104,18 @@ export class DiscountCodesService {
       .skip(skip)
       .take(limit)
       .getMany();
+  }
+
+  async getByCode(code: string): Promise<DiscountCode> {
+    const discountCode = await this.discountCodeRepo.findOne({
+      where: { code },
+      relations: ['users'],
+    });
+
+    if (!discountCode) {
+      throw new NotFoundException(NotFoundMessages.DiscountCode);
+    }
+
+    return discountCode;
   }
 }
