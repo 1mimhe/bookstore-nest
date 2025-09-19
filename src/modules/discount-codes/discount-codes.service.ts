@@ -12,6 +12,8 @@ import { DiscountCodeType } from './discount-code.entity';
 import { dbErrorHandler } from 'src/common/utilities/error-handler';
 import { DiscountCodeQueryDto } from './dtos/discount-code-query.dto';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
+import { CheckDiscountCodeDto } from './dtos/check-discount-code.dto';
+import { DiscountCodeCheckResponseDto } from './dtos/discount-code-response.dto';
 
 @Injectable()
 export class DiscountCodesService {
@@ -117,5 +119,115 @@ export class DiscountCodesService {
     }
 
     return discountCode;
+  }
+
+  async checkDiscountCode(
+    checkDiscountCodeDto: CheckDiscountCodeDto,
+    userId: string
+  ): Promise<DiscountCodeCheckResponseDto> {
+    const { code, finalPrice } = checkDiscountCodeDto;
+
+    try {
+      const discountCode = await this.getByCode(code);
+      
+      // Check if code is active
+      if (!discountCode.isActive) {
+        return {
+          isValid: false,
+          discountAmount: 0,
+          finalPrice,
+          message: 'Discount code is not active.'
+        };
+      }
+
+      // Check if code has reached usage limit
+      if (discountCode.usageLimit && discountCode.usedCount >= discountCode.usageLimit) {
+        return {
+          isValid: false,
+          discountAmount: 0,
+          finalPrice,
+          message: 'Discount code usage limit exceeded.'
+        };
+      }
+
+      // Check date validity if dates are provided
+      const now = new Date();
+      if (discountCode.startDate && now < new Date(discountCode.startDate)) {
+        return {
+          isValid: false,
+          discountAmount: 0,
+          finalPrice,
+          message: 'Discount code is not yet active.'
+        };
+      }
+      if (discountCode.endDate && now > new Date(discountCode.endDate)) {
+        return {
+          isValid: false,
+          discountAmount: 0,
+          finalPrice,
+          message: 'Discount code has expired.'
+        };
+      }
+
+      // Check if user can use this code
+      if (discountCode.users && discountCode.users.length > 0) {
+        const userCanUse = discountCode.users.some(user => user.id === userId);
+        if (!userCanUse) {
+          return {
+            isValid: false,
+            discountAmount: 0,
+            finalPrice,
+            message: 'User can not use this discount code.'
+          };
+        }
+      }
+
+      // Check purchase amount
+      if (discountCode.minPurchase && finalPrice < discountCode.minPurchase) {
+        return {
+          isValid: false,
+          discountAmount: 0,
+          finalPrice,
+          message: `Minimum purchase amount of ${discountCode.minPurchase} required.`
+        };
+      }
+
+      if (discountCode.maxPurchase && finalPrice > discountCode.maxPurchase) {
+        return {
+          isValid: false,
+          discountAmount: 0,
+          finalPrice,
+          message: `Maximum purchase amount of ${discountCode.maxPurchase} exceeded.`
+        };
+      }
+
+      // Calculate discount amount
+      let discountAmount = 0;
+      if (discountCode.type === DiscountCodeType.Percentage) {
+        discountAmount = finalPrice * discountCode.value;
+      } else if (discountCode.type === DiscountCodeType.FixedAmount) {
+        discountAmount = Math.min(discountCode.value, finalPrice);
+      }
+
+      const discountedPrice = finalPrice - discountAmount;
+
+      return {
+        isValid: true,
+        discountAmount,
+        finalPrice: discountedPrice,
+        message: 'Discount code applied successfully.'
+      };
+
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        return {
+          isValid: false,
+          discountAmount: 0,
+          finalPrice,
+          message: 'Invalid discount code.'
+        };
+      }
+      throw error;
+    }
   }
 }

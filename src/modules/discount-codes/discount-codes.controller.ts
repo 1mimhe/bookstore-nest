@@ -30,6 +30,8 @@ import { BaseController } from 'src/common/base.controller';
 import { ConfigService } from '@nestjs/config';
 import { DiscountCodeQueryDto } from './dtos/discount-code-query.dto';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import { CheckDiscountCodeDto } from './dtos/check-discount-code.dto';
 
 @Controller('discount-codes')
 @ApiTags('Discount Codes')
@@ -109,4 +111,24 @@ export class DiscountCodesController extends BaseController {
   ): Promise<DiscountCodeResponseDto> {
     return this.discountCodesService.getByCode(code);
   }
+
+  @ApiOperation({
+    summary: 'Check if a discount code is valid',
+    description: 'Checks if a discount code can be applied to a given price.',
+  })
+  @ApiBadRequestResponse({
+    type: ValidationErrorResponseDto,
+  })
+  @ApiOkResponse({
+    type: DiscountCodeCheckResponseDto,
+  })
+  @Serialize(DiscountCodeCheckResponseDto)
+  @Post('check')
+  async checkDiscountCode(
+    @Body() checkDiscountCodeDto: CheckDiscountCodeDto,
+    @CurrentUser('id') userId: string
+  ): Promise<DiscountCodeCheckResponseDto> {
+    return this.discountCodesService.checkDiscountCode(checkDiscountCodeDto, userId);
+  }
+
 }
