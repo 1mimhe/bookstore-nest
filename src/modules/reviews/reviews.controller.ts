@@ -5,23 +5,23 @@ import {
   Delete,
   Get,
   Param,
+  ParseEnumPipe,
   ParseIntPipe,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
   UseGuards,
 } from '@nestjs/common';
 import { ReviewsService } from './reviews.service';
-import { CreateBookReviewDto } from './dtos/create-review.dto';
 import { ReviewableType } from './entities/review.entity';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { ApiQueryPagination } from 'src/common/decorators/query.decorators';
 import {
-  GetBlogReviewsResponseDto,
-  GetBookReviewsResponseDto,
   ReviewResponseDto,
   ReviewResponseWithCountDto,
+  ReviewsResponseDto,
 } from './dtos/review-response.dto';
 import { Serialize } from 'src/common/serialize.interceptor';
 import { UpdateReviewDto } from './dtos/update-review.dto';
@@ -29,6 +29,8 @@ import { ReactToReviewDto } from './dtos/react-review.dto';
 import { ChangeReactionDto } from './dtos/change-reaction.dto';
 import { SoftAuthGuard } from '../auth/guards/soft-auth.guard';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import { CreateReviewDto } from './dtos/create-review.dto';
+import { ReviewQueryDto } from './dtos/review-query.dto';
 
 @Controller('reviews')
 @ApiTags('Review')
@@ -36,91 +38,41 @@ export class ReviewsController {
   constructor(private reviewsService: ReviewsService) {}
 
   @ApiOperation({
-    summary: 'Create a review for a book',
+    summary: 'Create a review',
+    description: 'You can create review for books, blogs, authors and publishers.'
   })
   @ApiBearerAuth()
   @UseGuards(AuthGuard)
-  @Post('books')
-  async createBookReview(
-    @Body() body: CreateBookReviewDto,
+  @Post(':reviewableType')
+  async createReview(
+    @Body() body: CreateReviewDto,
     @CurrentUser('id') userId: string
   ) {
-    const { bookId, ...reviewDto } = body;
-    return this.reviewsService.create(
-      userId,
-      ReviewableType.Book,
-      bookId,
-      reviewDto,
-    );
+    return this.reviewsService.create(userId, body);
   }
 
   @ApiOperation({
-    summary: 'Create a review for a blog',
-  })
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard)
-  @Post('blogs')
-  async createBlogReview(
-    @Body() body: CreateBookReviewDto,
-    @CurrentUser('id') userId: string
-  ) {
-    const { bookId, ...reviewDto } = body;
-    return this.reviewsService.create(
-      userId,
-      ReviewableType.Book,
-      bookId,
-      reviewDto,
-    );
-  }
-
-  @ApiOperation({
-    summary: 'Get all book\'s reviews',
+    summary: 'Get all reviews',
+    description: 'Retrieves books\', blogs\', authors\' and publisher\'s reviews.'
   })
   @ApiOkResponse({
-    type: GetBookReviewsResponseDto,
+    type: ReviewsResponseDto,
   })
   @ApiQueryPagination()
   @ApiBearerAuth()
   @UseGuards(SoftAuthGuard)
-  @Serialize(GetBookReviewsResponseDto)
-  @Get('books/:id')
-  async getBookReviews(
-    @Param('id') id: string,
-    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
-    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
+  @Serialize(ReviewsResponseDto)
+  @Get(':reviewableType/:reviewableId')
+  async getAllReviews(
+    @Param('reviewableType', new ParseEnumPipe(ReviewableType)) reviewableType: ReviewableType,
+    @Param('reviewableId', ParseUUIDPipe) reviewableId: string,
+    @Query() query: ReviewQueryDto,
     @CurrentUser('id') userId: string
   ) {
     return this.reviewsService.getAll(
-      ReviewableType.Book,
-      id,
-      page,
-      limit,
-      userId,
-    );
-  }
-
-  @ApiOperation({
-    summary: 'Get all blog\'s reviews',
-  })
-  @ApiOkResponse({
-    type: GetBlogReviewsResponseDto,
-  })
-  @ApiQueryPagination()
-  @ApiBearerAuth()
-  @UseGuards(SoftAuthGuard)
-  @Serialize(GetBlogReviewsResponseDto)
-  @Get('blogs/:id')
-  async getBlogReviews(
-    @Param('id') id: string,
-    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
-    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
-    @CurrentUser('id') userId: string
-  ) {
-    return this.reviewsService.getAll(
-      ReviewableType.Blog,
-      id,
-      page,
-      limit,
+      reviewableType,
+      reviewableId,
+      query,
       userId,
     );
   }

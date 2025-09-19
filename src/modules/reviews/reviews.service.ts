@@ -1,7 +1,7 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Review, ReviewableType } from './entities/review.entity';
-import { DataSource, DeepPartial, EntityManager, EntityNotFoundError, In, Repository } from 'typeorm';
+import { DataSource, DeepPartial, EntityManager, EntityNotFoundError, In, Repository, SelectQueryBuilder } from 'typeorm';
 import { CreateReviewDto } from './dtos/create-review.dto';
 import { dbErrorHandler } from 'src/common/utilities/error-handler';
 import { ReactionsEnum, ReviewReaction } from './entities/review-reaction.entity';
@@ -10,6 +10,11 @@ import { UpdateReviewDto } from './dtos/update-review.dto';
 import { ReactToReviewDto } from './dtos/react-review.dto';
 import { BooksService } from '../books/books.service';
 import { RolesEnum } from '../users/entities/role.entity';
+import { ReviewQueryDto, ReviewSortBy } from './dtos/review-query.dto';
+import { Book } from '../books/entities/book.entity';
+import { Author } from '../authors/author.entity';
+import { Publisher } from '../publishers/publisher.entity';
+import { Blog } from '../blogs/blog.entity';
 
 @Injectable()
 export class ReviewsService {
@@ -22,20 +27,35 @@ export class ReviewsService {
 
   async create(
     userId: string,
-    reviewableType: ReviewableType,
-    reviewableId: string,
     {
+      reviewableType,
+      reviewableId,
       parentReviewId,
       rate,
       content
     }: CreateReviewDto
   ): Promise<Review | never> {
+    const MODEL_MAP = {
+      [ReviewableType.Book]: Book,
+      [ReviewableType.Author]: Author,
+      [ReviewableType.Publisher]: Publisher,
+      [ReviewableType.Blog]: Blog,
+    } as const;
+    
     return this.dataSource.transaction(async manager => {
+      const reviewableRepo = manager.getRepository(MODEL_MAP[reviewableType]);
+      const reviewable = await reviewableRepo.findOne({
+        where: { id: reviewableId }
+      });
+
+      if (!reviewable) {
+        throw new NotFoundException(NotFoundMessages.Reviewable);
+      }
+      
       const entityLike: DeepPartial<Review> = {
         userId,
         reviewableType,
-        ...(reviewableType === ReviewableType.Book && { bookId: reviewableId }),
-        ...(reviewableType === ReviewableType.Blog && { blogId: reviewableId }),
+        reviewableId,
         parentReviewId,
         rate,
         content
@@ -63,25 +83,29 @@ export class ReviewsService {
   async getAll(
     reviewableType: ReviewableType,
     reviewableId: string,
-    page = 1,
-    limit = 10,
+    {
+      page = 1,
+      limit = 10,
+      sortBy = ReviewSortBy.Newest,
+    }: ReviewQueryDto,
     userId?: string,
   ) {
     const skip = (page - 1) * limit;
-    const whereCondition = reviewableType === ReviewableType.Book 
-      ? { bookId: reviewableId } 
-      : { blogId: reviewableId };
 
-    const [reviews, totalReviews] = await this.reviewRepo
+    const qb = this.reviewRepo
       .createQueryBuilder('review')
       .leftJoinAndSelect('review.user', 'user')
-      .leftJoinAndSelect('user.roles', 'user.roles')
-      .leftJoinAndSelect('replies.book', 'book')
+      .leftJoinAndSelect('user.roles', 'userRoles')
       .leftJoinAndSelect('review.replies', 'replies')
-      .leftJoinAndSelect('replies.user', 'repliesUser')
-      .where(whereCondition)
+      .leftJoinAndSelect('replies.user', 'repliesUser');
+
+    this.addReviewableConditions(qb, reviewableType, reviewableId);
+
+    // Apply sorting
+    this.buildReviewOrderBy(qb, sortBy);
+
+    const [reviews, totalReviews] = await qb
       .andWhere('review.parentReviewId IS NULL')
-      .orderBy('review.createdAt', 'DESC') // TODO: Add more sorting
       .skip(skip)
       .take(limit)
       .getManyAndCount();
@@ -107,6 +131,78 @@ export class ReviewsService {
       totalReviews,
       totalReviewPages: Math.ceil(totalReviews / limit)
     };
+  }
+
+  private addReviewableConditions(
+    qb: SelectQueryBuilder<Review>,
+    reviewableType: ReviewableType,
+    reviewableId: string
+  ) {
+    qb.where('review.reviewableType = :reviewableType', { reviewableType })
+      .andWhere('review.reviewableId = :reviewableId', { reviewableId });
+
+    if(reviewableType === ReviewableType.Book) {
+      qb.leftJoinAndSelect('review.book', 'book');
+    }
+  }
+
+  private buildReviewOrderBy(
+    qb: SelectQueryBuilder<Review>,
+    sortBy: ReviewSortBy = ReviewSortBy.Newest
+  ): void {
+    switch (sortBy) {
+      case ReviewSortBy.MostReactions:
+        qb.addSelect(
+          'review.likeCount + review.dislikeCount + review.loveCount + review.fireCount + review.tomatoCount',
+          'totalReactions'
+        )
+        .orderBy('totalReactions', 'DESC')
+        .addOrderBy('review.createdAt', 'DESC');
+        break;
+      
+      case ReviewSortBy.MostLiked:
+        qb.orderBy('review.likeCount', 'DESC')
+          .addOrderBy('review.createdAt', 'DESC');
+        break;
+      
+      case ReviewSortBy.MostDisliked:
+        qb.orderBy('review.dislikeCount', 'DESC')
+          .addOrderBy('review.createdAt', 'DESC');
+        break;
+      
+      case ReviewSortBy.MostLoved:
+        qb.orderBy('review.loveCount', 'DESC')
+          .addOrderBy('review.createdAt', 'DESC');
+        break;
+      
+      case ReviewSortBy.MostFire:
+        qb.orderBy('review.fireCount', 'DESC')
+          .addOrderBy('review.createdAt', 'DESC');
+        break;
+      
+      case ReviewSortBy.MostTomato:
+        qb.orderBy('review.tomatoCount', 'DESC')
+          .addOrderBy('review.createdAt', 'DESC');
+        break;
+      
+      case ReviewSortBy.MostReplies:
+        qb.orderBy('review.repliesCount', 'DESC')
+          .addOrderBy('review.createdAt', 'DESC');
+        break;
+      
+      case ReviewSortBy.HighestRate:
+        qb.orderBy('review.rate', 'DESC')
+          .addOrderBy('review.createdAt', 'DESC');
+        break;
+      case ReviewSortBy.LowestRate:
+        qb.orderBy('review.rate', 'ASC')
+          .addOrderBy('review.createdAt', 'DESC');
+        break;
+      case ReviewSortBy.Newest:
+      default:
+        qb.orderBy('review.createdAt', 'DESC');
+        break;
+    }
   }
 
   async getAllReplies(
@@ -191,7 +287,7 @@ export class ReviewsService {
 
       if (review.reviewableType === ReviewableType.Book && reviewDto.rate && reviewDto.rate !== review.rate) {
         const rateDiff = reviewDto.rate - (review.rate ?? 0);
-        await this.booksService.updateRate(review.bookId!, rateDiff, 0, manager);
+        await this.booksService.updateRate(review.reviewableId, rateDiff, 0, manager);
       }
 
       Object.assign(review, reviewDto);
@@ -214,7 +310,7 @@ export class ReviewsService {
       }
   
       if (review.reviewableType === ReviewableType.Book) {
-        await this.booksService.updateRate(review.bookId!, review.rate, -1, manager);
+        await this.booksService.updateRate(review.reviewableId, review.rate, -1, manager);
       }
 
       if (review.parentReviewId) {

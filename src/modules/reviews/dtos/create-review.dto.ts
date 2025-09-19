@@ -1,6 +1,7 @@
 import { profanity } from '@2toad/profanity';
 import { Transform } from 'class-transformer';
-import { IsInt, IsNotEmpty, IsOptional, IsString, IsUUID, Length, Max, Min } from 'class-validator';
+import { IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, IsUUID, Length, Max, Min } from 'class-validator';
+import { ReviewableType } from '../entities/review.entity';
 
 export class CreateReviewDto {
   @IsNotEmpty()
@@ -15,19 +16,15 @@ export class CreateReviewDto {
   @Max(5)
   rate: number;
 
+  @IsNotEmpty()
+  @IsEnum(ReviewableType)
+  reviewableType: ReviewableType;
+
+  @IsNotEmpty()
+  @IsUUID()
+  reviewableId: string;
+
   @IsOptional()
   @IsUUID()
   parentReviewId?: string;
-}
-
-export class CreateBookReviewDto extends CreateReviewDto {
-  @IsNotEmpty()
-  @IsUUID()
-  bookId: string;
-}
-
-export class CreateBlogReviewDto extends CreateReviewDto {
-  @IsNotEmpty()
-  @IsUUID()
-  blogId: string;
 }

@@ -1,7 +1,9 @@
 import { Expose, Type } from 'class-transformer';
 import { ReactionsEnum } from '../entities/review-reaction.entity';
 import { ApiProperty } from '@nestjs/swagger';
-import { BookResponseDto } from 'src/modules/books/dtos/book-response.dto';
+import { BookCompactResponseDto } from 'src/modules/books/dtos/book-response.dto';
+import { ReviewableType } from '../entities/review.entity';
+import { RolesEnum } from 'src/modules/users/entities/role.entity';
 
 class UserDto {
   @Expose()
@@ -12,6 +14,12 @@ class UserDto {
 
   @Expose()
   lastName: string;
+
+  @ApiProperty({
+    examples: [RolesEnum.Customer, RolesEnum.Admin]
+  })
+  @Expose()
+  role: RolesEnum.Customer | RolesEnum.Admin;
 }
 
 export class ReviewResponseDto {
@@ -21,6 +29,16 @@ export class ReviewResponseDto {
   @Expose()
   @Type(() => UserDto)
   user: UserDto;
+
+  @Expose()
+  reviewableType: ReviewableType;
+
+  @Expose()
+  reviewableId: string;
+
+  @Expose()
+  @Type(() => BookCompactResponseDto)
+  book?: BookCompactResponseDto;
   
   @Expose()
   content: string;
@@ -76,36 +94,10 @@ export class ReviewResponseWithCountDto {
   reviews: ReviewResponseDto[];
 }
 
-export class BookReviewResponseDto extends ReviewResponseDto {
+export class ReviewsResponseDto {
   @Expose()
-  bookId?: string;
-
-  @Expose()
-  @Type(() => BookResponseDto)
-  book?: BookResponseDto;
-}
-
-export class BlogReviewResponseDto extends ReviewResponseDto {
-  @Expose()
-  blogId?: string;
-}
-
-export class GetBookReviewsResponseDto {
-  @Expose()
-  @Type(() => BookReviewResponseDto)
-  reviews: BookReviewResponseDto[];
-
-  @Expose()
-  totalReviews: number;
-  
-  @Expose()
-  totalReviewPages: number;
-}
-
-export class GetBlogReviewsResponseDto {
-  @Expose()
-  @Type(() => BlogReviewResponseDto)
-  reviews: BlogReviewResponseDto[];
+  @Type(() => ReviewResponseDto)
+  reviews: ReviewResponseDto[];
 
   @Expose()
   totalReviews: number;

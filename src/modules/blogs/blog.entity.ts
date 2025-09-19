@@ -75,9 +75,6 @@ export class Blog extends BaseEntity {
   @ManyToMany(() => Tag, (tag) => tag.blogs)
   tags: Tag[];
 
-  @OneToMany(() => Review, (review) => review.book)
-  reviews: Review[];
-
   @Column({ default: 0 })
   views: number;
 }
