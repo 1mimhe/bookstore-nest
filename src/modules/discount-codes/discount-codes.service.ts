@@ -10,6 +10,7 @@ import { User } from 'src/modules/users/entities/user.entity';
 import { CreateDiscountCodeDto } from './dtos/create-discount-code.dto';
 import { DiscountCodeType } from './discount-code.entity';
 import { dbErrorHandler } from 'src/common/utilities/error-handler';
+import { DiscountCodeQueryDto } from './dtos/discount-code-query.dto';
 
 @Injectable()
 export class DiscountCodesService {
@@ -66,5 +67,41 @@ export class DiscountCodesService {
       dbErrorHandler(error);
       throw error;
     });
+  }
+
+  async getAll(query: DiscountCodeQueryDto): Promise<DiscountCode[]> {
+    const { page = 1, limit = 10, search, isActive, type, startDate, endDate } = query;
+    const skip = (page - 1) * limit;
+
+    const qb = this.discountCodeRepo.createQueryBuilder('discountCode');
+
+    if (search) {
+      qb.andWhere(
+        'LOWER(discountCode.code) LIKE LOWER(:search)',
+        { search: `%${search}%` }
+      );
+    }
+
+    if (isActive !== undefined) {
+      qb.andWhere('discountCode.isActive = :isActive', { isActive });
+    }
+
+    if (type) {
+      qb.andWhere('discountCode.type = :type', { type });
+    }
+
+    if (startDate) {
+      qb.andWhere('discountCode.startDate >= :startDate', { startDate });
+    }
+
+    if (endDate) {
+      qb.andWhere('discountCode.endDate <= :endDate', { endDate });
+    }
+
+    return qb
+      .orderBy('discountCode.createdAt', 'DESC')
+      .skip(skip)
+      .take(limit)
+      .getMany();
   }
 }

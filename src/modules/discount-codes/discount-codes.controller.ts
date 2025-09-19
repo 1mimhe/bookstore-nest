@@ -1,15 +1,18 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
   ApiNotFoundResponse,
+  ApiOkResponse,
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
@@ -24,6 +27,7 @@ import { RequiredRoles } from 'src/common/decorators/roles.decorator';
 import { RolesEnum } from '../users/entities/role.entity';
 import { BaseController } from 'src/common/base.controller';
 import { ConfigService } from '@nestjs/config';
+import { DiscountCodeQueryDto } from './dtos/discount-code-query.dto';
 
 @Controller('discount-codes')
 @ApiTags('Discount Codes')
@@ -58,5 +62,26 @@ export class DiscountCodesController extends BaseController {
     @Body() discountCodeDto: CreateDiscountCodeDto
   ): Promise<DiscountCodeResponseDto> {
     return this.discountCodesService.create(discountCodeDto);
+  }
+
+  @ApiOperation({
+    summary: 'Get all discount codes',
+    description: 'With pagination, filtering, and search capabilities.',
+  })
+  @ApiOkResponse({
+    type: [DiscountCodeResponseDto],
+  })
+  @Serialize(DiscountCodeResponseDto)
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequiredRoles(
+    RolesEnum.Admin,
+    RolesEnum.ContentManager,
+    RolesEnum.InventoryManager
+  )
+  @Get()
+  async getAllDiscounts(
+    @Query() query: DiscountCodeQueryDto
+  ): Promise<DiscountCodeResponseDto[]> {
+    return this.discountCodesService.getAll(query);
   }
 }
