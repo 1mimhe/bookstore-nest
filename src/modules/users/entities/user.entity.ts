@@ -3,6 +3,7 @@ import {
   Column,
   Entity,
   Index,
+  ManyToMany,
   OneToMany,
   OneToOne,
 } from 'typeorm';
@@ -16,6 +17,7 @@ import { Review } from 'src/modules/reviews/entities/review.entity';
 import { Bookmark } from 'src/modules/books/entities/bookmark.entity';
 import { Staff } from 'src/modules/staffs/entities/staff.entity';
 import { Order } from 'src/modules/orders/entities/order.entity';
+import { DiscountCode } from 'src/modules/discount-codes/discount-code.entity';
 
 export enum Genders {
   Male = 'male',
@@ -81,4 +83,7 @@ export class User extends BaseEntity {
 
   @OneToMany(() => Order, (order) => order.user)
   orders: Order[];
+
+  @ManyToMany(() => DiscountCode, (discountCode) => discountCode.users)
+  discountCodes: DiscountCode[];
 }

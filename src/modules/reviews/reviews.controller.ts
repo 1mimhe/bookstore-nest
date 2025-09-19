@@ -15,7 +15,7 @@ import {
 } from '@nestjs/common';
 import { ReviewsService } from './reviews.service';
 import { ReviewableType } from './entities/review.entity';
-import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { ApiQueryPagination } from 'src/common/decorators/query.decorators';
 import {
@@ -31,6 +31,7 @@ import { SoftAuthGuard } from '../auth/guards/soft-auth.guard';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { CreateReviewDto } from './dtos/create-review.dto';
 import { ReviewQueryDto } from './dtos/review-query.dto';
+import { NotFoundMessages } from 'src/common/enums/error.messages';
 
 @Controller('reviews')
 @ApiTags('Review')
@@ -40,6 +41,9 @@ export class ReviewsController {
   @ApiOperation({
     summary: 'Create a review',
     description: 'You can create review for books, blogs, authors and publishers.'
+  })
+  @ApiNotFoundResponse({
+    description: NotFoundMessages.Reviewable
   })
   @ApiBearerAuth()
   @UseGuards(AuthGuard)

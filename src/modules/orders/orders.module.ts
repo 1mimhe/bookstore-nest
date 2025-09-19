@@ -7,6 +7,7 @@ import { TokenModule } from '../token/token.module';
 import { BooksModule } from '../books/books.module';
 import { Order } from './entities/order.entity';
 import { ShippingPrice } from './entities/shipping-price.entity';
+import { DiscountCodesModule } from '../discount-codes/discount-codes.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { ShippingPrice } from './entities/shipping-price.entity';
     ]),
     TokenModule,
     BooksModule,
+    DiscountCodesModule
   ],
   controllers: [OrdersController],
   providers: [OrdersService]

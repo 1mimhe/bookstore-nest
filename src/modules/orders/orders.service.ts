@@ -20,6 +20,7 @@ import { Address } from '../users/entities/address.entity';
 import { SubmitOrderDto } from './dto/submit-order.dto';
 import { OrderBookDto } from './dto/order-response.dto';
 import { Cron } from '@nestjs/schedule';
+import { DiscountCodesService } from '../discount-codes/discount-codes.service';
 
 @Injectable()
 export class OrdersService {
@@ -33,6 +34,7 @@ export class OrdersService {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private booksService: BooksService,
     config: ConfigService,
+    private discountCodesService: DiscountCodesService
   ) {
     this.cartCacheTime = config.get<number>('CART_CACHE_TIME', 2 * 24 * 60 * 60 * 1000);
   }
@@ -185,7 +187,24 @@ export class OrdersService {
     }
     finalPrice += shippingPrice;
 
-    // TODO: Apply discount code
+    // Apply discount code
+    let totalDiscount = discount;
+    if (discountCode) {
+      const discountResult = await this.discountCodesService.check(
+        {
+          code: discountCode,
+          finalPrice
+        },
+        userId
+      );
+
+      if (!discountResult.isValid) {
+        throw new BadRequestException(discountResult.message);
+      }
+
+      totalDiscount += discountResult.discountAmount;
+      finalPrice -= discountResult.discountAmount;
+    }
 
     return this.dataSource.transaction(async manager => {
       const shippingAddress = await manager.findOneOrFail(Address, {
@@ -209,7 +228,8 @@ export class OrdersService {
         shippingType,
         totalPrice,
         shippingPrice,
-        discount,
+        discountCode,
+        discountAmount: totalDiscount,
         finalPrice
       });
       
@@ -283,7 +303,7 @@ export class OrdersService {
         shippingType: true,
         shippingPrice: true,
         totalPrice: true,
-        discount: true,
+        discountAmount: true,
         finalPrice: true,
         paymentId: true,
         trackingCode: true,

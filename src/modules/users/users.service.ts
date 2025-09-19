@@ -18,6 +18,7 @@ import { Publisher } from '../publishers/publisher.entity';
 import { Blog } from '../blogs/blog.entity';
 import { Character } from '../books/entities/characters.entity';
 import { RecentViewDto } from './dtos/recent-view-response.dto';
+import { Order } from '../orders/entities/order.entity';
 
 @Injectable()
 export class UsersService {
@@ -25,6 +26,7 @@ export class UsersService {
     @InjectRepository(User) private userRepo: Repository<User>,
     @InjectRepository(Address) private addressRepo: Repository<Address>,
     @InjectRepository(Bookmark) private bookmarkRepo: Repository<Bookmark>,
+    @InjectRepository(Order) private orderRepo: Repository<Order>,
     private dataSource: DataSource,
     private authService: AuthService
   ) {}
@@ -211,11 +213,15 @@ export class UsersService {
       throw error;
     });
 
-    // TODO: calculate order count
+    const orderCount = await this.orderRepo.count({
+      where: {
+        shippingAddressId: id
+      }
+    });
       
     return {
       address,
-      orderCount: 0
+      orderCount
     };
   }
 

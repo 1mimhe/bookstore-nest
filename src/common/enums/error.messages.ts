@@ -42,7 +42,8 @@ export enum NotFoundMessages {
   Review = 'Review not found.',
   Staff = 'Staff not found.',
   Order = 'Order not found.',
-  Reviewable = 'Reviewable not found.'
+  Reviewable = 'Reviewable not found.',
+  DiscountCode = 'Discount code not found.'
 }
 
 export enum BadRequestMessages {
