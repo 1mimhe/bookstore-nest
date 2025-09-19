@@ -29,7 +29,8 @@ export class ReviewQueryDto {
   limit?: number;
 
   @ApiPropertyOptional({
-    default: ReviewSortBy.Newest
+    default: ReviewSortBy.Newest,
+    enum: ReviewSortBy
   })
   @IsOptional()
   @IsEnum(ReviewSortBy)

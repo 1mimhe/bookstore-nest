@@ -12,7 +12,7 @@ import { StaffsService } from '../staffs/staffs.service';
 import { EntityTypes, StaffActionTypes } from '../staffs/entities/staff-action.entity';
 import { TrendingPeriod, ViewEntityTypes } from '../views/views.types';
 import { ViewsService } from '../views/views.service';
-import { CollectionFilterDto, SortBy } from './dtos/collection-filter.dto';
+import { CollectionQueryDto, CollectionSortBy } from './dtos/collection-query.dto';
 
 @Injectable()
 export class CollectionsService {
@@ -60,7 +60,7 @@ export class CollectionsService {
       limit = 10,
       search,
       sortBy
-    }: CollectionFilterDto
+    }: CollectionQueryDto
   ): Promise<(Collection & { bookCount: number })[]> {
     const skip = (page - 1) * limit;
     const qb = this.collectionRepo
@@ -95,22 +95,22 @@ export class CollectionsService {
 
   private buildOrderBy(
     qb: SelectQueryBuilder<Collection>,
-    sortBy: SortBy = SortBy.Newest
+    sortBy: CollectionSortBy = CollectionSortBy.Newest
   ): void {
     switch (sortBy) {
-      case SortBy.NameAsc:
+      case CollectionSortBy.NameAsc:
         qb.orderBy('collection.name', 'ASC');
         break;
-      case SortBy.NameDesc:
+      case CollectionSortBy.NameDesc:
         qb.orderBy('collection.name', 'DESC');
         break;
-      case SortBy.MostBooks:
+      case CollectionSortBy.MostBooks:
         qb.orderBy('bookCount', 'DESC');
         break;
-      case SortBy.MostView:
+      case CollectionSortBy.MostViews:
         qb.orderBy('collection.views', 'DESC');
         break;
-      case SortBy.Newest:
+      case CollectionSortBy.Newest:
       default:
         qb.orderBy('collection.createdAt', 'DESC');
         break;

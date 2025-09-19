@@ -15,7 +15,7 @@ import {
 } from '@nestjs/common';
 import { ReviewsService } from './reviews.service';
 import { ReviewableType } from './entities/review.entity';
-import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { ApiQueryPagination } from 'src/common/decorators/query.decorators';
 import {
@@ -58,13 +58,18 @@ export class ReviewsController {
   @ApiOkResponse({
     type: ReviewsResponseDto,
   })
+  @ApiParam({
+    name: 'reviewableType',
+    enum: ReviewableType
+  })
   @ApiQueryPagination()
   @ApiBearerAuth()
   @UseGuards(SoftAuthGuard)
   @Serialize(ReviewsResponseDto)
   @Get(':reviewableType/:reviewableId')
   async getAllReviews(
-    @Param('reviewableType', new ParseEnumPipe(ReviewableType)) reviewableType: ReviewableType,
+    @Param('reviewableType', new ParseEnumPipe(ReviewableType))
+    reviewableType: ReviewableType,
     @Param('reviewableId', ParseUUIDPipe) reviewableId: string,
     @Query() query: ReviewQueryDto,
     @CurrentUser('id') userId: string

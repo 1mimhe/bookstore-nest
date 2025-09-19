@@ -14,7 +14,7 @@ import { EntityTypes, StaffActionTypes } from '../staffs/entities/staff-action.e
 import { dbErrorHandler } from 'src/common/utilities/error-handler';
 import { TrendingPeriod, ViewEntityTypes } from '../views/views.types';
 import { ViewsService } from '../views/views.service';
-import { AuthorFilterDto, SortBy } from './dtos/author-filter.dto';
+import { AuthorQueryDto, AuthorSortBy } from './dtos/author-query.dto';
 
 @Injectable()
 export class AuthorsService {
@@ -79,7 +79,7 @@ export class AuthorsService {
       limit = 10,
       search,
       sortBy
-    }: AuthorFilterDto
+    }: AuthorQueryDto
   ): Promise<(Author & { bookCount: number })[]> {
     const skip = (page - 1) * limit;
     const qb = this.authorRepo
@@ -114,24 +114,24 @@ export class AuthorsService {
 
   private buildOrderBy(
     qb: SelectQueryBuilder<Author>,
-    sortBy: SortBy = SortBy.Newest
+    sortBy: AuthorSortBy = AuthorSortBy.Newest
   ): void {
     switch (sortBy) {
-      case SortBy.NameAsc:
+      case AuthorSortBy.NameAsc:
         qb.orderBy('author.firstName', 'ASC')
           .addOrderBy('author.lastName', 'ASC');
         break;
-      case SortBy.NameDesc:
+      case AuthorSortBy.NameDesc:
         qb.orderBy('author.firstName', 'DESC')
           .addOrderBy('author.lastName', 'DESC');
         break;
-      case SortBy.MostBooks:
+      case AuthorSortBy.MostBooks:
         qb.orderBy('bookCount', 'DESC');
         break;
-      case SortBy.MostView:
+      case AuthorSortBy.MostViews:
         qb.orderBy('author.views', 'DESC');
         break;
-      case SortBy.Newest:
+      case AuthorSortBy.Newest:
       default:
         qb.orderBy('author.createdAt', 'DESC');
         break;

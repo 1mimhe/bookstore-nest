@@ -45,7 +45,7 @@ import { ViewsService } from '../views/views.service';
 import { TrendingPeriod, ViewEntityTypes } from '../views/views.types';
 import { Request, Response } from 'express';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
-import { CollectionFilterDto } from './dtos/collection-filter.dto';
+import { CollectionQueryDto } from './dtos/collection-query.dto';
 
 @Controller('collections')
 @ApiTags('Collection')
@@ -80,7 +80,7 @@ export class CollectionsController {
   @Serialize(CollectionCompactResponseDto)
   @Get()
   async getAllCollections(
-    @Query() query: CollectionFilterDto
+    @Query() query: CollectionQueryDto
   ): Promise<CollectionCompactResponseDto[]> {
     return this.collectionsService.getAll(query);
   }

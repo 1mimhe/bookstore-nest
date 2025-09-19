@@ -19,7 +19,7 @@ import { CreateBlogDto } from '../blogs/dtos/create-blog.dto';
 import { UpdateBlogDto } from '../blogs/dtos/update-blog.dto';
 import { TrendingPeriod, ViewEntityTypes } from '../views/views.types';
 import { ViewsService } from '../views/views.service';
-import { PublisherFilterDto, SortBy } from './dtos/publisher-filter.dto';
+import { PublisherQueryDto, PublisherSortBy } from './dtos/publisher-query.dto';
 
 @Injectable()
 export class PublishersService {
@@ -66,7 +66,7 @@ export class PublishersService {
       limit = 10,
       search,
       sortBy
-    }: PublisherFilterDto
+    }: PublisherQueryDto
   ): Promise<(Publisher & { bookCount: number })[]> {
     const skip = (page - 1) * limit;
     const qb = this.publisherRepo
@@ -99,22 +99,22 @@ export class PublishersService {
 
   private buildOrderBy(
     qb: SelectQueryBuilder<Publisher>,
-    sortBy: SortBy = SortBy.Newest
+    sortBy: PublisherSortBy = PublisherSortBy.Newest
   ): void {
     switch (sortBy) {
-      case SortBy.NameAsc:
+      case PublisherSortBy.NameAsc:
         qb.orderBy('publisher.publisherName', 'ASC');
         break;
-      case SortBy.NameDesc:
+      case PublisherSortBy.NameDesc:
         qb.orderBy('publisher.publisherName', 'DESC');
         break;
-      case SortBy.MostBooks:
+      case PublisherSortBy.MostBooks:
         qb.orderBy('bookCount', 'DESC');
         break;
-      case SortBy.MostView:
+      case PublisherSortBy.MostViews:
         qb.orderBy('publisher.views', 'DESC');
         break;
-      case SortBy.Newest:
+      case PublisherSortBy.Newest:
       default:
         qb.orderBy('publisher.createdAt', 'DESC');
         break;

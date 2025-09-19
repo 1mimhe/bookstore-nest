@@ -56,7 +56,7 @@ import { CookieNames } from 'src/common/enums/cookie.names';
 import { RecentView, RecentViewTypes } from 'src/common/types/recent-view.type';
 import { ViewsService } from '../views/views.service';
 import { TrendingPeriod, ViewEntityTypes } from '../views/views.types';
-import { PublisherFilterDto } from './dtos/publisher-filter.dto';
+import { PublisherQueryDto } from './dtos/publisher-query.dto';
 
 @Controller('publishers')
 @ApiTags('Publisher')
@@ -105,7 +105,7 @@ export class PublishersController extends BaseController {
   @Serialize(PublisherPlusResDto)
   @Get()
   async getAllPublishers(
-    @Query() query: PublisherFilterDto,
+    @Query() query: PublisherQueryDto,
   ): Promise<PublisherPlusResDto[]> {
     return this.publishersService.getAll(query);
   }
