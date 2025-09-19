@@ -179,6 +179,16 @@ export class DiscountCodesService {
       throw error;
     });
   }
+  
+  async delete(id: string): Promise<void> {
+    const discountCode = await this.discountCodeRepo.findOne({ where: { id } });
+    
+    if (!discountCode) {
+      throw new NotFoundException(NotFoundMessages.DiscountCode);
+    }
+
+    await this.discountCodeRepo.softRemove(discountCode);
+  }
 
   async checkDiscountCode(
     checkDiscountCodeDto: CheckDiscountCodeDto,

@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -116,7 +117,7 @@ export class DiscountCodesController extends BaseController {
   }
 
     @ApiOperation({
-    summary: 'Update a discount code',
+    summary: 'Updates a discount code',
   })
   @ApiBadRequestResponse({
     type: ValidationErrorResponseDto,
@@ -144,7 +145,25 @@ export class DiscountCodesController extends BaseController {
   }
 
   @ApiOperation({
-    summary: 'Check if a discount code is valid',
+    summary: 'Deletes a discount code',
+    description: 'Soft deletes a discount code.',
+  })
+  @ApiNotFoundResponse({
+    description: NotFoundMessages.DiscountCode,
+  })
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequiredRoles(
+    RolesEnum.Admin,
+    RolesEnum.InventoryManager
+  )
+  @Delete(':id')
+  async remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
+    return this.discountCodesService.delete(id);
+  }
+
+  @ApiOperation({
+    summary: 'Checks if a discount code is valid',
     description: 'Checks if a discount code can be applied to a given price.',
   })
   @ApiBadRequestResponse({
