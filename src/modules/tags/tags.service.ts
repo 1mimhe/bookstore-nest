@@ -10,12 +10,12 @@ import { dbErrorHandler } from 'src/common/utilities/error-handler';
 import { StaffsService } from '../staffs/staffs.service';
 import { EntityTypes, StaffActionTypes } from '../staffs/entities/staff-action.entity';
 import { makeSlug } from 'src/common/utilities/make-slug';
-import { BookFilterDto } from '../books/dtos/book-filter.dto';
+import { BookQueryDto } from '../books/dtos/book-query.dto';
 import { RootTag } from './entities/root-tag.entity';
 import { CreateRootTagDto } from './dtos/create-root-tag.dto';
 import { TrendingPeriod, ViewEntityTypes } from '../views/views.types';
 import { ViewsService } from '../views/views.service';
-import { SortBy, TagFilterDto } from './dtos/tag-filter.dto';
+import { TagSortBy, TagQueryDto } from './dtos/tag-query.dto';
 
 @Injectable()
 export class TagsService {
@@ -91,7 +91,7 @@ export class TagsService {
     {
       search,
       sortBy
-    }: TagFilterDto
+    }: TagQueryDto
   ): Promise<(Tag & { titleCount: number })[]> {
     const qb = this.tagRepo
       .createQueryBuilder('tag')
@@ -124,19 +124,19 @@ export class TagsService {
 
   private buildOrderBy(
     qb: SelectQueryBuilder<Tag>,
-    sortBy: SortBy = SortBy.MostBooks
+    sortBy: TagSortBy = TagSortBy.MostBooks
   ): void {
     switch (sortBy) {
-      case SortBy.NameAsc:
+      case TagSortBy.NameAsc:
         qb.orderBy('tag.name', 'ASC');
         break;
-      case SortBy.NameDesc:
+      case TagSortBy.NameDesc:
         qb.orderBy('tag.name', 'DESC');
         break;
-      case SortBy.MostView:
+      case TagSortBy.MostViews:
         qb.orderBy('tag.views', 'DESC');
         break;
-      case SortBy.MostBooks:
+      case TagSortBy.MostBooks:
       default:
         qb.orderBy('titleCount', 'DESC');
         break;
@@ -160,7 +160,7 @@ export class TagsService {
 
   async getBySlug(
     slug: string,
-    filter: BookFilterDto
+    filter: BookQueryDto
   ): Promise<Tag | never> {
     const tag = await this.tagRepo.findOneOrFail({
       where: { slug },

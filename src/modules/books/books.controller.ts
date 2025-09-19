@@ -51,7 +51,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { RequiredRoles } from 'src/common/decorators/roles.decorator';
 import { RolesEnum } from '../users/entities/role.entity';
 import { SessionData } from 'express-session';
-import { BookFilterDto } from './dtos/book-filter.dto';
+import { BookQueryDto } from './dtos/book-query.dto';
 import { ConfigService } from '@nestjs/config';
 import { BaseController } from 'src/common/base.controller';
 import { Request, Response } from 'express';
@@ -179,7 +179,7 @@ export class BooksController extends BaseController {
   @Serialize(BookResponseDto)
   @Get()
   async getAllBooks(
-    @Query() query: BookFilterDto
+    @Query() query: BookQueryDto
   ): Promise<BookResponseDto[]> {
     return this.booksService.getAll(query);
   }

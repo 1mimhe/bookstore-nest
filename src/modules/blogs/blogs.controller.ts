@@ -52,7 +52,7 @@ import { Request, Response } from 'express';
 import { ViewsService } from '../views/views.service';
 import { TrendingPeriod, ViewEntityTypes } from '../views/views.types';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
-import { BlogFilterDto } from './dtos/blog-filter.dto';
+import { BlogQueryDto } from './dtos/blog-query.dto';
 import { ApiQueryPagination } from 'src/common/decorators/query.decorators';
 
 @Controller('blogs')
@@ -106,7 +106,7 @@ export class BlogsController extends BaseController {
   @Serialize(BlogResponseDto)
   @Get()
   async getAllBlogs(
-    @Query() query: BlogFilterDto,
+    @Query() query: BlogQueryDto,
   ): Promise<BlogResponseDto[]> {
     return this.blogsService.getAll(query);
   }

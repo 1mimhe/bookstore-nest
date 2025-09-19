@@ -2,14 +2,14 @@ import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { TagType } from '../entities/tag.entity';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
-export enum SortBy {
-  NameAsc = 'name-asc',
-  NameDesc = 'name-desc',
-  MostView = 'mostview',
-  MostBooks = 'mostbooks'
+export enum TagSortBy {
+  NameAsc = 'name_asc',
+  NameDesc = 'name_desc',
+  MostViews = 'most_views',
+  MostBooks = 'most_books'
 }
 
-export class TagFilterDto {
+export class TagQueryDto {
   @ApiPropertyOptional({
     description: 'Just a simple search in names'
   })
@@ -25,9 +25,10 @@ export class TagFilterDto {
   type?: TagType;
 
   @ApiPropertyOptional({
-    default: 'mostbooks'
+    default: TagSortBy.MostBooks,
+    enum: TagSortBy
   })
   @IsOptional()
-  @IsEnum(SortBy)
-  sortBy?: SortBy;
+  @IsEnum(TagSortBy)
+  sortBy?: TagSortBy;
 }

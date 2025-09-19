@@ -41,7 +41,8 @@ export enum NotFoundMessages {
   ParentReview = 'Parent review not found.',
   Review = 'Review not found.',
   Staff = 'Staff not found.',
-  Order = 'Order not found.'
+  Order = 'Order not found.',
+  Reviewable = 'Reviewable not found.'
 }
 
 export enum BadRequestMessages {

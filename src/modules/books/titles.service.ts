@@ -20,7 +20,7 @@ import { dbErrorHandler } from 'src/common/utilities/error-handler';
 import { StaffsService } from '../staffs/staffs.service';
 import { EntityTypes, StaffActionTypes } from '../staffs/entities/staff-action.entity';
 import { TagsService } from '../tags/tags.service';
-import { BookFilterDto, SortBy } from './dtos/book-filter.dto';
+import { BookQueryDto, BookSortBy } from './dtos/book-query.dto';
 import { getDateRange } from 'src/common/utilities/decade.utils';
 import { Book } from './entities/book.entity';
 import { ViewsService } from '../views/views.service';
@@ -251,7 +251,7 @@ export class TitlesService {
       tags: optionalTags = [],
       decades = [],
       sortBy
-    }: BookFilterDto
+    }: BookQueryDto
   ): Promise<Title[]> {
     if (!tagSlug) {
       return [];
@@ -571,19 +571,19 @@ export class TitlesService {
 
   private buildOrderBy(
     qb: SelectQueryBuilder<Title>,
-    by: SortBy = SortBy.Newest
+    by: BookSortBy = BookSortBy.Newest
   ): void {
     switch (by) {
-      case SortBy.MostLiked:
-        const rateCountSubQuery = this.titleRepo.createQueryBuilder('sub_title')
-          .select('SUM(sub_book.rateCount)', 'totalRateCount')
+      case BookSortBy.MostLiked:
+        const sq = this.titleRepo.createQueryBuilder('sub_title')
+          .select('SUM(sub_book.rateCount) + SUM(sub_book.bookmarkCount)', 'totalLikedCount')
           .leftJoin('sub_title.books', 'sub_book')
           .where('sub_title.id = title.id')
           .getQuery();
-          qb.addSelect(`(${rateCountSubQuery})`, 'title_rateCount');
-          qb.orderBy('title_rateCount', 'DESC');
+          qb.addSelect(`(${sq})`, 'titleLikedCount');
+          qb.orderBy('titleLikedCount', 'DESC');
         break;
-      case SortBy.MostSale:
+      case BookSortBy.MostSale:
         const soldSubQuery = this.titleRepo.createQueryBuilder('sub_title')
           .select('SUM(sub_book.sold)', 'totalSold')
           .leftJoin('sub_title.books', 'sub_book')
@@ -592,10 +592,10 @@ export class TitlesService {
         qb.addSelect(`(${soldSubQuery})`, 'title_sold');
         qb.orderBy('title_sold', 'DESC')
         break;
-      case SortBy.MostView:
+      case BookSortBy.MostViews:
         qb.orderBy('title.views', 'DESC');
         break;
-      case SortBy.Newest:
+      case BookSortBy.Newest:
       default:
         qb.orderBy('title.createdAt', 'DESC');
     }

@@ -2,15 +2,15 @@ import { IsEnum, IsNumber, IsOptional, IsPositive, IsString } from 'class-valida
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
-export enum SortBy {
+export enum CollectionSortBy {
   Newest = 'newest',
   NameAsc = 'name_asc',
   NameDesc = 'name_desc',
-  MostBooks = 'mostbooks',
-  MostView = 'mostview'
+  MostBooks = 'most_books',
+  MostViews = 'most_views'
 }
 
-export class CollectionFilterDto {
+export class CollectionQueryDto {
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
@@ -28,9 +28,10 @@ export class CollectionFilterDto {
   search?: string;
 
   @ApiPropertyOptional({
-     default: 'newest'
+     default: 'newest',
+     enum: CollectionSortBy
   })
   @IsOptional()
-  @IsEnum(SortBy)
-  sortBy?: SortBy;
+  @IsEnum(CollectionSortBy)
+  sortBy?: CollectionSortBy;
 }

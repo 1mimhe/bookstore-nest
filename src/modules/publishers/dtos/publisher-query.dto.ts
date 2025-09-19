@@ -2,15 +2,15 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsEnum, IsInt, IsOptional, IsPositive, IsString } from 'class-validator';
 
-export enum SortBy {
+export enum PublisherSortBy {
   NameAsc = 'name_asc',
   NameDesc = 'name_desc',
-  MostView = 'mostview',
-  MostBooks = 'mostbooks',
+  MostViews = 'most_views',
+  MostBooks = 'most_books',
   Newest = 'newest'
 }
 
-export class AuthorFilterDto {
+export class PublisherQueryDto {
   @Transform(({ value }) => !value ? value : Number(value))
   @IsOptional()
   @IsInt()
@@ -31,9 +31,10 @@ export class AuthorFilterDto {
   search?: string;
 
   @ApiPropertyOptional({
-    default: 'newest'
+    default: PublisherSortBy.Newest,
+    enum: PublisherSortBy
   })
   @IsOptional()
-  @IsEnum(SortBy)
-  sortBy?: SortBy;
+  @IsEnum(PublisherSortBy)
+  sortBy?: PublisherSortBy;
 }

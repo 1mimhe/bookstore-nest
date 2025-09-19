@@ -49,6 +49,8 @@ export class TokenService {
   }
 
   refreshTokens(oldRefreshToken: string, session: SessionData) {
+    console.log(session);
+        
     if (!(session.userId && oldRefreshToken)) {
       throw new ForbiddenException(AuthMessages.AccessDenied);
     }

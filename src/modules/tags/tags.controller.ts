@@ -32,14 +32,14 @@ import { RequiredRoles } from 'src/common/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { SessionData } from 'express-session';
-import { BookFilterDto } from '../books/dtos/book-filter.dto';
+import { BookQueryDto } from '../books/dtos/book-query.dto';
 import { ReorderRootTagsDto } from './dtos/reorder-root-tags.dto';
 import { CreateRootTagDto } from './dtos/create-root-tag.dto';
 import { ViewsService } from '../views/views.service';
 import { TrendingPeriod, ViewEntityTypes } from '../views/views.types';
 import { Request, Response } from 'express';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
-import { TagFilterDto } from './dtos/tag-filter.dto';
+import { TagQueryDto } from './dtos/tag-query.dto';
 
 @Controller('tags')
 @ApiTags('Tag')
@@ -92,7 +92,7 @@ export class TagsController {
   @Serialize(TagCompactPlusResponseDto)
   @Get()
   async getAllTags(
-    @Query() query: TagFilterDto
+    @Query() query: TagQueryDto
   ): Promise<TagCompactPlusResponseDto[]> {
     return this.tagsService.getAll(query);
   }
@@ -114,7 +114,7 @@ export class TagsController {
   @Get(':slug')
   async getTagByName(
     @Param('slug') slug: string,
-    @Query() query: BookFilterDto,
+    @Query() query: BookQueryDto,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
     @CurrentUser('id') userId?: string

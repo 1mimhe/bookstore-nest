@@ -146,9 +146,6 @@ export class Book extends BaseEntity {
   @Column('int', { default: 0 })
   rateCount: number;
 
-  @OneToMany(() => Review, (review) => review.book)
-  reviews: Review[];
-
   @Column('int', { default: 0 })
   bookmarkCount: number;
 

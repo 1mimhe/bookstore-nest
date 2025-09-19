@@ -1,17 +1,19 @@
 import { BaseEntity } from 'src/common/base.entity';
 import { User } from 'src/modules/users/entities/user.entity';
-import { Column, Entity, Index, ManyToOne, OneToMany } from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 import { ReactionsEnum, ReviewReaction } from './review-reaction.entity';
 import { Book } from 'src/modules/books/entities/book.entity';
-import { Blog } from 'src/modules/blogs/blog.entity';
 
 export enum ReviewableType {
   Book = 'book',
-  Blog = 'blog'
+  Blog = 'blog',
+  Author = 'author',
+  Publisher = 'publisher'
 }
 
 @Entity('reviews')
 @Index(['user'])
+@Index(['reviewableType', 'reviewableId'])
 export class Review extends BaseEntity {
   @Column('text')
   content: string;
@@ -25,21 +27,8 @@ export class Review extends BaseEntity {
   })
   reviewableType: ReviewableType;
 
-  @Column({
-    type: 'uuid',
-    nullable: true
-  })
-  bookId?: string;
-  @ManyToOne(() => Book, (book) => book.reviews)
-  book?: Book;
-
-  @Column({
-    type: 'uuid',
-    nullable: true
-  })
-  blogId?: string;
-  @ManyToOne(() => Blog, (blog) => blog.reviews)
-  blog?: Blog;
+  @Column('uuid')
+  reviewableId: string;
 
   @Column('uuid')
   userId: string;

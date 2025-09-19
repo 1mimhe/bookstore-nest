@@ -9,7 +9,7 @@ import { NotFoundMessages } from 'src/common/enums/error.messages';
 import { UpdateBlogDto } from './dtos/update-blog.dto';
 import { StaffsService } from '../staffs/staffs.service';
 import { EntityTypes, StaffActionTypes } from '../staffs/entities/staff-action.entity';
-import { BlogFilterDto, SortBy } from './dtos/blog-filter.dto';
+import { BlogQueryDto, BlogSortBy } from './dtos/blog-query.dto';
 import { TrendingPeriod, ViewEntityTypes } from '../views/views.types';
 import { ViewsService } from '../views/views.service';
 
@@ -118,7 +118,7 @@ export class BlogsService {
       tags,
       search,
       ...filters
-    }: BlogFilterDto
+    }: BlogQueryDto
   ): Promise<Blog[]> {
     const skip = (page - 1) * limit;
     const qb = this.blogRepo.createQueryBuilder('blog');
@@ -149,7 +149,7 @@ export class BlogsService {
 
   private applyFilters(
     qb: SelectQueryBuilder<Blog>,
-    filters: Omit<BlogFilterDto, 'page' | 'limit' | 'sortBy'>
+    filters: Omit<BlogQueryDto, 'page' | 'limit' | 'sortBy'>
   ): void {
     if (filters.titleId) {
       qb.andWhere('blog.titleId = :titleId', { titleId: filters.titleId });
@@ -188,16 +188,16 @@ export class BlogsService {
 
   private buildOrderBy(
     qb: SelectQueryBuilder<Blog>,
-    by: SortBy = SortBy.Newest
+    by: BlogSortBy = BlogSortBy.Newest
   ): void {
     const entityType = qb.expressionMap.mainAlias?.metadata?.targetName;
 
     if (entityType === 'Blog') {
       switch (by) {
-        case SortBy.MostView:
+        case BlogSortBy.MostViews:
           qb.orderBy('blog.views', 'DESC');
           break;
-        case SortBy.Newest:
+        case BlogSortBy.Newest:
         default:
           qb.orderBy('blog.createdAt', 'DESC');
           break;

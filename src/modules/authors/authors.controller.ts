@@ -55,7 +55,7 @@ import { Request, Response } from 'express';
 import { ViewsService } from '../views/views.service';
 import { TrendingPeriod, ViewEntityTypes } from '../views/views.types';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
-import { AuthorFilterDto } from './dtos/author-filter.dto';
+import { AuthorQueryDto } from './dtos/author-query.dto';
 
 @Controller('authors')
 @ApiTags('Author')
@@ -98,7 +98,7 @@ export class AuthorsController extends BaseController {
   @Serialize(AuthorPlusCountResDto)
   @Get()
   async getAllAuthors(
-    @Query() query: AuthorFilterDto
+    @Query() query: AuthorQueryDto
   ): Promise<AuthorPlusCountResDto[]> {
     return this.authorsService.getAll(query);
   }

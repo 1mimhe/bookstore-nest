@@ -43,7 +43,6 @@ import { ConfigService } from '@nestjs/config';
 
 @Controller('users')
 @ApiTags('User')
-@UseGuards(AuthGuard)
 export class UsersController extends BaseController {
   constructor(
     private usersService: UsersService,
@@ -60,6 +59,7 @@ export class UsersController extends BaseController {
   })
   @ApiBearerAuth()
   @Serialize(UserResponseDto)
+  @UseGuards(AuthGuard)
   @Get('whoami')
   whoAmI(@CurrentUser() user: UserResponseDto): UserResponseDto {
     return user;
@@ -85,6 +85,7 @@ export class UsersController extends BaseController {
   })
   @ApiBearerAuth()
   @Serialize(AddressResponseDto)
+  @UseGuards(AuthGuard)
   @HttpCode(HttpStatus.CREATED)
   @Post('addresses')
   createAddress(
@@ -102,6 +103,7 @@ export class UsersController extends BaseController {
   })
   @ApiBearerAuth()
   @Serialize(AddressResponseDto)
+  @UseGuards(AuthGuard)
   @Get('addresses')
   getAllUserAddresses(@CurrentUser('id') userId: string) {
     return this.usersService.getAllUserAddresses(userId);
@@ -115,6 +117,7 @@ export class UsersController extends BaseController {
   })
   @ApiBearerAuth()
   @Serialize(AddressResponseDto)
+  @UseGuards(AuthGuard)
   @Patch('addresses/:id')
   updateAddress(
     @Param('id', ParseUUIDPipe) id: string,
@@ -127,6 +130,7 @@ export class UsersController extends BaseController {
     summary: 'Delete a address by its id',
   })
   @ApiBearerAuth()
+  @UseGuards(AuthGuard)
   @Delete('addresses/:id')
   deleteAddress(@Param('id', ParseUUIDPipe) id: string) {
     return this.usersService.deleteAddress(id);
@@ -141,6 +145,7 @@ export class UsersController extends BaseController {
   @ApiQueryPagination()
   @ApiBearerAuth()
   @Serialize(BookmarksDto)
+  @UseGuards(AuthGuard)
   @Get('bookmarks/:type')
   async getAllBookmarks(
     @Param('type', new ParseEnumPipe(BookmarkTypes)) type: BookmarkTypes,
@@ -157,7 +162,6 @@ export class UsersController extends BaseController {
       including \`titles\`, \`authors\`, \`publishers\`, \`blogs\`, and \`characters\`
       with their basic information and images.`,
   })
-  @ApiBearerAuth()
   @Serialize(RecentViewDto)
   @Get('recent-views')
   async getUserRecentViews(

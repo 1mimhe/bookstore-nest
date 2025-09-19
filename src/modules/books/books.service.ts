@@ -20,7 +20,7 @@ import { dbErrorHandler } from 'src/common/utilities/error-handler';
 import { StaffsService } from '../staffs/staffs.service';
 import { EntityTypes, StaffActionTypes } from '../staffs/entities/staff-action.entity';
 import { CartBook } from './books.types';
-import { BookFilterDto, SortBy } from './dtos/book-filter.dto';
+import { BookQueryDto, BookSortBy } from './dtos/book-query.dto';
 import { TitlesService } from './titles.service';
 
 @Injectable()
@@ -116,7 +116,7 @@ export class BooksService {
       authorId,
       publisherId,
       search
-    }: BookFilterDto
+    }: BookQueryDto
   ): Promise<Book[]> {
     const skip = (page - 1) * limit;
 
@@ -173,19 +173,19 @@ export class BooksService {
 
   private buildOrderBy(
     qb: SelectQueryBuilder<Book>,
-    by: SortBy = SortBy.Newest
+    by: BookSortBy = BookSortBy.Newest
   ): void {
     switch (by) {
-      case SortBy.MostLiked:
+      case BookSortBy.MostLiked:
         qb.orderBy('book.rateCount', 'DESC');
         break;
-      case SortBy.MostView:
+      case BookSortBy.MostViews:
         qb.orderBy('title.views', 'DESC');
         break;
-      case SortBy.MostSale:
+      case BookSortBy.MostSale:
         qb.orderBy('book.sold', 'DESC');
         break;
-      case SortBy.Newest:
+      case BookSortBy.Newest:
       default:
         qb.orderBy('book.createdAt', 'DESC');
     }
