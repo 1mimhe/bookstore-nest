@@ -5,6 +5,8 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  ParseUUIDPipe,
+  Patch,
   Post,
   Query,
   UseGuards,
@@ -32,6 +34,7 @@ import { DiscountCodeQueryDto } from './dtos/discount-code-query.dto';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { CheckDiscountCodeDto } from './dtos/check-discount-code.dto';
+import { UpdateDiscountCodeDto } from './dtos/update-discount-code.dto';
 
 @Controller('discount-codes')
 @ApiTags('Discount Codes')
@@ -110,6 +113,34 @@ export class DiscountCodesController extends BaseController {
     @Param('code') code: string
   ): Promise<DiscountCodeResponseDto> {
     return this.discountCodesService.getByCode(code);
+  }
+
+    @ApiOperation({
+    summary: 'Update a discount code',
+  })
+  @ApiBadRequestResponse({
+    type: ValidationErrorResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: NotFoundMessages.DiscountCode,
+  })
+  @ApiNotFoundResponse({
+    description: 'Some users not found.',
+  })
+  @ApiBearerAuth()
+  @Serialize(DiscountCodeResponseDto)
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequiredRoles(
+    RolesEnum.Admin,
+    RolesEnum.ContentManager,
+    RolesEnum.InventoryManager
+  )
+  @Patch(':id')
+  async updateDiscountCode(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateDiscountCodeDto: UpdateDiscountCodeDto
+  ): Promise<DiscountCodeResponseDto> {
+    return this.discountCodesService.update(id, updateDiscountCodeDto);
   }
 
   @ApiOperation({

@@ -14,6 +14,7 @@ import { DiscountCodeQueryDto } from './dtos/discount-code-query.dto';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
 import { CheckDiscountCodeDto } from './dtos/check-discount-code.dto';
 import { DiscountCodeCheckResponseDto } from './dtos/discount-code-response.dto';
+import { UpdateDiscountCodeDto } from './dtos/update-discount-code.dto';
 
 @Injectable()
 export class DiscountCodesService {
@@ -119,6 +120,64 @@ export class DiscountCodesService {
     }
 
     return discountCode;
+  }
+
+  async update(
+    id: string,
+    discountCodeDto: UpdateDiscountCodeDto
+  ): Promise<DiscountCode> {
+    return this.dataSource.transaction(async (manager) => {
+      const existingDiscountCode = await manager.findOne(DiscountCode, {
+        where: { id },
+        relations: ['users'],
+      });
+
+      if (!existingDiscountCode) {
+        throw new NotFoundException(NotFoundMessages.DiscountCode);
+      }
+
+      const { userIds, ...discountCodeData } = discountCodeDto;
+
+      // Check dates if provided
+      if (discountCodeData.startDate && discountCodeData.endDate) {
+        if (new Date(discountCodeData.startDate) >= new Date(discountCodeData.endDate)) {
+          throw new BadRequestException('End date must be after start date.');
+        }
+      }
+
+      // Check percentage
+      if (
+        discountCodeData.type === DiscountCodeType.Percentage
+        && discountCodeData.value && discountCodeData.value > 1
+      ) {
+        throw new BadRequestException('Percentage value must be between 0 and 1.');
+      }
+
+      // Check min/max purchase
+      if (discountCodeData.minPurchase && discountCodeData.maxPurchase && 
+          discountCodeData.minPurchase > discountCodeData.maxPurchase) {
+        throw new BadRequestException('Min purchase must be less than or equal to max purchase');
+      }
+
+      const updatedDiscountCode = manager.merge(DiscountCode, existingDiscountCode, discountCodeData) as DiscountCode;
+
+      // Update user relationships if userIds are provided
+      if (userIds !== undefined) {
+        let users: User[] = [];
+        if (userIds.length > 0) {
+          users = await manager.findBy(User, { id: In(userIds) });
+          if (users.length !== userIds.length) {
+            throw new NotFoundException('Some users not found.');
+          }
+        }
+        updatedDiscountCode.users = users;
+      }
+
+      return manager.save(DiscountCode, updatedDiscountCode);
+    }).catch((error) => {
+      dbErrorHandler(error);
+      throw error;
+    });
   }
 
   async checkDiscountCode(
