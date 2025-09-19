@@ -163,7 +163,7 @@ export class DiscountCodesController extends BaseController {
   }
 
   @ApiOperation({
-    summary: 'Checks if a discount code is valid',
+    summary: 'Checks if a discount code is valid (For all authorized users)',
     description: 'Checks if a discount code can be applied to a given price.',
   })
   @ApiBadRequestResponse({
@@ -173,6 +173,7 @@ export class DiscountCodesController extends BaseController {
     type: DiscountCodeCheckResponseDto,
   })
   @Serialize(DiscountCodeCheckResponseDto)
+  @UseGuards(AuthGuard)
   @Post('check')
   async checkDiscountCode(
     @Body() checkDiscountCodeDto: CheckDiscountCodeDto,
