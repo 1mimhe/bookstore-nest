@@ -131,9 +131,9 @@ export class BlogsService {
     if (search) {
       qb.andWhere(
         '(LOWER(book.subject) LIKE LOWER(:search) OR ' +
-        '(LOWER(book.otherSubject) LIKE LOWER(:search) OR ' +
-        '(LOWER(book.slug) LIKE LOWER(:search) OR ' +
-        '(LOWER(book.summary) LIKE LOWER(:search)',
+        'LOWER(book.otherSubject) LIKE LOWER(:search) OR ' +
+        'LOWER(book.slug) LIKE LOWER(:search) OR ' +
+        'LOWER(book.summary) LIKE LOWER(:search))',
         { search: `%${search}%` }
       );
     }
@@ -168,20 +168,22 @@ export class BlogsService {
     qb: SelectQueryBuilder<Blog>,
     tags: string[] = []
   ): void {
-    qb.andWhere(
-      qb => {
-        const subQuery = qb
-          .subQuery()
-          .select('1')
-          .from('blog_tag', 'bt')
-          .innerJoin('tags', 't', 'bt.tagId = t.id')
-          .where('bt.blogId = blog.id')
-          .andWhere('t.slug IN (:...tags)')
-          .getQuery();
-        return `EXISTS (${subQuery})`;
-      }
-    )
-    .setParameter('tags', tags);
+    if (tags.length > 0) {
+      qb.andWhere(
+        qb => {
+          const subQuery = qb
+            .subQuery()
+            .select('1')
+            .from('blog_tag', 'bt')
+            .innerJoin('tags', 't', 'bt.tagId = t.id')
+            .where('bt.blogId = blog.id')
+            .andWhere('t.slug IN (:...tags)')
+            .getQuery();
+          return `EXISTS (${subQuery})`;
+        }
+      )
+      .setParameter('tags', tags);
+    }
   }
 
   private buildOrderBy(

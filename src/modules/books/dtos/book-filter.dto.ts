@@ -10,13 +10,13 @@ export enum SortBy {
 }
 
 export class BookFilterDto {
-  @Transform(({ value }) => Number(value))
+  @Transform(({ value }) => !value ? value : Number(value))
   @IsOptional()
   @IsInt()
   @IsPositive()
   page?: number;
 
-  @Transform(({ value }) => Number(value))
+  @Transform(({ value }) => !value ? value : Number(value))
   @IsOptional()
   @IsInt()
   @IsPositive()
@@ -49,7 +49,7 @@ export class BookFilterDto {
   tags?: string[];
 
   @ApiPropertyOptional({
-    examples: ['1900s', '1380s', '800s', '1900', '1380']
+    example: ['1900s', '1380s', '1900', '1380']
   })
   @IsOptional()
   @IsArray()

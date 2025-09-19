@@ -99,7 +99,7 @@ export class PublishersController extends BaseController {
 
   @ApiOperation({ 
     summary: 'Retrieves all publishers',
-    description: 'With pagination, different filtering, search and sorting'
+    description: 'With pagination, different filtering, search and sorting.'
   })
   @ApiQueryPagination()
   @Serialize(PublisherPlusResDto)

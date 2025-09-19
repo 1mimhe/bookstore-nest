@@ -173,7 +173,7 @@ export class BooksController extends BaseController {
 
   @ApiOperation({
     summary: 'Retrieves all books',
-    description: 'With pagination, different filtering and sorting'
+    description: 'With pagination, different filtering, search and sorting.'
   })
   @ApiQueryPagination()
   @Serialize(BookResponseDto)

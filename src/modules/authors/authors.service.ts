@@ -92,8 +92,8 @@ export class AuthorsService {
     // Search filter across combined names
     if (search) {
       qb.andWhere(
-        'LOWER(CONCAT(author.firstName, \' \', author.lastName, \' \', author.nickName)) LIKE LOWER(:search) OR ' +
-        '(LOWER(author.slug) LIKE LOWER(:search) OR ',
+        '(LOWER(CONCAT(author.firstName, author.lastName, author.nickName)) LIKE LOWER(:search) OR ' +
+        'LOWER(author.slug) LIKE LOWER(:search))',
         { search: `%${search}%` }
       );
     }

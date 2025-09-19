@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Book } from './entities/book.entity';
-import { DataSource, EntityManager, EntityNotFoundError, In, Repository, SelectQueryBuilder } from 'typeorm';
+import { Brackets, DataSource, EntityManager, EntityNotFoundError, In, Repository, SelectQueryBuilder } from 'typeorm';
 import { CreateBookDto } from './dtos/create-book.dto';
 import { Title } from './entities/title.entity';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
@@ -126,14 +126,21 @@ export class BooksService {
       .leftJoin('book.title', 'title')
       .addSelect('title.views');
 
-    // Add publisherId filter
+    // Add authorId filter
     if (authorId) {
-      qb.andWhere('blog.authorId = :authorId', { authorId });
+      qb.leftJoin('title.authors', 'authors')
+        .leftJoin('book.translators', 'translators')
+        .where(
+          new Brackets((qb) => {
+            qb.where('authors.id = :authorId', { authorId })
+              .orWhere('translators.id = :authorId', { authorId });
+          })
+        );
     }
 
     // Add publisherId filter
     if (publisherId) {
-      qb.andWhere('blog.publisherId = :publisherId', { publisherId });
+      qb.andWhere('book.publisherId = :publisherId', { publisherId });
     }
 
     // Add tags filters
@@ -150,7 +157,7 @@ export class BooksService {
     if (search) {
       qb.andWhere(
         '(LOWER(book.name) LIKE LOWER(:search) OR ' +
-        '(LOWER(book.anotherName) LIKE LOWER(:search) OR ',
+        'LOWER(book.anotherName) LIKE LOWER(:search))',
         { search: `%${search}%` }
       );
     }

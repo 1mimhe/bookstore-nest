@@ -92,7 +92,7 @@ export class AuthorsController extends BaseController {
 
   @ApiOperation({
     summary: 'Retrieves all authors',
-    description: 'With pagination, different filtering, search and sorting'
+    description: 'With pagination, different filtering, search and sorting.'
   })
   @ApiQueryPagination()
   @Serialize(AuthorPlusCountResDto)

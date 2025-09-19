@@ -79,7 +79,7 @@ export class PublishersService {
     if (search) {
       qb.andWhere(
         '(LOWER(publisher.publisherName) LIKE LOWER(:search) OR ' +
-        '(LOWER(publisher.slug) LIKE LOWER(:search)',
+        'LOWER(publisher.slug) LIKE LOWER(:search))',
         { search: `%${search}%` }
       );
     }

@@ -8,13 +8,13 @@ export enum SortBy {
 }
 
 export class BlogFilterDto {
-  @Transform(({ value }) => Number(value))
+  @Transform(({ value }) => !value ? value : Number(value))
   @IsOptional()
   @IsInt()
   @IsPositive()
   page?: number;
 
-  @Transform(({ value }) => Number(value))
+  @Transform(({ value }) => !value ? value : Number(value))
   @IsOptional()
   @IsInt()
   @IsPositive()

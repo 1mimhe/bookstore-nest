@@ -11,13 +11,13 @@ export enum SortBy {
 }
 
 export class PublisherFilterDto {
-  @Transform(({ value }) => Number(value))
+  @Transform(({ value }) => !value ? value : Number(value))
   @IsOptional()
   @IsInt()
   @IsPositive()
   page?: number;
 
-  @Transform(({ value }) => Number(value))
+  @Transform(({ value }) => !value ? value : Number(value))
   @IsOptional()
   @IsInt()
   @IsPositive()
