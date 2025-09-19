@@ -178,7 +178,7 @@ export class DiscountCodesController extends BaseController {
     @Body() checkDiscountCodeDto: CheckDiscountCodeDto,
     @CurrentUser('id') userId: string
   ): Promise<DiscountCodeCheckResponseDto> {
-    return this.discountCodesService.checkDiscountCode(checkDiscountCodeDto, userId);
+    return this.discountCodesService.check(checkDiscountCodeDto, userId);
   }
 
 }

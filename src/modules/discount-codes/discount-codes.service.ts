@@ -190,7 +190,7 @@ export class DiscountCodesService {
     await this.discountCodeRepo.softRemove(discountCode);
   }
 
-  async checkDiscountCode(
+  async check(
     checkDiscountCodeDto: CheckDiscountCodeDto,
     userId: string
   ): Promise<DiscountCodeCheckResponseDto> {
@@ -298,5 +298,32 @@ export class DiscountCodesService {
       }
       throw error;
     }
+  }
+
+
+  async apply(
+    code: string,
+    finalPrice: number,
+    userId: string
+  ): Promise<{ discountAmount: number; finalPrice: number }> {
+    const checkResult = await this.check(
+      {
+        code,
+        finalPrice
+      },
+      userId
+    );
+    
+    if (!checkResult.isValid) {
+      throw new BadRequestException(checkResult.message);
+    }
+
+    // Increment usage count
+    await this.discountCodeRepo.increment({ code }, 'usedCount', 1);
+
+    return {
+      discountAmount: checkResult.discountAmount,
+      finalPrice: checkResult.finalPrice
+    };
   }
 }
