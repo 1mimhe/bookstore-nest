@@ -62,14 +62,14 @@ export class Order extends BaseEntity {
   @Column('int', { default: 0 })
   shippingPrice: number;
 
-  // TODO: discountCode: DiscountCode;
-  // With eager loading.
+  @Column({ nullable: true })
+  discountCode?: string;
 
   @Column('int')
   totalPrice: number; // Without apply the discount code and shipping price
 
   @Column('int')
-  discount: number;
+  discountAmount: number;
 
   @Column('int')
   finalPrice: number;

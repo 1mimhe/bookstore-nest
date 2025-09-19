@@ -67,7 +67,10 @@ export class OrderResponseDto {
   totalPrice: number;
 
   @Expose()
-  discount: number;
+  discountCode: number;
+
+  @Expose()
+  discountAmount: number;
 
   @Expose()
   finalPrice: number;

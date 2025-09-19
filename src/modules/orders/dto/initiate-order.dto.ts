@@ -12,5 +12,5 @@ export class InitiateOrderDto {
 
   @IsOptional()
   @IsString()
-  discountCode: string;
+  discountCode?: string;
 }
