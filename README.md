@@ -1,8 +1,29 @@
-# 📚 Bookstore NestJS API
+<div align="center">
 
-A comprehensive, feature-rich and scalable bookstore API built with NestJS, featuring advanced role-based access control, real-time analytics, and a complete content management system.
+<img src="./public/Bookstore-Logo.png" alt="HamBaar Logo" width="200">
+</br>
+</br>
 
-## 🚀 Cote Features
+# Bookstore NestJS API
+
+**A comprehensive, feature-rich and scalable bookstore API built with NestJS**
+
+[![Node.js](https://img.shields.io/badge/Node.js-43853D?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![NestJS](https://img.shields.io/badge/NestJS-E0234E?style=for-the-badge&logo=nestjs&logoColor=white)](https://nestjs.com/)
+[![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
+[![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io/)
+[![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
+
+</br>
+
+[![](https://img.shields.io/badge/Database%20Schema-8A2BE2?style=for-the-badge)](https://dbdiagram.io/d/hambaar-db-686b7b0cf413ba350893efca)
+
+</div>
+
+---
+
+## ✨ Core Features
 
 - **🔐 Authentication & Authorization** - JWT-based auth with role-based access control
 - **📖 Complete Book Management** - Titles, books, authors, publishers, and characters
@@ -181,6 +202,58 @@ npm run start:dev
 ## 📁 Project Structure
 
 ```
+bookstore-nest/
+├── 📁 dist/                          # Compiled output
+├── 📁 node_modules/                  # Dependencies
+├── 📁 src/                           # Source code
+│   ├── 📄 main.ts                    # Entry point
+│   ├── 📁 common/                    # Shared utilities
+│   │   ├── 📁 decorators/            # Custom decorators
+│   │   ├── 📁 enums/                 # Shared enums
+│   │   ├── 📁 types/                 # Type definitions
+│   │   └── 📁 utilities/             # Helper functions
+│   └── 📁 modules/                   # Feature modules
+│       ├── 📁 app/                   # App configuration
+│       ├── 📁 auth/                  # Authentication
+│       │   ├── 📁 dtos/
+│       │   └── 📁 guards/
+│       ├── 📁 authors/               # Authors management
+│       │   └── 📁 dtos/
+│       ├── 📁 blogs/                 # Blog posts
+│       │   └── 📁 dtos/
+│       ├── 📁 books/                 # Books management
+│       │   ├── 📁 dtos/
+│       │   └── 📁 entities/
+│       ├── 📁 collections/           # Book collections
+│       │   ├── 📁 dtos/
+│       │   └── 📁 entities/
+│       ├── 📁 discount-codes/        # Discount codes
+│       │   └── 📁 dtos/
+│       ├── 📁 languages/             # Language management
+│       ├── 📁 orders/                # Order management
+│       │   ├── 📁 dto/
+│       │   └── 📁 entities/
+│       ├── 📁 publishers/            # Publishers
+│       │   └── 📁 dtos/
+│       ├── 📁 reviews/               # Reviews system
+│       │   ├── 📁 dtos/
+│       │   └── 📁 entities/
+│       ├── 📁 staffs/                # Staff management
+│       │   ├── 📁 dtos/
+│       │   └── 📁 entities/
+│       ├── 📁 tags/                  # Tags system
+│       │   ├── 📁 dtos/
+│       │   └── 📁 entities/
+│       ├── 📁 token/                 # Token management
+│       ├── 📁 users/                 # User management
+│       │   ├── 📁 dtos/
+│       │   └── 📁 entities/
+│       └── 📁 views/                 # Views tracking
+├── 📁 test/                          # E2E tests
+├── 📄 Dockerfile
+├── 📄 package.json
+├── 📄 tsconfig.json
+└── 📄 README.md
 ```
 
 ## 🔐 Authentication & Authorization
@@ -333,22 +406,6 @@ POST /signup-test-admin
 - **Pagination**: Limit-offset with cursor-based alternatives
 - **Eager Loading**: Optimized relations loading
 - **Query Builders**: Complex queries with TypeORM query builder
-
-## 🛡️ Security
-
-### Security Measures
-- **JWT Tokens**: Short-lived access tokens with refresh mechanism
-- **Role-based Access**: Granular permission system
-- **Input Validation**: class-validator for all inputs
-- **SQL Injection**: TypeORM parameterized queries
-- **Rate Limiting**: Configurable rate limits per endpoint
-- **CORS**: Configurable cross-origin settings
-
-### Data Privacy
-- **Personal Data**: Minimal data collection
-- **Anonymous Tracking**: UUID-based view tracking
-- **Audit Logging**: Staff action logging
-- **Data Retention**: Configurable retention policies
 
 ## 📞 Support & Contributing
 
