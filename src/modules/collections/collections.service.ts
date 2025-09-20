@@ -13,6 +13,7 @@ import { EntityTypes, StaffActionTypes } from '../staffs/entities/staff-action.e
 import { TrendingPeriod, ViewEntityTypes } from '../views/views.types';
 import { ViewsService } from '../views/views.service';
 import { CollectionQueryDto, CollectionSortBy } from './dtos/collection-query.dto';
+import { RolesEnum } from '../users/entities/role.entity';
 
 @Injectable()
 export class CollectionsService {
@@ -30,7 +31,11 @@ export class CollectionsService {
     staffId?: string
   ): Promise<Collection | never> {
     return this.dataSource.transaction(async manager => {
-      const collection =  manager.create(Collection, collectionRepo);
+      const collection = manager.create(Collection, {
+        ...collectionRepo,
+        userId,
+        isPublic: collectionRepo.isPublic ?? true
+      });
       const dbCollection = await manager.save(Collection, collection);
 
       if (userId) {
@@ -60,6 +65,55 @@ export class CollectionsService {
       limit = 10,
       search,
       sortBy
+    }: CollectionQueryDto,
+  ) {
+    const skip = (page - 1) * limit;
+    const qb = this.collectionRepo
+      .createQueryBuilder('collection')
+      .leftJoinAndSelect('collection.user', 'user')
+      .leftJoinAndSelect('user.roles', 'userRoles')
+      .leftJoin('collection.collectionBooks', 'collectionBooks')
+      .select(['collection', 'user', 'userRoles', 'COUNT(collectionBooks.id) as bookCount'])
+      .groupBy('collection.id, user.id, userRoles.id')
+      .andWhere('collection.isPublic = true');
+
+    // Search filter
+    if (search) {
+      qb.andWhere(
+        '(LOWER(collection.name) LIKE LOWER(:search) OR ' +
+        'LOWER(collection.slug) LIKE LOWER(:search) OR ' +
+        'LOWER(collection.description) LIKE LOWER(:search))',
+        { search: `%${search}%` }
+      );
+    }
+
+    // Sorting
+    this.buildOrderBy(qb, sortBy);
+
+    const collections = await qb
+      .skip(skip)
+      .limit(limit)
+      .getRawAndEntities();
+    
+    return collections.entities.map((collection, index) => ({
+      ...collection,
+      bookCount: parseInt(collections.raw[index].bookCount, 10),
+      user: collection.user ? {
+        username: collection.user.username,
+        firstName: collection.user.firstName,
+        lastName: collection.user.lastName,
+        role: collection.user.roles?.[0]?.role === RolesEnum.Customer ? RolesEnum.Customer : RolesEnum.Admin,
+      } : undefined,
+    }));
+  }
+
+  async getUserCollections(
+    userId: string,
+    {
+      page = 1,
+      limit = 10,
+      search,
+      sortBy
     }: CollectionQueryDto
   ): Promise<(Collection & { bookCount: number })[]> {
     const skip = (page - 1) * limit;
@@ -67,6 +121,7 @@ export class CollectionsService {
       .createQueryBuilder('collection')
       .leftJoin('collection.collectionBooks', 'collectionBooks')
       .select(['collection', 'COUNT(collectionBooks.id) as bookCount'])
+      .where('collection.userId = :userId', { userId })
       .groupBy('collection.id');
 
     // Search filter
@@ -120,7 +175,9 @@ export class CollectionsService {
   async get(
     identifier: { id?: string; slug?: string },
     complete = true,
-    manager?: EntityManager
+    manager?: EntityManager,
+    userId?: string,
+    staffId?: string
   ): Promise<Collection | never> {
     const where: FindOptionsWhere<Collection> = {};
     if (identifier.id) {
@@ -135,10 +192,17 @@ export class CollectionsService {
     const relations = complete ? {
       collectionBooks: {
         book: true
+      },
+      user: {
+        roles: true
       }
-    } as FindOptionsRelations<Collection> : {};
+    } as FindOptionsRelations<Collection> : {
+      user: {
+        roles: true
+      }
+    };
   
-    return repository.findOneOrFail({
+    const collection = await repository.findOneOrFail({
       where,
       relations,
       order: {
@@ -152,6 +216,22 @@ export class CollectionsService {
       }
       throw error;
     });
+
+    // Check if user can access this collection
+    if (!staffId && !collection.isPublic && collection.userId !== userId) {
+      throw new NotFoundException(NotFoundMessages.Collection);
+    }
+
+    // Transform user data to include role
+    if (collection.user) {
+      collection.user = {
+        ...collection.user,
+        role: collection.user.roles?.[0]?.role === RolesEnum.Customer ? RolesEnum.Customer : RolesEnum.Admin,
+        roles: undefined
+      } as any;
+    }
+
+    return collection;
   }
 
   async getTrending(
@@ -172,6 +252,22 @@ export class CollectionsService {
     const collections = await this.collectionRepo.find({
       where: {
         id: In(collectionIds)
+      },
+      relations: {
+        user: {
+          roles: true
+        }
+      }
+    });
+
+    // Transform user data
+    collections.forEach(collection => {
+      if (collection.user) {
+        collection.user = {
+          ...collection.user,
+          role: collection.user.roles?.[0]?.role === RolesEnum.Customer ? RolesEnum.Customer : RolesEnum.Admin,
+          roles: undefined
+        } as any;
       }
     });
 
@@ -242,7 +338,7 @@ export class CollectionsService {
     limit = 10
   ): Promise<Collection[]> {
     const skip = (page - 1) * limit;
-    return this.collectionRepo.find({
+    const collections = await this.collectionRepo.find({
       where: {
         collectionBooks: {
           book: {
@@ -250,9 +346,28 @@ export class CollectionsService {
           }
         }
       },
+      relations: {
+        user: {
+          roles: true
+        }
+      },
       skip,
       take: limit,
     });
+
+    // Transform user data
+    collections.forEach(collection => {
+      if (collection.user) {
+        collection.user = {
+          username: collection.user.username,
+          firstName: collection.user.firstName,
+          lastName: collection.user.lastName,
+          role: collection.user.roles?.[0]?.role === RolesEnum.Customer ? RolesEnum.Customer : RolesEnum.Admin,
+        } as any;
+      }
+    });
+
+    return collections;
   }
 
   async updateCollectionBook(
@@ -297,5 +412,79 @@ export class CollectionsService {
   async deleteCollectionBooks(id: string): Promise<CollectionBook | never> {
     const cb = await this.getCollectionBook(id);
     return this.collectionBookRepo.remove(cb);
+  }
+
+  async update(
+    id: string,
+    updateDto: any,
+    userId: string,
+    staffId?: string,
+  ): Promise<Collection | never> {
+    const collection = await this.get({ id }, true, undefined, userId, staffId);
+    
+    // Check ownership
+    if (!staffId && collection.userId !== userId) {
+      throw new BadRequestException('You can only update your own collections.');
+    }
+
+    return this.dataSource.transaction(async manager => {
+      Object.assign(collection, updateDto);
+      const updatedCollection = await manager.save(Collection, collection);
+
+      if (userId) {
+        await this.staffsService.createAction(
+          {
+            userId,
+            staffId,
+            type: StaffActionTypes.CollectionUpdated,
+            entityId: updatedCollection.id,
+            entityType: EntityTypes.Collection,
+            newValue: JSON.stringify(updatedCollection)
+          },
+          manager
+        );
+      }
+
+      return updatedCollection;
+    }).catch(error => {
+      dbErrorHandler(error);
+      throw error;
+    });
+  }
+
+  async delete(
+    id: string,
+    userId: string,
+    staffId?: string
+  ): Promise<Collection | never> {
+    const collection = await this.get({ id }, true, undefined, userId, staffId);
+    
+    // Check ownership
+    if (!staffId && collection.userId !== userId) {
+      throw new BadRequestException('You can only delete your own collections.');
+    }
+
+    return this.dataSource.transaction(async manager => {
+      const deletedCollection = await manager.remove(Collection, collection);
+
+      if (userId) {
+        await this.staffsService.createAction(
+          {
+            userId,
+            staffId,
+            type: StaffActionTypes.CollectionDeleted,
+            entityId: deletedCollection.id,
+            entityType: EntityTypes.Collection,
+            newValue: JSON.stringify(deletedCollection)
+          },
+          manager
+        );
+      }
+
+      return deletedCollection;
+    }).catch(error => {
+      dbErrorHandler(error);
+      throw error;
+    });
   }
 }
