@@ -1,5 +1,20 @@
 import { Expose, Type } from 'class-transformer';
 import { BookResponseDto } from 'src/modules/books/dtos/book-response.dto';
+import { RolesEnum } from 'src/modules/users/entities/role.entity';
+
+class UserDto {
+  @Expose()
+  username: string;
+
+  @Expose()
+  firstName: string;
+
+  @Expose()
+  lastName?: string;
+
+  @Expose()
+  role?: RolesEnum.Customer | RolesEnum.Admin;
+}
 
 export class CollectionBookCompactResponseDto {
   @Expose()
@@ -48,6 +63,16 @@ export class CollectionCompactResponseDto {
   
   @Expose()
   views: number;
+
+  @Expose()
+  isPublic: boolean;
+
+  @Expose()
+  userId?: string;
+
+  @Expose()
+  @Type(() => UserDto)
+  user?: UserDto;
 
   @Expose()
   createdAt: Date;

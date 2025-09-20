@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { makeSlug } from 'src/common/utilities/make-slug';
 
 export class CreateCollectionDto {
@@ -21,4 +21,8 @@ export class CreateCollectionDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isPublic?: boolean;
 }

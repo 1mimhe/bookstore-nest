@@ -20,8 +20,9 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { CollectionsService } from './collections.service';
-import { ApiBearerAuth, ApiNotFoundResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateCollectionDto } from './dtos/create-collection.dto';
+import { UpdateCollectionDto } from './dtos/update-collection.dto';
 import { CreateCollectionBookDto } from './dtos/create-collection-book.dto';
 import { UpdateCollectionBookDto } from './dtos/update-collection-book.dto';
 import { UuidArrayDto } from './entities/uuid-array.dto';
@@ -46,6 +47,7 @@ import { TrendingPeriod, ViewEntityTypes } from '../views/views.types';
 import { Request, Response } from 'express';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { CollectionQueryDto } from './dtos/collection-query.dto';
+import { SoftAuthGuard } from '../auth/guards/soft-auth.guard';
 
 @Controller('collections')
 @ApiTags('Collection')
@@ -76,13 +78,32 @@ export class CollectionsController {
     summary: 'Retrieves all collections',
     description: 'With pagination, different filtering, search and sorting.'
   })
+  @ApiOkResponse({
+    type: [CollectionCompactResponseDto]
+  })
   @ApiQueryPagination()
   @Serialize(CollectionCompactResponseDto)
   @Get()
   async getAllCollections(
-    @Query() query: CollectionQueryDto
-  ): Promise<CollectionCompactResponseDto[]> {
+    @Query() query: CollectionQueryDto,
+  ) {
     return this.collectionsService.getAll(query);
+  }
+
+  @ApiOperation({
+    summary: 'Retrieves user\'s own collections',
+    description: 'With pagination, different filtering, search and sorting.'
+  })
+  @ApiBearerAuth()
+  @ApiQueryPagination()
+  @Serialize(CollectionCompactResponseDto)
+  @UseGuards(AuthGuard)
+  @Get('my')
+  async getUserCollections(
+    @Query() query: CollectionQueryDto,
+    @CurrentUser('id') userId: string
+  ): Promise<CollectionCompactResponseDto[]> {
+    return this.collectionsService.getUserCollections(userId, query);
   }
 
   @ApiOperation({
@@ -93,13 +114,16 @@ export class CollectionsController {
   })
   @ApiQueryComplete('collections')
   @Serialize(CollectionResponseDto)
+  @UseGuards(SoftAuthGuard)
   @Get('id/:id')
   async getCollectionById(
     @Param('id', ParseUUIDPipe) id: string,
     @Query('complete', new ParseBoolPipe({ optional: true }))
     complete?: boolean,
+    @CurrentUser('id') userId?: string,
+    @Session() session?: SessionData
   ): Promise<CollectionResponseDto> {
-    return this.collectionsService.get({ id }, complete);
+    return this.collectionsService.get({ id }, complete, undefined, userId, session?.staffId);
   }
 
   @ApiOperation({
@@ -110,6 +134,7 @@ export class CollectionsController {
   })
   @ApiQueryComplete('collections')
   @Serialize(CollectionResponseDto)
+  @UseGuards(SoftAuthGuard)
   @Get('slug/:slug')
   async getCollectionBySlug(
     @Param('slug') slug: string,
@@ -117,9 +142,10 @@ export class CollectionsController {
     @Res({ passthrough: true }) res: Response,
     @Query('complete', new ParseBoolPipe({ optional: true }))
     complete?: boolean,
-    @CurrentUser('id') userId?: string
+    @CurrentUser('id') userId?: string,
+    @Session() session?: SessionData
   ): Promise<CollectionResponseDto> {
-    const collection = await this.collectionsService.get({ slug }, complete);
+    const collection = await this.collectionsService.get({ slug }, complete, undefined, userId, session?.staffId);
 
     await this.viewsService.recordView(
       ViewEntityTypes.Collection,
@@ -156,6 +182,39 @@ export class CollectionsController {
     @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number = 20
   ): Promise<CollectionCompactResponseDto[]> {
     return this.collectionsService.getTrending(period, limit);
+  }
+
+  @ApiOperation({
+    summary: 'Update a collection',
+  })
+  @ApiBearerAuth()
+  @Serialize(CollectionCompactResponseDto)
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequiredRoles(RolesEnum.Admin, RolesEnum.ContentManager)
+  @Patch(':id')
+  async updateCollection(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: UpdateCollectionDto,
+    @Session() session: SessionData,
+    @CurrentUser('id') userId: string
+  ): Promise<CollectionCompactResponseDto> {
+    return this.collectionsService.update(id, body, userId, session.staffId);
+  }
+
+  @ApiOperation({
+    summary: 'Delete a collection',
+  })
+  @ApiBearerAuth()
+  @Serialize(CollectionCompactResponseDto)
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequiredRoles(RolesEnum.Admin, RolesEnum.ContentManager)
+  @Delete(':id')
+  async deleteCollection(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Session() session: SessionData,
+    @CurrentUser('id') userId: string
+  ): Promise<CollectionCompactResponseDto> {
+    return this.collectionsService.delete(id, userId, session.staffId);
   }
 
   @ApiOperation({
