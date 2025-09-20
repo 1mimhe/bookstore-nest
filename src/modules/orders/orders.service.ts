@@ -162,7 +162,7 @@ export class OrdersService {
   }
 
   async clearCart(userId: string) {
-    return this.cacheManager.del(`cart-${userId}`);
+    return this.cacheManager.del(`cart:${userId}`);
   }
 
   async initiateOrder(
@@ -398,7 +398,7 @@ export class OrdersService {
   }
 
   private async getCacheCart(userId: string) {
-    const userBasketKey = `cart-${userId}`;
+    const userBasketKey = `cart:${userId}`;
     const cart = await this.cacheManager.get<Cart>(userBasketKey);
 
     if (!cart) {
@@ -411,7 +411,7 @@ export class OrdersService {
   }
 
   private async setCacheCart(userId: string, cart: Cart) {
-    return this.cacheManager.set(`cart-${userId}`, cart, this.cartCacheTime);
+    return this.cacheManager.set(`cart:${userId}`, cart, this.cartCacheTime);
   }
 
   private async getShippingPrice(type: ShippingTypes) {
