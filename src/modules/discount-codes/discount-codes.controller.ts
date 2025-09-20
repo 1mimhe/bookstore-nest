@@ -158,7 +158,7 @@ export class DiscountCodesController extends BaseController {
     RolesEnum.InventoryManager
   )
   @Delete(':id')
-  async remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
+  async deleteDiscountCode(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
     return this.discountCodesService.delete(id);
   }
 
