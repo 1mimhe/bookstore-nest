@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Ticket } from './ticket.entity';
+import { Ticket, TicketStatuses } from './ticket.entity';
 import { Repository, DataSource, SelectQueryBuilder } from 'typeorm';
 import { CreateTicketDto } from './dtos/create-ticket.dto';
 import { TicketQueryDto } from './dtos/ticket-query.dto';
@@ -124,5 +124,31 @@ export class TicketsService {
       Object.assign(ticket, ticketDto);
       return manager.save(Ticket, ticket);
     });
+  }
+
+  async delete(
+    id: string,
+    userId?: string,
+    isStaff: boolean = false
+  ): Promise<void> {
+    const queryBuilder = this.ticketRepo
+      .createQueryBuilder('ticket')
+      .where('ticket.id = :id', { id });
+
+    if (!isStaff && userId) {
+      queryBuilder.andWhere('ticket.userId = :userId', { userId });
+    }
+
+    const ticket = await queryBuilder.getOne();
+
+    if (!ticket) {
+      throw new NotFoundException('Ticket not found.');
+    }
+
+    if (ticket.status === TicketStatuses.Closed) {
+      throw new BadRequestException('You can not delete a closed ticket.');
+    }
+
+    await this.ticketRepo.softDelete(id);
   }
 }

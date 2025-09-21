@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -15,7 +16,6 @@ import {
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
-  ApiForbiddenResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
@@ -94,5 +94,22 @@ export class TicketsController {
     @Session() session: SessionData,
   ): Promise<TicketResponseDto> {
     return this.ticketsService.update(id, body, session.staffId!);
+  }
+
+  @ApiOperation({ summary: 'Delete a ticket' })
+  @ApiQueryPagination()
+  @RequiredRoles(
+    RolesEnum.Admin,
+    RolesEnum.OrderManager,
+    RolesEnum.Customer
+  )
+  @UseGuards(AuthGuard, RolesGuard)
+  @Delete(':id')
+  async deleteTicket(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Session() session: SessionData,
+    @CurrentUser('id') userId: string,
+  ): Promise<void> {
+    return this.ticketsService.delete(id, userId, Boolean(session.staffId));
   }
 }
