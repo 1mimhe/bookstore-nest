@@ -1,6 +1,5 @@
 import { BaseEntity } from 'src/common/base.entity';
 import { User } from 'src/modules/users/entities/user.entity';
-import { Staff } from 'src/modules/staffs/entities/staff.entity';
 import { Order } from 'src/modules/orders/entities/order.entity';
 import {
   Column,
@@ -61,5 +60,5 @@ export class Ticket extends BaseEntity {
   order?: Order;
 
   @Column({ nullable: true })
-  subject?: string; // Optional subject line for the ticket
+  subject?: string;
 }

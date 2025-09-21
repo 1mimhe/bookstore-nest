@@ -4,8 +4,9 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Ticket } from './ticket.entity';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, SelectQueryBuilder } from 'typeorm';
 import { CreateTicketDto } from './dtos/create-ticket.dto';
+import { TicketQueryDto } from './dtos/ticket-query.dto';
 import { TicketResponseDto } from './dtos/ticket-response.dto';
 import { Order } from '../orders/entities/order.entity';
 
@@ -38,5 +39,64 @@ export class TicketsService {
 
       return manager.save(Ticket, ticket);
     });
+  }
+
+  async getAll(
+    {
+      page = 1,
+      limit = 10,
+      ...query
+    }: TicketQueryDto,
+    userId?: string,
+    isStaff: boolean = false,
+  ): Promise<{ tickets: TicketResponseDto[]; total: number }> {
+    const skip = (page - 1) * limit;
+
+    const qb = this.ticketRepo
+    .createQueryBuilder('ticket')
+    .leftJoinAndSelect('ticket.user', 'user')
+    .leftJoinAndSelect('ticket.staff', 'staff')
+    .leftJoinAndSelect('staff.user', 'staffUser')
+    .leftJoinAndSelect('ticket.order', 'order');
+
+    // Apply filters
+    this.addFilters(qb, query, isStaff, userId);
+
+    const [tickets, total] = await qb
+      .skip(skip)
+      .limit(limit)
+      .getManyAndCount();
+    return {
+      tickets,
+      total,
+    };
+  }
+
+  private addFilters(
+    qb: SelectQueryBuilder<Ticket>,
+    query: TicketQueryDto,
+    isStaff: boolean,
+    userId?: string,
+  ): void {
+    // Apply filters
+    if (query.type) {
+      qb.andWhere('ticket.type = :type', { type: query.type });
+    }
+
+    if (query.status) {
+      qb.andWhere('ticket.status = :status', { status: query.status });
+    }
+
+    if (query.orderId) {
+      qb.andWhere('ticket.orderId = :orderId', { orderId: query.orderId });
+    }
+
+    // If not staff, only show user's own tickets
+    if (!isStaff && userId) {
+      qb.andWhere('ticket.userId = :userId', { userId });
+    }
+
+    // Apply sorting
+    qb.orderBy(`ticket.createdAt`, 'DESC');
   }
 }

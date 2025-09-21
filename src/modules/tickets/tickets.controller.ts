@@ -1,19 +1,25 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Post,
+  Query,
+  Session,
   UseGuards,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
+  ApiForbiddenResponse,
+  ApiOkResponse,
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
 import { TicketsService } from './tickets.service';
 import { CreateTicketDto } from './dtos/create-ticket.dto';
+import { TicketQueryDto } from './dtos/ticket-query.dto';
 import { TicketResponseDto } from './dtos/ticket-response.dto';
 import { Serialize } from 'src/common/serialize.interceptor';
 import { AuthGuard } from '../auth/guards/auth.guard';
@@ -21,7 +27,9 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { RequiredRoles } from 'src/common/decorators/roles.decorator';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { ValidationErrorResponseDto } from 'src/common/error.dtos';
+import { ApiQueryPagination } from 'src/common/decorators/query.decorators';
 import { RolesEnum } from '../users/entities/role.entity';
+import { SessionData } from 'express-session';
 
 @ApiTags('Ticket')
 @Controller('tickets')
@@ -46,5 +54,24 @@ export class TicketsController {
     @CurrentUser('id') userId: string,
   ): Promise<TicketResponseDto> {
     return this.ticketsService.create(createTicketDto, userId);
+  }
+
+  @ApiOperation({ summary: 'Get all tickets' })
+  @ApiOkResponse({ type: [TicketResponseDto] })
+  @ApiQueryPagination()
+  @RequiredRoles(
+    RolesEnum.Admin,
+    RolesEnum.OrderManager,
+    RolesEnum.Customer
+  )
+  @UseGuards(AuthGuard, RolesGuard)
+  @Serialize(TicketResponseDto)
+  @Get()
+  async getAllTickets(
+    @Query() query: TicketQueryDto,
+    @Session() session: SessionData,
+    @CurrentUser('id') userId: string,
+  ): Promise<{ tickets: TicketResponseDto[]; total: number }> {
+    return this.ticketsService.getAll(query, userId, Boolean(session.staffId));
   }
 }
