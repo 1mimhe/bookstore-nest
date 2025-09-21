@@ -4,6 +4,9 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Param,
+  ParseUUIDPipe,
+  Patch,
   Post,
   Query,
   Session,
@@ -30,6 +33,7 @@ import { ValidationErrorResponseDto } from 'src/common/error.dtos';
 import { ApiQueryPagination } from 'src/common/decorators/query.decorators';
 import { RolesEnum } from '../users/entities/role.entity';
 import { SessionData } from 'express-session';
+import { UpdateTicketDto } from './dtos/update-ticket.dto';
 
 @ApiTags('Ticket')
 @Controller('tickets')
@@ -73,5 +77,22 @@ export class TicketsController {
     @CurrentUser('id') userId: string,
   ): Promise<{ tickets: TicketResponseDto[]; total: number }> {
     return this.ticketsService.getAll(query, userId, Boolean(session.staffId));
+  }
+
+  @ApiOperation({ summary: 'Update a ticket (Only for staff)' })
+  @ApiQueryPagination()
+  @RequiredRoles(
+    RolesEnum.Admin,
+    RolesEnum.OrderManager,
+  )
+  @UseGuards(AuthGuard, RolesGuard)
+  @Serialize(TicketResponseDto)
+  @Patch(':id')
+  async updateTicket(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: UpdateTicketDto,
+    @Session() session: SessionData,
+  ): Promise<TicketResponseDto> {
+    return this.ticketsService.update(id, body, session.staffId!);
   }
 }

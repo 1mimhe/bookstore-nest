@@ -18,9 +18,6 @@ export class TicketResponseDto {
   status: TicketStatuses;
 
   @Expose()
-  priority?: string;
-
-  @Expose()
   subject?: string;
 
   @Expose()
@@ -37,35 +34,4 @@ export class TicketResponseDto {
 
   @Expose()
   updatedAt: Date;
-
-  @Expose()
-  @Type(() => Object)
-  user?: {
-    id: string;
-    username: string;
-    firstName: string;
-    lastName?: string;
-  };
-
-  @Expose()
-  @Type(() => Object)
-  staff?: {
-    id: string;
-    employeeId: string;
-    user: {
-      id: string;
-      username: string;
-      firstName: string;
-      lastName?: string;
-    };
-  };
-
-  @Expose()
-  @Type(() => Object)
-  order?: {
-    id: string;
-    orderStatus: string;
-    totalPrice: number;
-    finalPrice: number;
-  };
 }

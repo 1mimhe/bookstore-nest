@@ -1,5 +1,6 @@
 import { BaseEntity } from 'src/common/base.entity';
 import { User } from 'src/modules/users/entities/user.entity';
+import { Staff } from 'src/modules/staffs/entities/staff.entity';
 import { Order } from 'src/modules/orders/entities/order.entity';
 import {
   Column,
@@ -58,6 +59,13 @@ export class Ticket extends BaseEntity {
   @ManyToOne(() => Order, (order) => order.tickets, { nullable: true })
   @JoinColumn()
   order?: Order;
+
+  @Column('uuid', { nullable: true })
+  staffId?: string;
+  @ManyToOne(() => Staff, (staff) => staff.tickets, { nullable: true })
+  @JoinColumn()
+  staff?: Staff;
+
 
   @Column({ nullable: true })
   subject?: string;

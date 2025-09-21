@@ -1,6 +1,8 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Ticket } from './ticket.entity';
@@ -9,6 +11,7 @@ import { CreateTicketDto } from './dtos/create-ticket.dto';
 import { TicketQueryDto } from './dtos/ticket-query.dto';
 import { TicketResponseDto } from './dtos/ticket-response.dto';
 import { Order } from '../orders/entities/order.entity';
+import { UpdateTicketDto } from './dtos/update-ticket.dto';
 
 @Injectable()
 export class TicketsService {
@@ -98,5 +101,28 @@ export class TicketsService {
 
     // Apply sorting
     qb.orderBy(`ticket.createdAt`, 'DESC');
+  }
+
+  async update(
+    id: string,
+    ticketDto: UpdateTicketDto,
+    staffId: string
+  ): Promise<TicketResponseDto> {
+    return this.dataSource.transaction(async (manager) => {
+      const queryBuilder = manager
+        .createQueryBuilder(Ticket, 'ticket')
+        .where('ticket.id = :id', { id });
+
+      const ticket = await queryBuilder.getOne();
+
+      if (!ticket) {
+        throw new NotFoundException('Ticket not found.');
+      }
+
+      ticketDto['staffId'] = staffId;
+
+      Object.assign(ticket, ticketDto);
+      return manager.save(Ticket, ticket);
+    });
   }
 }
