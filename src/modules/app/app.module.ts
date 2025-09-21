@@ -22,6 +22,7 @@ import { ReviewsModule } from '../reviews/reviews.module';
 import { StaffModule } from '../staffs/staffs.module';
 import { OrdersModule } from '../orders/orders.module';
 import { DiscountCodesModule } from '../discount-codes/discount-codes.module';
+import { TicketsModule } from '../tickets/tickets.module';
 import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
@@ -69,7 +70,8 @@ import { ScheduleModule } from '@nestjs/schedule';
     ReviewsModule,
     StaffModule,
     OrdersModule,
-    DiscountCodesModule
+    DiscountCodesModule,
+    TicketsModule
   ],
   providers: [
     {
