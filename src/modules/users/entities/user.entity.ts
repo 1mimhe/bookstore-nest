@@ -18,6 +18,7 @@ import { Bookmark } from 'src/modules/books/entities/bookmark.entity';
 import { Staff } from 'src/modules/staffs/entities/staff.entity';
 import { Order } from 'src/modules/orders/entities/order.entity';
 import { DiscountCode } from 'src/modules/discount-codes/discount-code.entity';
+import { Ticket } from 'src/modules/tickets/ticket.entity';
 
 export enum Genders {
   Male = 'male',
@@ -86,4 +87,7 @@ export class User extends BaseEntity {
 
   @ManyToMany(() => DiscountCode, (discountCode) => discountCode.users)
   discountCodes: DiscountCode[];
+
+  @OneToMany(() => Ticket, (ticket) => ticket.user)
+  tickets: Ticket[];
 }

@@ -3,6 +3,7 @@ import { Address } from 'src/modules/users/entities/address.entity';
 import { User } from 'src/modules/users/entities/user.entity';
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 import { OrderBook } from './order-book.entity';
+import { Ticket } from 'src/modules/tickets/ticket.entity';
 
 export enum PaymentStatuses {
   Pending = 'pending',
@@ -82,4 +83,7 @@ export class Order extends BaseEntity {
 
   @OneToMany(() => OrderBook, (orderBook) => orderBook.order, { cascade: true })
   orderBooks: OrderBook[];
+
+  @OneToMany(() => Ticket, (ticket) => ticket.order)
+  tickets: Ticket[];
 }
