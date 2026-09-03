@@ -1,0 +1,210 @@
+import {
+  Body,
+  Controller,
+  DefaultValuePipe,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseBoolPipe,
+  ParseEnumPipe,
+  ParseIntPipe,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+  Req,
+  Res,
+  Session,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
+import { CreateAuthorDto } from '../dtos/create-author.dto';
+import { AuthorsService } from '../services/authors.service';
+import {
+  ApiBearerAuth,
+  ApiConflictResponse,
+  ApiNotFoundResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
+import { UpdateAuthorDto } from '../dtos/update-author.dto';
+import { NotFoundMessages } from 'src/common/enums/error.messages';
+import { ConflictMessages } from 'src/common/enums/error.messages';
+import {
+  ApiQueryComplete,
+  ApiQueryPagination,
+} from 'src/common/decorators/query.decorators';
+import {
+  AuthorCompactResponseDto,
+  AuthorPlusCountResDto,
+  AuthorResponseDto,
+} from '../dtos/author-response.dto';
+import { Serialize } from 'src/common/serialize.interceptor';
+import { AuthGuard } from '../../auth/guards/auth.guard';
+import { RolesGuard } from '../../auth/guards/roles.guard';
+import { RequiredRoles } from 'src/common/decorators/roles.decorator';
+import { RolesEnum } from '../../users/entities/role.entity';
+import { SessionData } from 'express-session';
+import { RecentViewTypes } from 'src/common/types/recent-view.type';
+import { Request, Response } from 'express';
+import { ViewsService } from '../../views/views.service';
+import { TrendingPeriod, ViewEntityTypes } from '../../views/views.types';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import { AuthorQueryDto } from '../dtos/author-query.dto';
+import { TrackRecentView } from 'src/common/decorators/track-recent-view.decorator';
+import { RecentViewsInterceptor } from 'src/common/interceptors/recent-views.interceptor';
+
+@Controller('authors')
+@ApiTags('Author')
+export class AuthorsController {
+  constructor(
+    private authorsService: AuthorsService,
+    private viewsService: ViewsService
+  ) {}
+
+  @ApiOperation({
+    summary: 'Create a new author',
+    description:
+      'Creates a new author (or translator) with the provided information',
+  })
+  @ApiConflictResponse({
+    description: ConflictMessages.Slug,
+  })
+  @ApiBearerAuth()
+  @Serialize(AuthorResponseDto)
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequiredRoles(RolesEnum.Admin, RolesEnum.ContentManager)
+  @HttpCode(HttpStatus.CREATED)
+  @Post()
+  async createAuthor(
+    @Body() body: CreateAuthorDto,
+    @Session() session: SessionData,
+    @CurrentUser('id') userId: string
+  ): Promise<AuthorResponseDto> {
+    return this.authorsService.create(body, userId, session.staffId);
+  }
+
+  @ApiOperation({
+    summary: 'Retrieves all authors',
+    description: 'With pagination, different filtering, search and sorting.'
+  })
+  @ApiQueryPagination()
+  @Serialize(AuthorPlusCountResDto)
+  @Get()
+  async getAllAuthors(
+    @Query() query: AuthorQueryDto
+  ): Promise<AuthorPlusCountResDto[]> {
+    return this.authorsService.getAll(query);
+  }
+
+  @ApiOperation({
+    summary: 'Retrieves a author by its id',
+  })
+  @ApiNotFoundResponse({
+    description: NotFoundMessages.Publisher,
+  })
+  @ApiQueryComplete('books')
+  @ApiQueryPagination()
+  @Serialize(AuthorResponseDto)
+  @Get('id/:id')
+  async getPublisherById(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query('complete', new ParseBoolPipe({ optional: true })) complete?: boolean,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
+  ): Promise<AuthorResponseDto> {
+    return this.authorsService.get({ id }, page, limit, complete);
+  }
+
+  @ApiOperation({
+    summary: 'Retrieves a author by its slug',
+    description: 'If you want to filter books. You should use \`GET /books/author/:id\`'
+  })
+  @ApiNotFoundResponse({
+    description: NotFoundMessages.Publisher,
+  })
+  @ApiQueryComplete('books')
+  @ApiQueryPagination()
+  @Serialize(AuthorResponseDto)
+  @UseInterceptors(RecentViewsInterceptor)
+  @TrackRecentView(RecentViewTypes.Author)
+  @Get('slug/:slug')
+  async getAuthorBySlug(
+    @Param('slug') slug: string,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+    @Query('complete', new ParseBoolPipe({ optional: true }))
+    complete?: boolean,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
+    @CurrentUser('id') userId?: string
+  ): Promise<AuthorResponseDto> {
+    const author = await this.authorsService.get({ slug }, page, limit, complete);
+
+    await this.viewsService.recordView(
+      ViewEntityTypes.Author,
+      author.id,
+      req,
+      res,
+      userId
+    );
+
+    return author;
+  }
+
+  @ApiOperation({
+    summary: 'Retrieves trending authors (Based on views)',
+  })
+  @Serialize(AuthorCompactResponseDto)
+  @Get('trending/:period')
+  async getTrendingTitles(
+    @Param('period', new ParseEnumPipe(TrendingPeriod)) period: TrendingPeriod,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number = 20
+  ): Promise<AuthorCompactResponseDto[]> {
+    return this.authorsService.getTrending(period, limit);
+  }
+
+  @ApiOperation({
+    summary: 'Update a author',
+  })
+  @ApiConflictResponse({
+    description: ConflictMessages.Slug,
+  })
+  @ApiNotFoundResponse({
+    description: NotFoundMessages.Author,
+  })
+  @ApiBearerAuth()
+  @Serialize(AuthorCompactResponseDto)
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequiredRoles(RolesEnum.Admin, RolesEnum.ContentManager)
+  @Patch(':id')
+  async updateAuthor(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: UpdateAuthorDto,
+    @Session() session: SessionData,
+    @CurrentUser('id') userId: string
+  ): Promise<AuthorCompactResponseDto> {
+    return this.authorsService.update(id, body, userId, session.staffId);
+  }
+
+  @ApiOperation({
+    summary: 'Delete a author',
+  })
+  @ApiNotFoundResponse({
+    description: NotFoundMessages.Author,
+  })
+  @ApiBearerAuth()
+  @Serialize(AuthorCompactResponseDto)
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequiredRoles(RolesEnum.Admin, RolesEnum.ContentManager)
+  @Delete(':id')
+  async deleteAuthor(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Session() session: SessionData,
+    @CurrentUser('id') userId: string
+  ): Promise<AuthorCompactResponseDto> {
+    return this.authorsService.delete(id, userId, session.staffId);
+  }
+}

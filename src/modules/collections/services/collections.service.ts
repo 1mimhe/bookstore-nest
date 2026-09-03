@@ -1,0 +1,490 @@
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { CollectionBook } from '../entities/collection-book.entity';
+import { DataSource, EntityManager, EntityNotFoundError, FindOptionsRelations, FindOptionsWhere, In, Repository, SelectQueryBuilder } from 'typeorm';
+import { Collection } from '../entities/collection.entity';
+import { CreateCollectionDto } from '../dtos/create-collection.dto';
+import { CreateCollectionBookDto } from '../dtos/create-collection-book.dto';
+import { dbErrorHandler } from 'src/common/utilities/error-handler';
+import { NotFoundMessages } from 'src/common/enums/error.messages';
+import { UpdateCollectionBookDto } from '../dtos/update-collection-book.dto';
+import { StaffsService } from '../../staffs/staffs.service';
+import { EntityTypes, StaffActionTypes } from '../../staffs/entities/staff-action.entity';
+import { TrendingPeriod, ViewEntityTypes } from '../../views/views.types';
+import { ViewsService } from '../../views/views.service';
+import { CollectionQueryDto, CollectionSortBy } from '../dtos/collection-query.dto';
+import { RolesEnum } from '../../users/entities/role.entity';
+
+@Injectable()
+export class CollectionsService {
+  constructor(
+    @InjectRepository(Collection) private collectionRepo: Repository<Collection>,
+    @InjectRepository(CollectionBook) private collectionBookRepo: Repository<CollectionBook>,
+    private dataSource: DataSource,
+    private staffsService: StaffsService,
+    private viewsService: ViewsService
+  ) {}
+
+  async create(
+    collectionRepo: CreateCollectionDto,
+    userId: string,
+    staffId?: string
+  ): Promise<Collection | never> {
+    return this.dataSource.transaction(async manager => {
+      const collection = manager.create(Collection, {
+        ...collectionRepo,
+        userId,
+        isPublic: collectionRepo.isPublic ?? true
+      });
+      const dbCollection = await manager.save(Collection, collection);
+
+      if (userId) {
+        await this.staffsService.createAction(
+          {
+            userId,
+            staffId,
+            type: StaffActionTypes.CollectionCreated,
+            entityId: dbCollection.id,
+            entityType: EntityTypes.Collection,
+            newValue: JSON.stringify(dbCollection)
+          },
+          manager
+        );
+      }
+
+      return dbCollection;
+    }).catch(error => {
+      dbErrorHandler(error);
+      throw error;
+    });
+  }
+
+  async getAll(
+    {
+      page = 1,
+      limit = 10,
+      search,
+      sortBy
+    }: CollectionQueryDto,
+  ) {
+    const skip = (page - 1) * limit;
+    const qb = this.collectionRepo
+      .createQueryBuilder('collection')
+      .leftJoinAndSelect('collection.user', 'user')
+      .leftJoinAndSelect('user.roles', 'userRoles')
+      .leftJoin('collection.collectionBooks', 'collectionBooks')
+      .select(['collection', 'user', 'userRoles', 'COUNT(collectionBooks.id) as bookCount'])
+      .groupBy('collection.id, user.id, userRoles.id')
+      .andWhere('collection.isPublic = true');
+
+    // Search filter
+    if (search) {
+      qb.andWhere(
+        '(LOWER(collection.name) LIKE LOWER(:search) OR ' +
+        'LOWER(collection.slug) LIKE LOWER(:search) OR ' +
+        'LOWER(collection.description) LIKE LOWER(:search))',
+        { search: `%${search}%` }
+      );
+    }
+
+    // Sorting
+    this.buildOrderBy(qb, sortBy);
+
+    const collections = await qb
+      .skip(skip)
+      .limit(limit)
+      .getRawAndEntities();
+    
+    return collections.entities.map((collection, index) => ({
+      ...collection,
+      bookCount: parseInt(collections.raw[index].bookCount, 10),
+      user: collection.user ? {
+        username: collection.user.username,
+        firstName: collection.user.firstName,
+        lastName: collection.user.lastName,
+        role: collection.user.roles?.[0]?.role === RolesEnum.Customer ? RolesEnum.Customer : RolesEnum.Admin,
+      } : undefined,
+    }));
+  }
+
+  async getUserCollections(
+    userId: string,
+    {
+      page = 1,
+      limit = 10,
+      search,
+      sortBy
+    }: CollectionQueryDto
+  ): Promise<(Collection & { bookCount: number })[]> {
+    const skip = (page - 1) * limit;
+    const qb = this.collectionRepo
+      .createQueryBuilder('collection')
+      .leftJoin('collection.collectionBooks', 'collectionBooks')
+      .select(['collection', 'COUNT(collectionBooks.id) as bookCount'])
+      .where('collection.userId = :userId', { userId })
+      .groupBy('collection.id');
+
+    // Search filter
+    if (search) {
+      qb.andWhere(
+        '(LOWER(collection.name) LIKE LOWER(:search) OR ' +
+        'LOWER(collection.slug) LIKE LOWER(:search) OR ' +
+        'LOWER(collection.description) LIKE LOWER(:search))',
+        { search: `%${search}%` }
+      );
+    }
+
+    // Sorting
+    this.buildOrderBy(qb, sortBy);
+
+    const collections = await qb
+      .skip(skip)
+      .limit(limit)
+      .getRawAndEntities();
+    
+    return collections.entities.map((collection, index) => ({
+      ...collection,
+      bookCount: parseInt(collections.raw[index].bookCount, 10),
+    }));
+  }
+
+  private buildOrderBy(
+    qb: SelectQueryBuilder<Collection>,
+    sortBy: CollectionSortBy = CollectionSortBy.Newest
+  ): void {
+    switch (sortBy) {
+      case CollectionSortBy.NameAsc:
+        qb.orderBy('collection.name', 'ASC');
+        break;
+      case CollectionSortBy.NameDesc:
+        qb.orderBy('collection.name', 'DESC');
+        break;
+      case CollectionSortBy.MostBooks:
+        qb.orderBy('bookCount', 'DESC');
+        break;
+      case CollectionSortBy.MostViews:
+        qb.orderBy('collection.views', 'DESC');
+        break;
+      case CollectionSortBy.Newest:
+      default:
+        qb.orderBy('collection.createdAt', 'DESC');
+        break;
+    }
+  }
+
+  async get(
+    identifier: { id?: string; slug?: string },
+    complete = true,
+    manager?: EntityManager,
+    userId?: string,
+    staffId?: string
+  ): Promise<Collection | never> {
+    const where: FindOptionsWhere<Collection> = {};
+    if (identifier.id) {
+      where.id = identifier.id;
+    } else if (identifier.slug) {
+      where.slug = identifier.slug;
+    } else {
+      throw new BadRequestException('Either id or slug must be provided.');
+    }
+    
+    const repository = manager ? manager.getRepository(Collection) : this.collectionRepo;
+    const relations = complete ? {
+      collectionBooks: {
+        book: true
+      },
+      user: {
+        roles: true
+      }
+    } as FindOptionsRelations<Collection> : {
+      user: {
+        roles: true
+      }
+    };
+  
+    const collection = await repository.findOneOrFail({
+      where,
+      relations,
+      order: {
+        collectionBooks: {
+          order: 'ASC'
+        }
+      }
+    }).catch((error: Error) => {
+      if (error instanceof EntityNotFoundError) {
+        throw new NotFoundException(NotFoundMessages.Collection);
+      }
+      throw error;
+    });
+
+    // Check if user can access this collection
+    if (!staffId && !collection.isPublic && collection.userId !== userId) {
+      throw new NotFoundException(NotFoundMessages.Collection);
+    }
+
+    // Transform user data to include role
+    if (collection.user) {
+      collection.user = {
+        ...collection.user,
+        role: collection.user.roles?.[0]?.role === RolesEnum.Customer ? RolesEnum.Customer : RolesEnum.Admin,
+        roles: undefined
+      } as any;
+    }
+
+    return collection;
+  }
+
+  async getTrending(
+    period: TrendingPeriod,
+    limit?: number
+  ): Promise<Collection[]> {
+    const trendingData = await this.viewsService.getTrendingEntities(
+      ViewEntityTypes.Collection,
+      period,
+      limit
+    );
+
+    if (!trendingData || trendingData.length === 0) {
+      return [];
+    }
+
+    const collectionIds = trendingData.map(item => item.entityId);
+    const collections = await this.collectionRepo.find({
+      where: {
+        id: In(collectionIds)
+      },
+      relations: {
+        user: {
+          roles: true
+        }
+      }
+    });
+
+    // Transform user data
+    collections.forEach(collection => {
+      if (collection.user) {
+        collection.user = {
+          ...collection.user,
+          role: collection.user.roles?.[0]?.role === RolesEnum.Customer ? RolesEnum.Customer : RolesEnum.Admin,
+          roles: undefined
+        } as any;
+      }
+    });
+
+    const entityMap = new Map(collections.map(entity => [entity.id, entity]));
+    return trendingData.map(t => (
+      entityMap.get(t.entityId)
+    ))
+    .filter(e => e !== undefined);
+  }
+
+  async createCollectionBook(
+    collectionId: string,
+    cbDto: CreateCollectionBookDto,
+    userId: string,
+    staffId?: string
+  ): Promise<CollectionBook | never> {
+    return this.dataSource.transaction(async manager => {
+      const result = await manager
+        .getRepository(CollectionBook)
+        .createQueryBuilder('cb')
+        .where("cb.collectionId = :collectionId", { collectionId })
+        .select('MAX(cb.order)', 'maxOrder')
+        .getRawOne();
+      const maxOrder = result?.maxOrder ? parseInt(result.maxOrder) + 1 : 1;
+      
+      const cb = manager.create(CollectionBook, {
+        collectionId,
+        ...cbDto,
+        order: maxOrder
+      });
+      const dbCB = await manager.save(CollectionBook, cb);
+
+      if (userId) {
+        await this.staffsService.createAction(
+          {
+            userId,
+            staffId,
+            type: StaffActionTypes.CollectionUpdated,
+            entityId: dbCB.id,
+            entityType: EntityTypes.Collection,
+            newValue: JSON.stringify(dbCB)
+          },
+          manager
+        );
+      }
+
+      return dbCB;
+    }).catch((error: Error) => {
+      dbErrorHandler(error);
+      throw error;
+    });
+  }
+
+  async getCollectionBook(id: string): Promise<CollectionBook | never> {
+    return this.collectionBookRepo.findOneOrFail({
+      where: { id }
+    }).catch((error: Error) => {
+      if (error instanceof EntityNotFoundError) {
+        throw new NotFoundException(NotFoundMessages.CollectionBook);
+      }
+      throw error;
+    });
+  }
+
+  async getCollectionsByTitleId(
+    titleId: string,
+    page = 1,
+    limit = 10
+  ): Promise<Collection[]> {
+    const skip = (page - 1) * limit;
+    const collections = await this.collectionRepo.find({
+      where: {
+        collectionBooks: {
+          book: {
+            titleId
+          }
+        }
+      },
+      relations: {
+        user: {
+          roles: true
+        }
+      },
+      skip,
+      take: limit,
+    });
+
+    // Transform user data
+    collections.forEach(collection => {
+      if (collection.user) {
+        collection.user = {
+          username: collection.user.username,
+          firstName: collection.user.firstName,
+          lastName: collection.user.lastName,
+          role: collection.user.roles?.[0]?.role === RolesEnum.Customer ? RolesEnum.Customer : RolesEnum.Admin,
+        } as any;
+      }
+    });
+
+    return collections;
+  }
+
+  async updateCollectionBook(
+    id: string, cbDto: UpdateCollectionBookDto
+  ): Promise<CollectionBook | never> {
+    const cb = await this.getCollectionBook(id);
+    Object.assign(cb, cbDto);
+    return this.collectionBookRepo.save(cb).catch(error => {
+      dbErrorHandler(error);
+      throw error;
+    });
+  }
+
+  async reorderCollectionBooks(
+    collectionId: string, cbIds: string[]
+  ): Promise<{ affected?: number } | never> {
+    const count = await this.collectionBookRepo
+      .createQueryBuilder('cb')
+      .where("cb.collectionId = :collectionId", { collectionId })
+      .where('cb.id IN (:...cbIds)', { cbIds })
+      .getCount();
+
+    if (count !== cbIds.length) {
+      throw new NotFoundException(NotFoundMessages.SomeCollectionBooks);
+    }
+
+    let caseStatement = 'CASE ';    
+    cbIds.forEach((id, index) => {
+      caseStatement += `WHEN id = '${id}' THEN ${index + 1} `;
+    });
+    caseStatement += 'ELSE `order` END';
+
+    return this.collectionBookRepo
+      .createQueryBuilder('cb')
+      .select('cb.id', 'cb.order')
+      .update(CollectionBook)
+      .set({ order: () => caseStatement })
+      .where('id IN (:...cbIds)', { cbIds })
+      .execute();
+  }
+
+  async deleteCollectionBooks(id: string): Promise<CollectionBook | never> {
+    const cb = await this.getCollectionBook(id);
+    return this.collectionBookRepo.remove(cb);
+  }
+
+  async update(
+    id: string,
+    updateDto: any,
+    userId: string,
+    staffId?: string,
+  ): Promise<Collection | never> {
+    const collection = await this.get({ id }, true, undefined, userId, staffId);
+    
+    // Check ownership
+    if (!staffId && collection.userId !== userId) {
+      throw new BadRequestException('You can only update your own collections.');
+    }
+
+    return this.dataSource.transaction(async manager => {
+      Object.assign(collection, updateDto);
+      const updatedCollection = await manager.save(Collection, collection);
+
+      if (userId) {
+        await this.staffsService.createAction(
+          {
+            userId,
+            staffId,
+            type: StaffActionTypes.CollectionUpdated,
+            entityId: updatedCollection.id,
+            entityType: EntityTypes.Collection,
+            newValue: JSON.stringify(updatedCollection)
+          },
+          manager
+        );
+      }
+
+      return updatedCollection;
+    }).catch(error => {
+      dbErrorHandler(error);
+      throw error;
+    });
+  }
+
+  async delete(
+    id: string,
+    userId: string,
+    staffId?: string
+  ): Promise<Collection | never> {
+    const collection = await this.get({ id }, true, undefined, userId, staffId);
+    
+    // Check ownership
+    if (!staffId && collection.userId !== userId) {
+      throw new BadRequestException('You can only delete your own collections.');
+    }
+
+    return this.dataSource.transaction(async manager => {
+      const deletedCollection = await manager.remove(Collection, collection);
+
+      if (userId) {
+        await this.staffsService.createAction(
+          {
+            userId,
+            staffId,
+            type: StaffActionTypes.CollectionDeleted,
+            entityId: deletedCollection.id,
+            entityType: EntityTypes.Collection,
+            newValue: JSON.stringify(deletedCollection)
+          },
+          manager
+        );
+      }
+
+      return deletedCollection;
+    }).catch(error => {
+      dbErrorHandler(error);
+      throw error;
+    });
+  }
+}

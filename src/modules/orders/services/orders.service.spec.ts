@@ -1,16 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { OrdersService } from './orders.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Book } from '../books/entities/book.entity';
-import { Order, OrderStatuses, PaymentStatuses } from './entities/order.entity';
-import { ShippingPrice } from './entities/shipping-price.entity';
+import { Book } from '../../books/entities/book.entity';
+import { Order, OrderStatuses, PaymentStatuses } from '../entities/order.entity';
+import { ShippingPrice } from '../entities/shipping-price.entity';
 import { DataSource } from 'typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { BooksService } from '../books/books.service';
+import { BooksService } from '../../books/books.service';
 import { ConfigService } from '@nestjs/config';
-import { DiscountCodesService } from '../discount-codes/discount-codes.service';
-import { createMockRepository } from '../../../test/mocks/repository.mock';
-import { createMockDataSource } from '../../../test/mocks/data-source.mock';
+import { DiscountCodesService } from '../../discount-codes/discount-codes.service';
+import { createMockRepository } from '../../../../test/mocks/repository.mock';
+import { createMockDataSource } from '../../../../test/mocks/data-source.mock';
 import { UnprocessableEntityException } from '@nestjs/common';
 
 describe('OrdersService', () => {

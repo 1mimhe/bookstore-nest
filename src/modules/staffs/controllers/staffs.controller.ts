@@ -1,0 +1,61 @@
+import { Body, Controller, Delete, Param, Post, Session, UseGuards } from '@nestjs/common';
+import { StaffsService } from '../services/staffs.service';
+import { SignupStaffDto } from '../dtos/signup-staff.dto';
+import { ApiBadRequestResponse, ApiBearerAuth, ApiConflictResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ConflictResponseDto, ValidationErrorResponseDto } from 'src/common/error.dtos';
+import { ConflictMessages } from 'src/common/enums/error.messages';
+import { AuthGuard } from '../../auth/guards/auth.guard';
+import { RequiredRoles } from 'src/common/decorators/roles.decorator';
+import { RolesEnum } from '../../users/entities/role.entity';
+import { RolesGuard } from '../../auth/guards/roles.guard';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import { SessionData } from 'express-session';
+
+@Controller('staffs')
+@ApiTags('Staff')
+export class StaffsController {
+  constructor(private staffsService: StaffsService) {}
+
+  @ApiOperation({
+    summary: 'Sign up a new staff (For Admin)',
+    description: `Creates a new staff user with specified roles. Only accessible by admin users.
+      The request body must conform to the SignupStaffDto schema, which includes staff details
+      and one or more roles from \`StaffRoles\`.
+    `
+  })
+  @ApiBadRequestResponse({
+    type: ValidationErrorResponseDto
+  })
+  @ApiConflictResponse({
+    type: ConflictResponseDto
+  })
+  @ApiConflictResponse({
+    description: ConflictMessages.NationalId
+  })
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequiredRoles(RolesEnum.Admin)
+  @Post('signup')
+  async signupStaff(@Body() body: SignupStaffDto) {
+    return this.staffsService.signup(body);
+  }
+
+  @ApiOperation({
+    summary: 'Delete a review by its id',
+    description: `For admin and content manager use.`
+  })
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @RequiredRoles(
+    RolesEnum.Admin,
+    RolesEnum.ContentManager,
+  )
+  @Delete('reviews/:id')
+  async deleteReview(
+    @Param('id') reviewId: string,
+    @Session() session: SessionData,
+    @CurrentUser('id') userId: string
+  ) {
+    return this.staffsService.deleteReview(reviewId, userId, session.staffId);
+  }
+}

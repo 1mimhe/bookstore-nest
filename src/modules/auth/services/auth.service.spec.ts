@@ -1,13 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from './auth.service';
-import { TokenService } from '../token/token.service';
+import { TokenService } from '../../token/token.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { User } from '../users/entities/user.entity';
+import { User } from '../../users/entities/user.entity';
 import { DataSource } from 'typeorm';
 import { BadRequestException } from '@nestjs/common';
-import { RolesEnum } from '../users/entities/role.entity';
-import { createMockRepository } from '../../../test/mocks/repository.mock';
-import { createMockDataSource } from '../../../test/mocks/data-source.mock';
+import { RolesEnum } from '../../users/entities/role.entity';
+import { createMockRepository } from '../../../../test/mocks/repository.mock';
+import { createMockDataSource } from '../../../../test/mocks/data-source.mock';
 import * as bcrypt from 'bcryptjs';
 
 describe('AuthService', () => {
