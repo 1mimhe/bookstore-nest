@@ -1,13 +1,11 @@
 import {
   BadRequestException,
-  forwardRef,
-  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Title } from './entities/title.entity';
-import { DataSource, EntityManager, EntityNotFoundError, FindOptionsWhere, In, Repository, SelectQueryBuilder } from 'typeorm';
+import { DataSource, EntityManager, EntityNotFoundError, In, Repository, SelectQueryBuilder } from 'typeorm';
 import { CreateTitleDto } from './dtos/create-title.dto';
 import { Author } from '../authors/author.entity';
 import { BadRequestMessages, NotFoundMessages } from 'src/common/enums/error.messages';
@@ -17,8 +15,10 @@ import { Character } from './entities/characters.entity';
 import { CreateCharacterDto } from './dtos/create-character.dto';
 import { UpdateCharacterDto } from './dtos/update-character.dto';
 import { dbErrorHandler } from 'src/common/utilities/error-handler';
-import { StaffsService } from '../staffs/staffs.service';
-import { EntityTypes, StaffActionTypes } from '../staffs/entities/staff-action.entity';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { EventNames } from 'src/common/enums/event.names';
+import { TitleCreatedEvent } from '../../common/events/catalog/title-created.event';
+import { TitleUpdatedEvent } from '../../common/events/catalog/title-updated.event';
 import { TagsService } from '../tags/tags.service';
 import { BookQueryDto, BookSortBy } from './dtos/book-query.dto';
 import { getDateRange } from 'src/common/utilities/decade.utils';
@@ -33,8 +33,8 @@ export class TitlesService {
     @InjectRepository(Book) private bookRepo: Repository<Book>,
     @InjectRepository(Character) private characterRepo: Repository<Character>,
     private dataSource: DataSource,
-    private staffsService: StaffsService,
-    @Inject(forwardRef(() => TagsService)) private tagsService:  TagsService,
+    private eventEmitter: EventEmitter2,
+    private tagsService: TagsService,
     private viewsService: ViewsService
   ) {}
 
@@ -83,16 +83,9 @@ export class TitlesService {
       const dbTitle = await manager.save(Title, title);
 
       if (userId) {
-        await this.staffsService.createAction(
-          {
-            userId,
-            staffId,
-            type: StaffActionTypes.TitleCreated,
-            entityId: dbTitle.id,
-            entityType: EntityTypes.Title,
-            newValue: JSON.stringify(dbTitle)
-          },
-          manager
+        this.eventEmitter.emit(
+          EventNames.TitleCreated,
+          new TitleCreatedEvent(dbTitle.id, dbTitle.name, userId, staffId),
         );
       }
 
@@ -171,17 +164,9 @@ export class TitlesService {
       const dbTitle = await manager.save(Title, updatedTitle);
 
       if (userId) {
-        await this.staffsService.createAction(
-          {
-            userId,
-            staffId,
-            type: StaffActionTypes.TitleUpdated,
-            entityId: dbTitle.id,
-            entityType: EntityTypes.Title,
-            oldValue: JSON.stringify(existingTitle),
-            newValue: JSON.stringify(dbTitle)
-          },
-          manager
+        this.eventEmitter.emit(
+          EventNames.TitleUpdated,
+          new TitleUpdatedEvent(dbTitle.id, Object.keys(titleDto), userId, staffId),
         );
       }
       
@@ -225,17 +210,9 @@ export class TitlesService {
       const dbTitle = await manager.save(Title, existingTitle);
 
       if (userId) {
-        await this.staffsService.createAction(
-          {
-            userId,
-            staffId,
-            type: StaffActionTypes.TitleUpdated,
-            entityId: existingTitle.id,
-            entityType: EntityTypes.Title,
-            oldValue: JSON.stringify(existingTitle),
-            newValue: JSON.stringify(dbTitle)
-          },
-          manager
+        this.eventEmitter.emit(
+          EventNames.TitleUpdated,
+          new TitleUpdatedEvent(existingTitle.id, ['defaultBookId'], userId, staffId),
         );
       }
 
@@ -427,17 +404,12 @@ export class TitlesService {
       const dbCharacter = await manager.save(Character, character);
 
       if (userId) {
-        await this.staffsService.createAction(
-          {
-            userId,
-            staffId,
-            type: StaffActionTypes.CharacterCreated,
-            entityId: dbCharacter.id,
-            entityType: EntityTypes.Character,
-            newValue: JSON.stringify(dbCharacter)
-          },
-          manager
-        );
+        this.eventEmitter.emit(EventNames.CharacterCreated, {
+          characterId: dbCharacter.id,
+          name: dbCharacter.fullName,
+          userId,
+          staffId,
+        });
       }
 
       return dbCharacter;
@@ -448,38 +420,33 @@ export class TitlesService {
     identifier: { id?: string; slug?: string },
     page: number = 1,
     limit: number = 10,
-    complete = false,
+    complete?: boolean,
     manager?: EntityManager
   ): Promise<Character | never> {
-    const repository = manager ? manager.getRepository(Character) : this.characterRepo;
+    const qb = (manager ? manager.getRepository(Character) : this.characterRepo)
+      .createQueryBuilder('character');
 
-    const where: FindOptionsWhere<Character> = {};
     if (identifier.id) {
-      where.id = identifier.id;
+      qb.where('character.id = :id', { id: identifier.id });
     } else if (identifier.slug) {
-      where.slug = identifier.slug;
-    } else {
-      throw new BadRequestException('Either id or slug must be provided.');
+      qb.where('character.slug = :slug', { slug: identifier.slug });
     }
 
-    const character = await repository.findOneOrFail({
-      where
-    }).catch((error: Error) => {
-      if (error instanceof EntityNotFoundError) {
-        throw new NotFoundException(NotFoundMessages.Character);
-      }
-      throw error;
-    });
-
-    let titles: Title[] = [];
     if (complete) {
-      titles = await this.getByCharacterId(character.id, page, limit, manager);
+      const skip = (page - 1) * limit;
+      qb.leftJoinAndSelect('character.titles', 'titles')
+        .leftJoinAndSelect('titles.defaultBook', 'defaultBook')
+        .leftJoinAndSelect('defaultBook.images', 'images')
+        .skip(skip)
+        .take(limit);
     }
 
-    return {
-      ...character,
-      titles
-    };
+    const character = await qb.getOne();
+    if (!character) {
+      throw new NotFoundException(NotFoundMessages.Character);
+    }
+
+    return character;
   }
 
   async updateCharacter(
@@ -495,18 +462,11 @@ export class TitlesService {
       const dbCharacter = await manager.save(character);
 
       if (userId) {
-        await this.staffsService.createAction(
-          {
-            userId,
-            staffId,
-            type: StaffActionTypes.CharacterUpdated,
-            entityId: dbCharacter.id,
-            entityType: EntityTypes.Character,
-            oldValue: JSON.stringify(character),
-            newValue: JSON.stringify(dbCharacter)
-          },
-          manager
-        );
+        this.eventEmitter.emit(EventNames.CharacterUpdated, {
+          characterId: dbCharacter.id,
+          userId,
+          staffId,
+        });
       }
 
       return dbCharacter;

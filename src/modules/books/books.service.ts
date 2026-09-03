@@ -14,11 +14,13 @@ import { Author } from '../authors/author.entity';
 import { UpdateBookDto } from './dtos/update-book.dto';
 import { BookImage, BookImageTypes } from './entities/book-image.entity';
 import { Language } from '../languages/language.entity';
-import { Bookmark, BookmarkTypes } from './entities/bookmark.entity';
+import { Bookmark } from './entities/bookmark.entity';
 import { BookmarkDto } from './dtos/bookmark.dto';
 import { dbErrorHandler } from 'src/common/utilities/error-handler';
-import { StaffsService } from '../staffs/staffs.service';
-import { EntityTypes, StaffActionTypes } from '../staffs/entities/staff-action.entity';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { EventNames } from 'src/common/enums/event.names';
+import { BookCreatedEvent } from '../../common/events/catalog/book-created.event';
+import { BookUpdatedEvent } from '../../common/events/catalog/book-updated.event';
 import { CartBook } from './books.types';
 import { BookQueryDto, BookSortBy } from './dtos/book-query.dto';
 import { TitlesService } from './titles.service';
@@ -30,7 +32,7 @@ export class BooksService {
     @InjectRepository(BookImage) private bookImageRepo: Repository<BookImage>,
     @InjectRepository(Bookmark) private bookmarkRepo: Repository<Bookmark>,
     private dataSource: DataSource,
-    private staffsService: StaffsService,
+    private eventEmitter: EventEmitter2,
     private titleService: TitlesService
   ) {}
 
@@ -86,16 +88,9 @@ export class BooksService {
       }
 
       if (userId) {
-        await this.staffsService.createAction(
-          {
-            userId,
-            staffId,
-            type: StaffActionTypes.BookCreated,
-            entityId: dbBook.id,
-            entityType: EntityTypes.Book,
-            newValue: JSON.stringify(dbBook)
-          },
-          manager
+        this.eventEmitter.emit(
+          EventNames.BookCreated,
+          new BookCreatedEvent(dbBook.id, dbBook.titleId || titleId, dbBook.ISBN || '', userId, staffId),
         );
       }
 
@@ -287,17 +282,9 @@ export class BooksService {
       const dbBook = await manager.save(Book, updatedBook);
 
       if (userId) {
-        await this.staffsService.createAction(
-          {
-            userId,
-            staffId,
-            type: StaffActionTypes.BookUpdated,
-            entityId: dbBook.id,
-            entityType: EntityTypes.Book,
-            oldValue: JSON.stringify(existingBook),
-            newValue: JSON.stringify(dbBook),
-          },
-          manager
+        this.eventEmitter.emit(
+          EventNames.BookUpdated,
+          new BookUpdatedEvent(dbBook.id, dbBook.title?.id || '', userId, staffId),
         );
       }
 

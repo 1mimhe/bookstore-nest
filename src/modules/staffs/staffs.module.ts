@@ -7,6 +7,8 @@ import { StaffAction } from './entities/staff-action.entity';
 import { AuthModule } from '../auth/auth.module';
 import { TokenModule } from '../token/token.module';
 
+import { StaffAuditListener } from './listeners/staff-audit.listener';
+
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -17,7 +19,7 @@ import { TokenModule } from '../token/token.module';
     TokenModule
   ],
   controllers: [StaffsController],
-  providers: [StaffsService],
+  providers: [StaffsService, StaffAuditListener],
   exports: [StaffsService]
 })
 export class StaffModule {}
