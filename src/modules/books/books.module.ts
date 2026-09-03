@@ -1,5 +1,8 @@
-import { forwardRef, MiddlewareConsumer, Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module } from '@nestjs/common';
 import { BooksController } from './books.controller';
+import { TitlesController } from './titles.controller';
+import { CharactersController } from './characters.controller';
+import { BookmarksController } from './bookmarks.controller';
 import { LanguagesService } from '../languages/languages.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TitlesService } from './titles.service';
@@ -14,7 +17,6 @@ import { Bookmark } from './entities/bookmark.entity';
 import { CurrentUserMiddleware } from '../../common/current-user.middleware';
 import { UsersModule } from '../users/users.module';
 import { TokenModule } from '../token/token.module';
-import { StaffModule } from '../staffs/staffs.module';
 import { TagsModule } from '../tags/tags.module';
 import { ViewsModule } from '../views/views.module';
 
@@ -31,11 +33,15 @@ import { ViewsModule } from '../views/views.module';
     ]),
     UsersModule,
     TokenModule,
-    StaffModule,
-    forwardRef(() => TagsModule),
+    TagsModule,
     ViewsModule
   ],
-  controllers: [BooksController],
+  controllers: [
+    BooksController,
+    TitlesController,
+    CharactersController,
+    BookmarksController,
+  ],
   providers: [LanguagesService, TitlesService, BooksService],
   exports: [
     TitlesService,

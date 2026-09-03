@@ -1,9 +1,8 @@
-import { forwardRef, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TagsService } from './tags.service';
 import { TagsController } from './tags.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Tag } from './entities/tag.entity';
-import { BooksModule } from '../books/books.module';
 import { TokenModule } from '../token/token.module';
 import { StaffModule } from '../staffs/staffs.module';
 import { Title } from '../books/entities/title.entity';
@@ -19,7 +18,6 @@ import { ViewsModule } from '../views/views.module';
     ]),
     TokenModule,
     StaffModule,
-    forwardRef(() => BooksModule),
     ViewsModule
   ],
   providers: [TagsService],

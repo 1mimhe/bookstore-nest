@@ -1,10 +1,9 @@
-import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DataSource, EntityManager, EntityNotFoundError, In, Repository, SelectQueryBuilder } from 'typeorm';
-import { Tag, TagType } from './entities/tag.entity';
+import { Tag } from './entities/tag.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
 import { CreateTagDto } from './dtos/create-tag.dto';
-import { TitlesService } from '../books/titles.service';
 import { UpdateTagDto } from './dtos/update-tag.dto';
 import { dbErrorHandler } from 'src/common/utilities/error-handler';
 import { StaffsService } from '../staffs/staffs.service';
@@ -17,13 +16,15 @@ import { TrendingPeriod, ViewEntityTypes } from '../views/views.types';
 import { ViewsService } from '../views/views.service';
 import { TagSortBy, TagQueryDto } from './dtos/tag-query.dto';
 
+import { Title } from '../books/entities/title.entity';
+
 @Injectable()
 export class TagsService {
   constructor(
     @InjectRepository(Tag) private tagRepo: Repository<Tag>,
+    @InjectRepository(Title) private titleRepo: Repository<Title>,
     @InjectRepository(RootTag) private rootTagRepo: Repository<RootTag>,
     private dataSource: DataSource,
-    @Inject(forwardRef(() => TitlesService)) private titlesService:  TitlesService,
     private staffsService: StaffsService,
     private viewsService: ViewsService
   ) {}
@@ -171,7 +172,18 @@ export class TagsService {
       throw error;
     });
 
-    const titles = await this.titlesService.getAllByTag(slug, filter);
+    const page = filter?.page ?? 1;
+    const limit = filter?.limit ?? 10;
+    const skip = (page - 1) * limit;
+
+    const titles = await this.titleRepo
+      .createQueryBuilder('title')
+      .innerJoin('title.tags', 'tag', 'tag.slug = :slug', { slug })
+      .leftJoinAndSelect('title.defaultBook', 'defaultBook')
+      .leftJoinAndSelect('defaultBook.images', 'images')
+      .skip(skip)
+      .take(limit)
+      .getMany();
 
     return {
       ...tag,
