@@ -26,7 +26,6 @@ import { SigninDto } from './dtos/sign-in.dto';
 import { AuthMessages } from 'src/common/enums/error.messages';
 import { Response } from 'express';
 import { CookieNames } from 'src/common/enums/cookie.names';
-import { ConfigService } from '@nestjs/config';
 import { SessionData } from 'express-session';
 import { Serialize } from 'src/common/serialize.interceptor';
 import { AccessTokenDto } from './dtos/access-token.dto';
@@ -34,18 +33,15 @@ import { Cookies } from 'src/common/decorators/cookies.decorator';
 import { ConflictMessages } from 'src/common/enums/error.messages';
 import { UserResponseDto } from '../users/dtos/user-response.dto';
 import { TokenService } from '../token/token.service';
-import { SigninTestDto } from './dtos/sign-up-test.dto';
-import { BaseController } from 'src/common/base.controller';
+import { CookieService } from 'src/common/services/cookie.service';
 
 @Controller('auth')
-export class AuthController extends BaseController {
+export class AuthController {
   constructor(
     private authService: AuthService,
     private tokenService: TokenService,
-    config: ConfigService,
-  ) {
-    super(config);
-  }
+    private cookieService: CookieService,
+  ) {}
 
   @ApiOperation({
     summary: 'Sign up a new user account (customer)',
@@ -71,7 +67,7 @@ export class AuthController extends BaseController {
   @ApiOperation({
     summary: 'Sign in a user',
     description:
-      'Login a user and returns an access token with 20m expiration time',
+      'Login a user and establish an authenticated session backed by Redis',
   })
   @ApiBadRequestResponse({
     type: ValidationErrorResponseDto,
@@ -90,7 +86,7 @@ export class AuthController extends BaseController {
     @Session() session: SessionData,
     @Res({ passthrough: true }) res: Response,
   ) {
-    if (session.refreshToken) {
+    if (session.userId) {
       throw new BadRequestException(AuthMessages.AlreadyAuthorized);
     }
 
@@ -104,10 +100,12 @@ export class AuthController extends BaseController {
     session.refreshToken = refreshToken;
     session.roles = roles;
 
-    this.setCookie(res, CookieNames.RefreshToken, refreshToken);
+    this.cookieService.setCookie(res, CookieNames.RefreshToken, refreshToken);
 
     return {
       accessToken,
+      userId,
+      roles,
     };
   }
 
@@ -121,11 +119,11 @@ export class AuthController extends BaseController {
     @Session() session: SessionData,
     @Res({ passthrough: true }) res: Response,
   ) {
-    session.destroy();
+    session.destroy(() => {});
     res.clearCookie(CookieNames.RefreshToken);
     res.clearCookie(CookieNames.SessionId);
 
-    return true;
+    return { success: true, message: 'Successfully signed out' };
   }
 
   @ApiOperation({
@@ -147,18 +145,10 @@ export class AuthController extends BaseController {
     } = this.tokenService.refreshTokens(oldRefreshToken, session);
 
     session.refreshToken = refreshToken;
-    this.setCookie(res, CookieNames.RefreshToken, refreshToken, expirationTime);
+    this.cookieService.setCookie(res, CookieNames.RefreshToken, refreshToken, expirationTime);
 
     return {
       accessToken
     };
-  }
-
-  @ApiOperation({
-    summary: 'Just for test.'
-  })
-  @Post('signup-test-admin')
-  async createTestAdmin(@Body() overrides: SigninTestDto) {
-    return this.authService.createTestAdmin(overrides);
   }
 }

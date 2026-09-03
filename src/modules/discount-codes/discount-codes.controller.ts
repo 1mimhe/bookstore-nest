@@ -29,8 +29,6 @@ import { AuthGuard } from '../auth/guards/auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { RequiredRoles } from 'src/common/decorators/roles.decorator';
 import { RolesEnum } from '../users/entities/role.entity';
-import { BaseController } from 'src/common/base.controller';
-import { ConfigService } from '@nestjs/config';
 import { DiscountCodeQueryDto } from './dtos/discount-code-query.dto';
 import { NotFoundMessages } from 'src/common/enums/error.messages';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
@@ -39,13 +37,10 @@ import { UpdateDiscountCodeDto } from './dtos/update-discount-code.dto';
 
 @Controller('discount-codes')
 @ApiTags('Discount Codes')
-export class DiscountCodesController extends BaseController {
+export class DiscountCodesController {
   constructor(
     private readonly discountCodesService: DiscountCodesService,
-    config: ConfigService
-  ) {
-    super(config);
-  }
+  ) {}
 
   @ApiOperation({
     summary: 'Create a discount code',

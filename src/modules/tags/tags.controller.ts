@@ -21,8 +21,7 @@ import {
 } from '@nestjs/common';
 import { TagsService } from './tags.service';
 import { CreateTagDto } from './dtos/create-tag.dto';
-import { ApiBadRequestResponse, ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
-import { TagType } from './entities/tag.entity';
+import { ApiBadRequestResponse, ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UpdateTagDto } from './dtos/update-tag.dto';
 import { ApiQueryArray, ApiQueryPagination } from 'src/common/decorators/query.decorators';
 import { TagCompactPlusResponseDto, TagCompactResponseDto, TagResponseDto } from './dtos/tag-response.dto';

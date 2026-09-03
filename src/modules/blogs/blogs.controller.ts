@@ -16,6 +16,7 @@ import {
   Res,
   Session,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { BlogsService } from './blogs.service';
 import { CreateBlogDto } from './dtos/create-blog.dto';
@@ -43,28 +44,23 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { RolesEnum } from '../users/entities/role.entity';
 import { SessionData } from 'express-session';
-import { Cookies } from 'src/common/decorators/cookies.decorator';
-import { CookieNames } from 'src/common/enums/cookie.names';
-import { RecentView, RecentViewTypes } from 'src/common/types/recent-view.type';
-import { BaseController } from 'src/common/base.controller';
-import { ConfigService } from '@nestjs/config';
 import { Request, Response } from 'express';
+import { RecentViewTypes } from 'src/common/types/recent-view.type';
 import { ViewsService } from '../views/views.service';
 import { TrendingPeriod, ViewEntityTypes } from '../views/views.types';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { BlogQueryDto } from './dtos/blog-query.dto';
 import { ApiQueryPagination } from 'src/common/decorators/query.decorators';
+import { TrackRecentView } from 'src/common/decorators/track-recent-view.decorator';
+import { RecentViewsInterceptor } from 'src/common/interceptors/recent-views.interceptor';
 
 @Controller('blogs')
 @ApiTags('Blog')
-export class BlogsController extends BaseController {
+export class BlogsController {
   constructor(
     private blogsService: BlogsService,
-    config: ConfigService,
     private viewsService: ViewsService
-  ) {
-    super(config);
-  }
+  ) {}
 
   @ApiOperation({
     summary: 'Create a blog',
@@ -132,21 +128,16 @@ export class BlogsController extends BaseController {
     description: NotFoundMessages.Blog,
   })
   @Serialize(BlogResponseDto)
+  @UseInterceptors(RecentViewsInterceptor)
+  @TrackRecentView(RecentViewTypes.Blog)
   @Get('slug/:slug')
   async getBlogBySlug(
     @Param('slug') slug: string,
-    @Cookies(CookieNames.RecentViews) recentViewsCookie: string,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
     @CurrentUser('id') userId?: string
   ): Promise<BlogResponseDto> {
     const blog = await this.blogsService.get({ slug });
-
-    const newRecentView: RecentView = {
-      type: RecentViewTypes.Blog,
-      slug: blog.slug
-    };
-    this.updateRecentViewsCookie(res, recentViewsCookie, newRecentView);
 
     await this.viewsService.recordView(
       ViewEntityTypes.Blog,

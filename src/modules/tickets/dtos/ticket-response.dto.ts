@@ -1,4 +1,4 @@
-import { Expose, Type } from 'class-transformer';
+import { Expose } from 'class-transformer';
 import { TicketTypes, TicketStatuses } from '../ticket.entity';
 
 export class TicketResponseDto {

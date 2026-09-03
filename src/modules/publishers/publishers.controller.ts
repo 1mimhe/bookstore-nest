@@ -24,7 +24,6 @@ import {
   ApiConflictResponse,
   ApiNotFoundResponse,
   ApiOperation,
-  ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
 import { SignupPublisherDto } from './dtos/create-publisher.dto';
@@ -48,26 +47,22 @@ import { CreateBookDto } from '../books/dtos/create-book.dto';
 import { BlogCompactResponseDto } from '../blogs/dtos/blog-response.dto';
 import { CreateBlogDto } from '../blogs/dtos/create-blog.dto';
 import { UpdateBlogDto } from '../blogs/dtos/update-blog.dto';
-import { ConfigService } from '@nestjs/config';
-import { BaseController } from 'src/common/base.controller';
-import { Cookies } from 'src/common/decorators/cookies.decorator';
 import { Request, Response } from 'express';
-import { CookieNames } from 'src/common/enums/cookie.names';
-import { RecentView, RecentViewTypes } from 'src/common/types/recent-view.type';
+import { RecentViewTypes } from 'src/common/types/recent-view.type';
 import { ViewsService } from '../views/views.service';
 import { TrendingPeriod, ViewEntityTypes } from '../views/views.types';
 import { PublisherQueryDto } from './dtos/publisher-query.dto';
+import { TrackRecentView } from 'src/common/decorators/track-recent-view.decorator';
+import { RecentViewsInterceptor } from 'src/common/interceptors/recent-views.interceptor';
+import { UseInterceptors } from '@nestjs/common';
 
 @Controller('publishers')
 @ApiTags('Publisher')
-export class PublishersController extends BaseController {
+export class PublishersController {
   constructor(
     private publishersService: PublishersService,
-    config: ConfigService,
     private viewsService: ViewsService
-  ) {
-    super(config);
-  }
+  ) {}
 
   @ApiOperation({
     summary: 'Sign up a new publisher',
@@ -139,10 +134,11 @@ export class PublishersController extends BaseController {
   @ApiQueryComplete('books')
   @ApiQueryPagination()
   @Serialize(PublisherResponseDto)
+  @UseInterceptors(RecentViewsInterceptor)
+  @TrackRecentView(RecentViewTypes.Publisher)
   @Get('slug/:slug')
   async getPublisherBySlug(
     @Param('slug') slug: string,
-    @Cookies(CookieNames.RecentViews) recentViewsCookie: string,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
     @Query('complete', new ParseBoolPipe({ optional: true })) complete?: boolean,
@@ -151,12 +147,6 @@ export class PublishersController extends BaseController {
     @CurrentUser('id') userId?: string
   ): Promise<PublisherResponseDto> {
     const publisher = await this.publishersService.get({ slug }, page, limit, complete);
-
-    const newRecentView: RecentView = {
-      type: RecentViewTypes.Publisher,
-      slug: publisher.slug
-    };
-    this.updateRecentViewsCookie(res, recentViewsCookie, newRecentView);
 
     await this.viewsService.recordView(
       ViewEntityTypes.Publisher,

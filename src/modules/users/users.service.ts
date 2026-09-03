@@ -1,7 +1,7 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
-import { DataSource, DeepPartial, EntityNotFoundError, FindOptionsWhere, Repository } from 'typeorm';
+import { DataSource, EntityNotFoundError, FindOptionsWhere, Repository } from 'typeorm';
 import { ConflictDto } from 'src/common/error.dtos';
 import { CreateAddressDto } from './dtos/create-address.dto';
 import { Address } from './entities/address.entity';

@@ -38,18 +38,15 @@ import { AddressResponseDto } from './dtos/address-response.dto';
 import { RecentViewDto } from './dtos/recent-view-response.dto';
 import { Cookies } from 'src/common/decorators/cookies.decorator';
 import { CookieNames } from 'src/common/enums/cookie.names';
-import { BaseController } from 'src/common/base.controller';
-import { ConfigService } from '@nestjs/config';
+import { CookieService } from 'src/common/services/cookie.service';
 
 @Controller('users')
 @ApiTags('User')
-export class UsersController extends BaseController {
+export class UsersController {
   constructor(
     private usersService: UsersService,
-    config: ConfigService
-  ) {
-    super(config);
-  }
+    private cookieService: CookieService,
+  ) {}
 
   @ApiOperation({
     summary: 'Retrieves the current authorized user',
@@ -167,7 +164,7 @@ export class UsersController extends BaseController {
   async getUserRecentViews(
     @Cookies(CookieNames.RecentViews) recentViewsCookie: string
   ): Promise<RecentViewDto[]> {
-    const recentViews = this.getRecentViews(recentViewsCookie);
+    const recentViews = this.cookieService.getRecentViews(recentViewsCookie);
     return this.usersService.getRecentViews(recentViews);
   }
 }

@@ -15,7 +15,7 @@ import {
 } from '@nestjs/common';
 import { ReviewsService } from './reviews.service';
 import { ReviewableType } from './entities/review.entity';
-import { ApiBearerAuth, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiParam, ApiProperty, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { ApiQueryPagination } from 'src/common/decorators/query.decorators';
 import {

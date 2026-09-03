@@ -15,7 +15,6 @@ import { Author } from 'src/modules/authors/author.entity';
 import { BookImage } from './book-image.entity';
 import { Language } from 'src/modules/languages/language.entity';
 import { CollectionBook } from 'src/modules/collections/entities/collection-book.entity';
-import { Review } from 'src/modules/reviews/entities/review.entity';
 import { Bookmark } from './bookmark.entity';
 import { OrderBook } from 'src/modules/orders/entities/order-book.entity';
 

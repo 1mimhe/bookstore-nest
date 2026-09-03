@@ -1,4 +1,4 @@
-import { Expose, Type } from 'class-transformer';
+import { Expose } from 'class-transformer';
 import { DiscountCodeType } from '../discount-code.entity';
 
 export class DiscountCodeResponseDto {

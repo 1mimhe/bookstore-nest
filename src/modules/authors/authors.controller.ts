@@ -18,6 +18,7 @@ import {
   Res,
   Session,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { CreateAuthorDto } from './dtos/create-author.dto';
 import { AuthorsService } from './authors.service';
@@ -46,27 +47,22 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { RequiredRoles } from 'src/common/decorators/roles.decorator';
 import { RolesEnum } from '../users/entities/role.entity';
 import { SessionData } from 'express-session';
-import { BaseController } from 'src/common/base.controller';
-import { ConfigService } from '@nestjs/config';
-import { Cookies } from 'src/common/decorators/cookies.decorator';
-import { CookieNames } from 'src/common/enums/cookie.names';
-import { RecentView, RecentViewTypes } from 'src/common/types/recent-view.type';
+import { RecentViewTypes } from 'src/common/types/recent-view.type';
 import { Request, Response } from 'express';
 import { ViewsService } from '../views/views.service';
 import { TrendingPeriod, ViewEntityTypes } from '../views/views.types';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { AuthorQueryDto } from './dtos/author-query.dto';
+import { TrackRecentView } from 'src/common/decorators/track-recent-view.decorator';
+import { RecentViewsInterceptor } from 'src/common/interceptors/recent-views.interceptor';
 
 @Controller('authors')
 @ApiTags('Author')
-export class AuthorsController extends BaseController {
+export class AuthorsController {
   constructor(
     private authorsService: AuthorsService,
-    config: ConfigService,
     private viewsService: ViewsService
-  ) {
-    super(config);
-  }
+  ) {}
 
   @ApiOperation({
     summary: 'Create a new author',
@@ -132,10 +128,11 @@ export class AuthorsController extends BaseController {
   @ApiQueryComplete('books')
   @ApiQueryPagination()
   @Serialize(AuthorResponseDto)
+  @UseInterceptors(RecentViewsInterceptor)
+  @TrackRecentView(RecentViewTypes.Author)
   @Get('slug/:slug')
-  async getPublisherBySlug(
+  async getAuthorBySlug(
     @Param('slug') slug: string,
-    @Cookies(CookieNames.RecentViews) recentViewsCookie: string,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
     @Query('complete', new ParseBoolPipe({ optional: true }))
@@ -145,12 +142,6 @@ export class AuthorsController extends BaseController {
     @CurrentUser('id') userId?: string
   ): Promise<AuthorResponseDto> {
     const author = await this.authorsService.get({ slug }, page, limit, complete);
-
-    const newRecentView: RecentView = {
-      type: RecentViewTypes.Author,
-      slug: author.slug
-    };
-    this.updateRecentViewsCookie(res, recentViewsCookie, newRecentView);
 
     await this.viewsService.recordView(
       ViewEntityTypes.Author,
