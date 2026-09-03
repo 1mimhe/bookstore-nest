@@ -6,7 +6,6 @@ import { DataSource } from 'typeorm';
 import { createMockRepository } from '../../../../test/mocks/repository.mock';
 import { createMockDataSource } from '../../../../test/mocks/data-source.mock';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { Order } from '../../orders/entities/order.entity';
 
 describe('TicketsService', () => {
   let service: TicketsService;

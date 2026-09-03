@@ -3,7 +3,7 @@ import { CollectionsService } from './collections.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Collection } from '../entities/collection.entity';
 import { CollectionBook } from '../entities/collection-book.entity';
-import { DataSource, EntityNotFoundError } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { StaffsService } from '../../staffs/staffs.service';
 import { ViewsService } from '../../views/views.service';
 import { createMockRepository } from '../../../../test/mocks/repository.mock';

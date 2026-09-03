@@ -5,11 +5,10 @@ import { User } from '../entities/user.entity';
 import { Address } from '../entities/address.entity';
 import { Bookmark } from '../../books/entities/bookmark.entity';
 import { Order } from '../../orders/entities/order.entity';
-import { DataSource, EntityNotFoundError } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { AuthService } from '../../auth/auth.service';
 import { createMockRepository } from '../../../../test/mocks/repository.mock';
 import { createMockDataSource } from '../../../../test/mocks/data-source.mock';
-import { NotFoundException, ConflictException } from '@nestjs/common';
 
 describe('UsersService', () => {
   let service: UsersService;

@@ -4,7 +4,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Title } from '../entities/title.entity';
 import { Book } from '../entities/book.entity';
 import { Character } from '../entities/characters.entity';
-import { DataSource, EntityNotFoundError } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { TagsService } from '../../tags/tags.service';
 import { ViewsService } from '../../views/views.service';

@@ -9,7 +9,7 @@ import { StaffsService } from '../../staffs/staffs.service';
 import { ViewsService } from '../../views/views.service';
 import { createMockRepository } from '../../../../test/mocks/repository.mock';
 import { createMockDataSource } from '../../../../test/mocks/data-source.mock';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { NotFoundException } from '@nestjs/common';
 
 describe('TagsService', () => {
   let service: TagsService;

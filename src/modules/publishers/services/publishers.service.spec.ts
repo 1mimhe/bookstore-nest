@@ -7,9 +7,8 @@ import { BooksService } from '../../books/books.service';
 import { BlogsService } from '../../blogs/blogs.service';
 import { ViewsService } from '../../views/views.service';
 import { createMockRepository } from '../../../../test/mocks/repository.mock';
-import { BadRequestException, NotFoundException, ConflictException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { EntityNotFoundError } from 'typeorm';
-import { DBErrors } from 'src/common/enums/db.errors';
 
 describe('PublishersService', () => {
   let service: PublishersService;

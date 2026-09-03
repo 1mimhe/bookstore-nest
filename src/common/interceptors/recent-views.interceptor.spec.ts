@@ -4,7 +4,6 @@ import { CookieService } from '../services/cookie.service';
 import { ExecutionContext, CallHandler } from '@nestjs/common';
 import { of } from 'rxjs';
 import { RecentViewTypes } from '../types/recent-view.type';
-import { TRACK_RECENT_VIEW_KEY } from '../decorators/track-recent-view.decorator';
 
 describe('RecentViewsInterceptor', () => {
   let interceptor: RecentViewsInterceptor;
