@@ -944,7 +944,7 @@ async function safeDeleteTags(tagRepository: Repository<Tag>) {
 }
 
 // Alternative upsert method if deletion fails
-async function upsertTags(tagRepository: Repository<Tag>) {
+export async function upsertTags(tagRepository: Repository<Tag>) {
   console.log('🔄 Using upsert method instead...');
   
   for (const tagData of tagsData) {
