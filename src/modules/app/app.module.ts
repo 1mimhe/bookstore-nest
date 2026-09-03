@@ -1,7 +1,8 @@
 import { MiddlewareConsumer, Module, ValidationPipe } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { APP_PIPE } from '@nestjs/core';
+import { APP_PIPE, APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import * as session from 'express-session';
 import { CacheModule } from '@nestjs/cache-manager';
 import { createKeyv } from '@keyv/redis';
@@ -23,10 +24,15 @@ import { StaffModule } from '../staffs/staffs.module';
 import { OrdersModule } from '../orders/orders.module';
 import { DiscountCodesModule } from '../discount-codes/discount-codes.module';
 import { TicketsModule } from '../tickets/tickets.module';
+import { HealthModule } from '../health/health.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { EventEmitterModule } from '@nestjs/event-emitter';
+import { CommonModule } from 'src/common/common.module';
 
 @Module({
   imports: [
+    CommonModule,
+    EventEmitterModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: `.env.${process.env.NODE_ENV}`,
@@ -58,6 +64,12 @@ import { ScheduleModule } from '@nestjs/schedule';
       },
     }),
     ScheduleModule.forRoot(),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000, // 1 minute
+        limit: 100, // 100 requests per minute per IP
+      },
+    ]),
     UsersModule,
     AuthModule,
     AuthorsModule,
@@ -71,15 +83,22 @@ import { ScheduleModule } from '@nestjs/schedule';
     StaffModule,
     OrdersModule,
     DiscountCodesModule,
-    TicketsModule
+    TicketsModule,
+    HealthModule,
   ],
   providers: [
     {
       provide: APP_PIPE,
       useValue: new ValidationPipe({
         whitelist: true,
+        transform: true,
+        transformOptions: { enableImplicitConversion: true },
       }),
-    }
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
   ],
 })
 export class AppModule {
