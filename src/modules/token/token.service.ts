@@ -17,15 +17,15 @@ export class TokenService {
     this.refreshSecretKey = config.getOrThrow<string>('JWT_REFRESH_SECRET_KEY');
   }
   
-  private generateRefreshToken(payload: JwtPayload, expiresIn = 1_296_000 /* 15days */) {
+  generateRefreshToken(payload: JwtPayload, expiresIn = 1_296_000 /* 15days */) {
     expiresIn = Math.min(1_296_000, expiresIn);
-    const refreshSecretKey = this.refreshSecretKey
+    const refreshSecretKey = this.refreshSecretKey;
     return jwt.sign(payload, refreshSecretKey, { expiresIn });
   }
 
-  private generateAccessToken(payload: JwtPayload, expiresIn = 1200 /* 20min */) {
+  generateAccessToken(payload: JwtPayload, expiresIn = 1200 /* 20min */) {
     expiresIn = Math.min(1200, expiresIn);
-    const accessSecretKey = this.accessSecretKey
+    const accessSecretKey = this.accessSecretKey;
     return jwt.sign(payload, accessSecretKey, { expiresIn });
   }
 
@@ -49,8 +49,6 @@ export class TokenService {
   }
 
   refreshTokens(oldRefreshToken: string, session: SessionData) {
-    console.log(session);
-        
     if (!(session.userId && oldRefreshToken)) {
       throw new ForbiddenException(AuthMessages.AccessDenied);
     }

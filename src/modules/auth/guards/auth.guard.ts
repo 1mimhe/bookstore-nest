@@ -6,41 +6,20 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 import { AuthMessages } from 'src/common/enums/error.messages';
-import { HeaderNames } from 'src/common/enums/header.names';
-import { TokenService } from 'src/modules/token/token.service';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private tokenService: TokenService) {}
-
-  async canActivate(context: ExecutionContext): Promise<boolean> {
+  canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest<Request>();
-    const accessToken = this.extractBearerToken(request);
+    const userId = request.session?.userId;
 
-    if (!accessToken) {
-      throw new UnauthorizedException(AuthMessages.MissingAccessToken);
-    }
-
-    const payload = this.tokenService.verifyToken(accessToken, 'access');
-    if (!payload?.username) {
-      throw new UnauthorizedException(AuthMessages.InvalidAccessToken);
-    }
-
-    if (request.session.userId !== payload.sub) {
-      throw new UnauthorizedException(AuthMessages.InvalidAccessToken);
+    if (!userId) {
+      throw new UnauthorizedException(AuthMessages.Unauthorized);
     }
 
     request.user = request.user ?? {};
-    request.user.id = payload.sub;
+    request.user.id = userId;
 
     return true;
-  }
-
-  private extractBearerToken(request: Request): string | null {
-    const authHeader = request.headers[HeaderNames.Auth] as string;
-    if (!authHeader) return null;
-
-    const [type, token] = authHeader.split(' ');
-    return type === 'Bearer' ? token : null;
   }
 }

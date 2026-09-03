@@ -6,7 +6,8 @@ import {
 import { DataSource, EntityManager, FindOptionsWhere, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { SignupUserDto } from './dtos/sign-up.dto';
-import { pbkdf2, randomBytes } from 'crypto';
+import { pbkdf2 } from 'crypto';
+import * as bcrypt from 'bcryptjs';
 import { SigninDto } from './dtos/sign-in.dto';
 import { AuthMessages } from 'src/common/enums/error.messages';
 import { Publisher } from '../publishers/publisher.entity';
@@ -104,14 +105,20 @@ export class AuthService {
       throw new BadRequestException(AuthMessages.InvalidCredentials);
     }
 
+    // Transparently upgrade legacy PBKDF2 hash to bcrypt
+    if (user.hashedPassword.includes(':')) {
+      const newHash = await this.hashPassword(password);
+      await this.userRepo.update(user.id, { hashedPassword: newHash });
+    }
+
     const roles = user.roles.map(r => r.role);
     const payload = {
       sub: user.id,
       username: user.username,
       roles
     };
-    const refreshToken = this.tokenService['generateRefreshToken'](payload);
-    const accessToken = this.tokenService['generateAccessToken'](payload);
+    const refreshToken = this.tokenService.generateRefreshToken(payload);
+    const accessToken = this.tokenService.generateAccessToken(payload);
 
     return {
       refreshToken,
@@ -183,33 +190,31 @@ export class AuthService {
     return conflicts;
   }
 
-  hashPassword(password: string): Promise<string | never> {
-    const salt = randomBytes(16).toString('hex');
-    return new Promise((resolve, reject) => {
-      pbkdf2(password, salt, 1000, 64, 'sha512', (err, derivedKey) => {
-        if (err) return reject(err);
-        resolve(`${salt}:${derivedKey.toString('hex')}`);
-      });
-    });
+  async hashPassword(password: string): Promise<string> {
+    return bcrypt.hash(password, 12);
   }
 
-  private verifyPassword(
+  private async verifyPassword(
     password: string,
     hashedPassword: string,
-  ): Promise<boolean | never> {
-    return new Promise((resolve, reject) => {
+  ): Promise<boolean> {
+    if (!hashedPassword) return false;
+
+    // Backward compatibility: handle legacy PBKDF2 hashes (salt:hash format)
+    if (hashedPassword.includes(':')) {
       const [salt, hash] = hashedPassword.split(':');
+      if (!salt || !hash) return false;
 
-      if (!salt || !hash) {
-        reject(new Error('Stored hash is in invalid format.'));
-      }
-
-      pbkdf2(password, salt, 1000, 64, 'sha512', (err, derivedKey) => {
-        if (err) return reject(err);
-        const isCorrectPassword = derivedKey.toString('hex') === hash;
-        resolve(isCorrectPassword);
+      return new Promise((resolve) => {
+        pbkdf2(password, salt, 1000, 64, 'sha512', (err, derivedKey) => {
+          if (err) return resolve(false);
+          resolve(derivedKey.toString('hex') === hash);
+        });
       });
-    });
+    }
+
+    // Modern bcrypt verification
+    return bcrypt.compare(password, hashedPassword);
   }
 
   async createTestAdmin(
