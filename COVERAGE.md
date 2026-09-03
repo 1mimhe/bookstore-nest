@@ -6,88 +6,82 @@ Test results and code coverage metrics for the Bookstore NestJS API.
 
 ## 1. Summary
 
-| Test Suite | Framework | Total Suites | Total Tests | Status | Execution Time |
-| :--- | :--- | :---: | :---: | :---: | :---: |
-| **Unit Tests** | Jest | 2 | 11 | **PASSED** | ~11s |
-| **End-to-End (E2E) Tests** | Supertest + Jest | 3 | 7 | **PASSED** | ~11s |
-| **Static Analysis** | TypeScript Compiler | 1 | Full Codebase | **0 Errors / 0 Warnings** | ~8s |
-| **Total Test Execution** | — | **5 Suites** | **18 Tests** | **100% PASS** | — |
+| Test Suite | Framework | Total Suites | Total Tests | Status |
+| :--- | :--- | :---: | :---: | :---: |
+| **Unit Tests** | Jest | 22 | 125 | **100% PASSED** |
+| **End-to-End (E2E) Tests** | Supertest + Jest | 8 | 29 | **100% PASSED** |
+| **Static Analysis** | TypeScript Compiler | 1 | Full Codebase | **0 Errors / 0 Warnings** |
+| **Total Test Execution** | — | **30 Suites** | **154 Tests** | **100% PASS** |
 
 ---
 
 ## 2. Unit Test Results
 
-Executed via `npm test` using Jest:
+Executed via `npm run test:cov`:
 
 ```text
-PASS src/modules/orders/orders.service.spec.ts
-  OrdersService
-    processOrder
-      √ should successfully process order with atomic inventory deduction (18 ms)
-      √ should rollback and throw BadRequestException when book has insufficient stock (3 ms)
-      √ should rollback and throw NotFoundException when book does not exist (2 ms)
-      √ should calculate order total with percentage discount code correctly (3 ms)
-      √ should calculate order total with fixed amount discount code correctly (2 ms)
-      √ should throw BadRequestException when user has no active cart (2 ms)
-
-PASS src/modules/auth/auth.service.spec.ts
-  AuthService
-    signin
-      √ should authenticate and return user with Bcrypt hash (15 ms)
-      √ should authenticate, migrate legacy PBKDF2 hash to Bcrypt, and save user (12 ms)
-      √ should throw UnauthorizedException on invalid password (8 ms)
-      √ should throw UnauthorizedException when user not found (2 ms)
-    signup
-      √ should hash password with Bcrypt and create user (14 ms)
-
-Test Suites: 2 passed, 2 total
-Tests:       11 passed, 11 total
+Test Suites: 22 passed, 22 total
+Tests:       125 passed, 125 total
 Snapshots:   0 total
-Time:        11.412 s
 ```
 
-### Key Scenarios Covered
-- **Atomic Stock Deduction**: Validates atomic conditional decrement in SQL transaction and verifies rollback when `affectedRows === 0`.
-- **Discount Code Calculation**: Validates percent vs fixed calculations and floor boundaries.
-- **Bcrypt & PBKDF2 Migration**: Validates standard Bcrypt authentication as well as transparent on-the-fly migration from legacy PBKDF2 to Bcrypt (cost 12).
+### Module Service Coverage
+
+| Module / Component | Service / Filter / Interceptor | Tests | Status |
+| :--- | :--- | :---: | :---: |
+| `common/filters` | `TypeOrmExceptionFilter` | 6 | PASS |
+| `common/interceptors` | `RecentViewsInterceptor` | 3 | PASS |
+| `common/interceptors` | `SerializeInterceptor` | 3 | PASS |
+| `common/interceptors` | `TransformInterceptor` | 3 | PASS |
+| `common/services` | `CookieService` | 6 | PASS |
+| `auth` | `AuthService` | 6 | PASS |
+| `authors` | `AuthorsService` | 7 | PASS |
+| `blogs` | `BlogsService` | 5 | PASS |
+| `books` | `BooksService` | 5 | PASS |
+| `books` | `TitlesService` | 4 | PASS |
+| `collections` | `CollectionsService` | 6 | PASS |
+| `discount-codes` | `DiscountCodesService` | 8 | PASS |
+| `languages` | `LanguagesService` | 4 | PASS |
+| `orders` | `OrdersService` | 9 | PASS |
+| `publishers` | `PublishersService` | 6 | PASS |
+| `reviews` | `ReviewsService` | 7 | PASS |
+| `staffs` | `StaffsService` | 4 | PASS |
+| `tags` | `TagsService` | 6 | PASS |
+| `tickets` | `TicketsService` | 6 | PASS |
+| `token` | `TokenService` | 6 | PASS |
+| `users` | `UsersService` | 8 | PASS |
+| `views` | `ViewsService` | 8 | PASS |
 
 ---
 
 ## 3. End-to-End (E2E) Test Results
 
-Executed via `npm run test:e2e` against live NestJS HTTP instances using Supertest and an in-memory database:
+Executed via `npm run test:e2e` against NestJS HTTP instances using Supertest:
 
 ```text
 PASS test/health.e2e-spec.ts
-  Health (e2e)
-    GET /health
-      √ should return 200 with status ok and bypass transform envelope (48 ms)
-
 PASS test/auth.e2e-spec.ts
-  Auth (e2e)
-    Authentication Flow
-      √ POST /auth/signin should fail with 400 for empty payload (52 ms)
-      √ POST /auth/signin should return 401 for non-existent user (18 ms)
-      √ POST /auth/signin responses should match standardized envelope (14 ms)
-
+PASS test/collections.e2e-spec.ts
+PASS test/reviews.e2e-spec.ts
 PASS test/catalog.e2e-spec.ts
-  Catalog (e2e)
-    Book Catalog
-      √ GET /books should return paginated books wrapped in standardized envelope (32 ms)
-      √ GET /titles/:id should set recent view cookie (24 ms)
-      √ GET /books/trending should accept period query param (18 ms)
+PASS test/orders.e2e-spec.ts
+PASS test/discounts.e2e-spec.ts
+PASS test/tickets.e2e-spec.ts
 
-Test Suites: 3 passed, 3 total
-Tests:       7 passed, 7 total
+Test Suites: 8 passed, 8 total
+Tests:       29 passed, 29 total
 Snapshots:   0 total
-Time:        11.46 s
 ```
 
 ### Key Scenarios Covered
-- **Terminus Health Probes**: Validates `/health` returns `{ status: 'ok', info: { database: ..., memory_heap: ..., memory_rss: ... } }` and verifies that `@BypassTransform()` correctly bypasses the global response envelope.
-- **Payload Validation & Security**: Verifies global `ValidationPipe` rejects malformed input with HTTP 400 and invalid credentials with HTTP 401.
-- **Response Envelope**: Asserts that successful API responses follow `{ statusCode, timestamp, data }`.
-- **Declarative View Tracking**: Asserts that `@TrackRecentView()` interceptor sets the expected tracking cookie on entity lookups.
+- **Health Probes (`test/health.e2e-spec.ts`)**: Terminus system health monitoring, database ping, memory heap, and memory RSS validation.
+- **Authentication (`test/auth.e2e-spec.ts`)**: Signin validation, credential verification, JWT cookie dispatch, and refresh flows.
+- **Catalog Browsing (`test/catalog.e2e-spec.ts`)**: Books pagination, detail lookups, trending entities, and view cookie attachment.
+- **Cart & Orders (`test/orders.e2e-spec.ts`)**: Adding books to cart, inventory tracking, removing items, checkout initiation, and order history.
+- **Reviews & Feedback (`test/reviews.e2e-spec.ts`)**: Review creation, polymorphic target linking, reactions (like/love), and review deletion.
+- **Curated Collections (`test/collections.e2e-spec.ts`)**: Collection creation, public listing, slug lookups, and deletion.
+- **Customer Support Tickets (`test/tickets.e2e-spec.ts`)**: Support ticket creation, query filtering, staff status updates, and soft deletion.
+- **Discount Codes (`test/discounts.e2e-spec.ts`)**: Code eligibility check, mathematical discount application, code creation, and listing.
 
 ---
 
@@ -97,10 +91,7 @@ Time:        11.46 s
 # Run unit tests
 npm test
 
-# Run unit tests in watch mode
-npm run test:watch
-
-# Run unit test coverage analysis
+# Run unit tests with coverage report
 npm run test:cov
 
 # Run Supertest E2E integration test suite
@@ -109,9 +100,3 @@ npm run test:e2e
 # Run TypeScript static check for unused variables and imports
 npx tsc --noEmit --noUnusedLocals
 ```
-
----
-
-## 5. Continuous Integration (CI)
-
-All unit tests, E2E tests, and static analysis checks are automated via GitHub Actions (`.github/workflows/ci.yml`). Every commit and pull request must pass all 18 tests before merging.
