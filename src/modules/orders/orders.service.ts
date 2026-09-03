@@ -1,5 +1,14 @@
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { BadRequestException, ForbiddenException, Inject, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+  UnprocessableEntityException
+} from '@nestjs/common';
 import { Cache } from 'cache-manager';
 import { AddBookToCartDto } from './dto/add-book.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -24,6 +33,7 @@ import { DiscountCodesService } from '../discount-codes/discount-codes.service';
 
 @Injectable()
 export class OrdersService {
+  private readonly logger = new Logger(OrdersService.name);
   private cartCacheTime: number;
 
   constructor(
@@ -328,7 +338,7 @@ export class OrdersService {
   // Cron job for cleaning unpaid orders
   @Cron('*/10 * * * *')
   async handlePendingOrderCleanup(): Promise<void> {
-    console.log('Starting pending order cleanup job...');
+    this.logger.log('Starting pending order cleanup job...');
 
     const fifteenMinutesAgo = new Date();
     fifteenMinutesAgo.setMinutes(fifteenMinutesAgo.getMinutes() - 15);
@@ -342,11 +352,11 @@ export class OrdersService {
     });
 
     if (expiredOrders.length === 0) {
-      console.log('No expired pending orders found.');
+      this.logger.log('No expired pending orders found.');
       return;
     }
 
-    console.log(`Found ${expiredOrders.length} expired pending orders.`);
+    this.logger.log(`Found ${expiredOrders.length} expired pending orders.`);
 
     // Update orders to unpaid status
     const orderIds = expiredOrders.map(order => order.id);
@@ -358,32 +368,34 @@ export class OrdersService {
       },
     );
 
-    console.log(
+    this.logger.log(
       `Successfully updated ${updateResult.affected} orders to \`unpaid\` status.`,
     );
   }
 
-
   private async processOrder(order: Order): Promise<Order> {
     const updatedOrder = await this.dataSource.transaction(async manager => {
-      // Update stock and sold column of each order's books
-      const updateStockAndSoldPromises = order.orderBooks.flatMap(ob => 
-        [
-          manager.decrement(
-            Book,
-            { id: ob.bookId },
-            'stock',
-            ob.quantity
-          ),
-          manager.increment(
-            Book,
-            { id: ob.bookId },
-            'sold',
-            ob.quantity
-          )
-        ]
-      );
-      await Promise.all(updateStockAndSoldPromises);
+      // Concurrency safe: Atomically decrement stock and increment sold ONLY IF stock is sufficient
+      for (const ob of order.orderBooks) {
+        const updateResult = await manager
+          .createQueryBuilder()
+          .update(Book)
+          .set({
+            stock: () => `stock - ${ob.quantity}`,
+            sold: () => `sold + ${ob.quantity}`,
+          })
+          .where('id = :id AND stock >= :quantity', {
+            id: ob.bookId,
+            quantity: ob.quantity,
+          })
+          .execute();
+
+        if (updateResult.affected === 0) {
+          throw new ConflictException(
+            `Book with ID "${ob.bookId}" is out of stock or does not have sufficient quantity available.`,
+          );
+        }
+      }
 
       // Update order status
       order.paymentStatus = PaymentStatuses.Paid;

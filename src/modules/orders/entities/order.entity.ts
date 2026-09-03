@@ -1,7 +1,7 @@
 import { BaseEntity } from 'src/common/base.entity';
 import { Address } from 'src/modules/users/entities/address.entity';
 import { User } from 'src/modules/users/entities/user.entity';
-import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 import { OrderBook } from './order-book.entity';
 import { Ticket } from 'src/modules/tickets/ticket.entity';
 

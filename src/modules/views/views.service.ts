@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { TrendingPeriod, ViewEntityTypes, ViewResult } from './views.types';
 import { Request, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
@@ -16,6 +16,7 @@ import { Tag } from '../tags/entities/tag.entity';
 
 @Injectable()
 export class ViewsService {
+  private readonly logger = new Logger(ViewsService.name);
   private cookieMaxAge: number;
 
   constructor(
@@ -23,7 +24,7 @@ export class ViewsService {
     private dataSource: DataSource,
     config: ConfigService,
   ) {
-    this.cookieMaxAge = config.get<number>('COOKIE_MAX_AGE', 15 * 24 * 3600 * 100);
+    this.cookieMaxAge = config.get<number>('COOKIE_MAX_AGE', 15 * 24 * 3600 * 1000);
   }
 
   async recordView(
@@ -61,12 +62,12 @@ export class ViewsService {
   // Cron job: Sync Redis data (pending) to database every 2 hours
   @Cron('0 */2 * * *')
   async syncToDatabase(): Promise<void> {
-    console.log('Starting Entity Views Redis to Database sync...');
+    this.logger.log('Starting Entity Views Redis to Database sync...');
 
-    const pendingKeys = await this.redisClient.keys('pending:*:views');
+    const pendingKeys = await this.scanKeys('pending:*:views');
 
     if (pendingKeys.length === 0) {
-      console.log(`Synced 0 entity.`);
+      this.logger.log('Synced 0 entities.');
       return;
     }
 
@@ -75,8 +76,20 @@ export class ViewsService {
       const match = key.match(/pending:([^:]+:[^:]+):views/);
       if (match) {
         const compositeId = match[1];
-        const views = Number(await this.redisClient.get(key) ?? 0);
-        entityUpdates.set(compositeId, views);
+        // Atomically fetch and delete pending key so views recorded during sync are preserved
+        let views = 0;
+        try {
+          const raw = (await this.redisClient.call('GETDEL', key)) as string | null;
+          views = Number(raw ?? 0);
+        } catch {
+          // Fallback if Redis version does not support GETDEL
+          views = Number((await this.redisClient.get(key)) ?? 0);
+          await this.redisClient.del(key);
+        }
+
+        if (views > 0) {
+          entityUpdates.set(compositeId, (entityUpdates.get(compositeId) ?? 0) + views);
+        }
       }
     }
 
@@ -85,10 +98,7 @@ export class ViewsService {
       await this.incrementEntityViews(compositeId, data);
     }
 
-    // Clear pending
-    await this.redisClient.del(pendingKeys);
-
-    console.log(`Synced ${entityUpdates.size} entities.`);
+    this.logger.log(`Synced ${entityUpdates.size} entities.`);
   }
 
   async getTrendingEntities(
@@ -138,7 +148,7 @@ export class ViewsService {
     limit: number
   ): Promise<Array<{ entityId: string; views: number }>> {
     const pattern = `daily:${entityType}:*`;
-    const keys = await this.redisClient.keys(pattern);
+    const keys = await this.scanKeys(pattern);
     
     const entityViews = new Map<string, number>();
 
@@ -203,5 +213,20 @@ export class ViewsService {
 
   private getTodayKey(): string {
     return new Date().toISOString().split('T')[0];
+  }
+
+  private async scanKeys(pattern: string): Promise<string[]> {
+    return new Promise((resolve, reject) => {
+      const stream = this.redisClient.scanStream({
+        match: pattern,
+        count: 100,
+      });
+      const keys: string[] = [];
+      stream.on('data', (resultKeys: string[]) => {
+        keys.push(...resultKeys);
+      });
+      stream.on('end', () => resolve(keys));
+      stream.on('error', (err) => reject(err));
+    });
   }
 }
