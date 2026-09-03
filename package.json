@@ -20,7 +20,12 @@
     "test:e2e": "cross-env NODE_ENV=test jest --config ./test/jest-e2e.json",
     "seed:languages": "ts-node --files ./src/modules/languages/languages.seed.ts",
     "seed:tags": "ts-node --files ./src/modules/tags/tags.seed.ts",
-    "seed": "concurrently npm:seed:*"
+    "seed:admin": "ts-node --files ./src/database/seeds/admin.seed.ts",
+    "seed": "ts-node --files ./src/database/seeds/master.seed.ts",
+    "typeorm": "typeorm-ts-node-commonjs -d src/data-source.ts",
+    "migration:generate": "typeorm-ts-node-commonjs migration:generate -d src/data-source.ts",
+    "migration:run": "typeorm-ts-node-commonjs migration:run -d src/data-source.ts",
+    "migration:revert": "typeorm-ts-node-commonjs migration:revert -d src/data-source.ts"
   },
   "dependencies": {
     "@2toad/profanity": "^3.1.1",
@@ -29,18 +34,25 @@
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
+    "@nestjs/event-emitter": "^3.1.0",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/schedule": "^6.0.0",
     "@nestjs/swagger": "^11.2.0",
+    "@nestjs/terminus": "^11.1.1",
+    "@nestjs/throttler": "^6.5.0",
     "@nestjs/typeorm": "^11.0.0",
+    "@types/dotenv": "^6.1.1",
     "@types/jsonwebtoken": "^9.0.10",
+    "bcryptjs": "^3.0.3",
     "cache-manager": "^7.0.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
     "connect-redis": "^7.1.1",
     "cookie-parser": "^1.4.7",
     "cross-env": "^7.0.3",
+    "dotenv": "^17.4.2",
     "express-session": "^1.18.1",
+    "helmet": "^8.3.0",
     "ioredis": "^5.7.0",
     "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.14.3",
@@ -63,6 +75,7 @@
     "@nestjs/testing": "^11.0.1",
     "@swc/cli": "^0.6.0",
     "@swc/core": "^1.10.7",
+    "@types/bcryptjs": "^2.4.6",
     "@types/cookie-parser": "^1.4.9",
     "@types/express": "^5.0.0",
     "@types/express-session": "^1.18.2",
@@ -99,6 +112,9 @@
       "**/*.(t|j)s"
     ],
     "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "^src/(.*)$": "<rootDir>/$1"
+    }
   }
 }
