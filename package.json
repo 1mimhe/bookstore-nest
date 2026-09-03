@@ -18,8 +18,8 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "cross-env NODE_ENV=test jest --config ./test/jest-e2e.json",
-    "seed:languages": "ts-node --files ./src/modules/languages/languages.seed.ts",
-    "seed:tags": "ts-node --files ./src/modules/tags/tags.seed.ts",
+    "seed:languages": "ts-node --files ./src/database/seeds/languages.seed.ts",
+    "seed:tags": "ts-node --files ./src/database/seeds/tags.seed.ts",
     "seed:admin": "ts-node --files ./src/database/seeds/admin.seed.ts",
     "seed": "ts-node --files ./src/database/seeds/master.seed.ts",
     "typeorm": "typeorm-ts-node-commonjs -d src/data-source.ts",
@@ -109,7 +109,14 @@
       "^.+\\.(t|j)s$": "ts-jest"
     },
     "collectCoverageFrom": [
-      "**/*.(t|j)s"
+      "modules/**/services/*.service.ts",
+      "common/services/**/*.ts",
+      "common/interceptors/**/*.ts",
+      "common/filters/**/*.ts",
+      "!**/*.module.ts",
+      "!**/*.dto.ts",
+      "!**/*.entity.ts",
+      "!**/*.seed.ts"
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node",
