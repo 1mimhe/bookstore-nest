@@ -25,6 +25,13 @@ describe('AuthController (e2e)', () => {
       }
       throw new BadRequestException('Invalid email or password.');
     }),
+    createTestAdmin: jest.fn().mockResolvedValue({
+      id: 'admin-uuid-1',
+      username: 'admin',
+      firstName: 'Admin',
+      lastName: 'User',
+      roles: ['Admin'],
+    }),
   };
 
   const mockTokenService = {
@@ -104,5 +111,16 @@ describe('AuthController (e2e)', () => {
     expect(response.body).toHaveProperty('data');
     expect(response.body.data).toHaveProperty('accessToken', 'mock-access-token');
     expect(response.body.data).toHaveProperty('userId', 'user-uuid-1');
+  });
+
+  it('POST /auth/signup-test-admin - should provision test admin user for portfolio evaluation', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/auth/signup-test-admin')
+      .send({})
+      .expect(201);
+
+    expect(response.body).toHaveProperty('success', true);
+    expect(response.body.data).toHaveProperty('username', 'admin');
+    expect(response.body.data).not.toHaveProperty('hashedPassword');
   });
 });

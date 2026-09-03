@@ -21,7 +21,7 @@ The codebase was refactored to resolve architectural issues, security vulnerabil
 
 ### Previous State
 - Passwords used custom PBKDF2 with 1,000 iterations.
-- An unauthenticated admin signup endpoint (`/auth/signup-test-admin`) was present.
+- An unauthenticated admin signup endpoint (`/auth/signup-test-admin`) returned raw entity data without serialization.
 - No HTTP security headers were set.
 - Rate limiting was absent on sensitive endpoints.
 - CORS allowed all origins with credentials.
@@ -29,9 +29,10 @@ The codebase was refactored to resolve architectural issues, security vulnerabil
 ### Considerations
 - **Bcrypt vs. Argon2**: Bcrypt was chosen for native support and reliability across operating systems and Docker images.
 - **Password Migration**: To avoid breaking existing user accounts, passwords are verified against PBKDF2 on login, re-hashed with Bcrypt (cost 12), and updated in the database.
+- **Demo & Testing Endpoint**: Retained `/auth/signup-test-admin` for portfolio review and Swagger testing convenience, but hardened it: made it idempotent, hashed passwords with Bcrypt (cost 12), and enforced `@Serialize(UserResponseDto)` so password hashes are never exposed.
 
 ### Changes Implemented
-- Removed `/auth/signup-test-admin`.
+- Hardened `/auth/signup-test-admin` with Bcrypt hashing, idempotency, and sanitized DTO serialization.
 - Implemented Bcrypt hashing with automatic migration in `AuthService`.
 - Added `helmet` middleware in `src/main.ts`.
 - Added `@nestjs/throttler` (100 requests per minute limit).
@@ -183,10 +184,10 @@ The codebase was refactored to resolve architectural issues, security vulnerabil
 - E2E tests were limited.
 
 ### Changes Implemented
-- Created unit test suites for all domain services, filters, and interceptors (22 test suites, 125 unit tests passing).
-- Built E2E integration test suites using Supertest covering all key business workflows (8 test suites, 29 E2E tests passing):
+- Created unit test suites for all domain services, filters, and interceptors (22 test suites, 127 unit tests passing).
+- Built E2E integration test suites using Supertest covering all key business workflows (8 test suites, 30 E2E tests passing):
   - `health`: Terminus probes and system diagnostics.
-  - `auth`: Credentials validation, token issuance, and refresh flows.
+  - `auth`: Credentials validation, token issuance, refresh flows, and portfolio demo admin provisioning.
   - `catalog`: Book browsing, details, trending items, and view cookies.
   - `orders`: Cart operations, item adjustments, checkout initiation, and order history.
   - `reviews`: Multi-entity review creation, reactions, and deletions.
@@ -203,7 +204,8 @@ The codebase was refactored to resolve architectural issues, security vulnerabil
 | Area | Before | After |
 | :--- | :--- | :--- |
 | **Password Hashing** | PBKDF2 (1,000 iterations) | Bcrypt (cost 12) + lazy migration |
-| **Admin Provisioning** | Insecure HTTP endpoint | CLI seed script (`npm run seed:admin`) |
+| **Admin Provisioning** | Insecure CLI-only alternative | CLI seed script (`npm run seed:admin`) |
+| **Demo Admin Testing** | Unserialized test endpoint leaking hash | Idempotent, sanitized `@Serialize(UserResponseDto)` with Bcrypt |
 | **HTTP Security** | No helmet, open CORS, no rate limit | Helmet, parameterized CORS, Throttler (100 req/min) |
 | **Inventory Check** | In-memory comparison + save | Atomic conditional SQL decrement |
 | **Redis Keyspace** | Synchronous `KEYS *` | Non-blocking `scanStream` + atomic `GETDEL` |
@@ -217,6 +219,6 @@ The codebase was refactored to resolve architectural issues, security vulnerabil
 | **Health Probes** | None | Terminus `/health` (DB, memory heap, RSS) |
 | **Response Format** | Inconsistent JSON formats | Standard envelope `{ statusCode, timestamp, data }` |
 | **DevOps** | None | `docker-compose.yml` + GitHub Actions CI |
-| **Unit Tests** | Broken boilerplate specs | 22 suites / 125 passing unit tests |
-| **E2E Tests** | None | 8 suites / 29 passing Supertest E2E tests |
+| **Unit Tests** | Broken boilerplate specs | 22 suites / 127 passing unit tests |
+| **E2E Tests** | None | 8 suites / 30 passing Supertest E2E tests |
 | **Unused Imports** | 30+ unused imports/locals | 0 warnings (`tsc --noUnusedLocals`) |

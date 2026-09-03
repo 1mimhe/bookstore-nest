@@ -32,8 +32,10 @@ import { AccessTokenDto } from '../dtos/access-token.dto';
 import { Cookies } from 'src/common/decorators/cookies.decorator';
 import { ConflictMessages } from 'src/common/enums/error.messages';
 import { UserResponseDto } from '../../users/dtos/user-response.dto';
+import { User } from '../../users/entities/user.entity';
 import { TokenService } from '../../token/token.service';
 import { CookieService } from 'src/common/services/cookie.service';
+import { SigninTestDto } from '../dtos/sign-up-test.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -150,5 +152,21 @@ export class AuthController {
     return {
       accessToken
     };
+  }
+
+  @ApiOperation({
+    summary: 'Create test admin user (Demo / Portfolio testing)',
+    description:
+      'Idempotently provisions an administrator account with full privileges for portfolio evaluation and testing without requiring manual database seed commands.',
+  })
+  @ApiCreatedResponse({
+    type: UserResponseDto,
+  })
+  @Serialize(UserResponseDto)
+  @Post('signup-test-admin')
+  async createTestAdmin(
+    @Body() overrides: SigninTestDto,
+  ): Promise<User> {
+    return this.authService.createTestAdmin(overrides);
   }
 }

@@ -217,6 +217,7 @@ Full test metrics and passing test suites are documented in [COVERAGE.md](./COVE
 1. **Registration (`POST /auth/signup`)**: Creates customer account. Staff and Publisher accounts are provisioned by Administrators.
 2. **Login (`POST /auth/signin`)**: Authenticates via identifier and password, establishing an HTTP-only secure cookie session backed by Redis.
 3. **Logout (`POST /auth/signout`)**: Destroys the session and clears the cookie.
+4. **Demo Admin (`POST /auth/signup-test-admin`)**: Provisions an administrative account (`admin` / `AdminPass123!`) with `RolesEnum.Admin` for portfolio reviewers to test protected endpoints in Swagger (`/docs`) without running database seeds.
 
 ### Guard System
 
@@ -269,22 +270,6 @@ npm run seed
 # Seed admin user independently
 npm run seed:admin
 ```
-
----
-
-## 📞 Support & Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/name`)
-3. Commit your changes (`git commit -m "Implement feature"`)
-4. Push to the branch (`git push origin feature/name`)
-5. Open a Pull Request
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 

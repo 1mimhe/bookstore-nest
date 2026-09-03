@@ -142,4 +142,22 @@ describe('AuthService', () => {
       );
     });
   });
+
+  describe('createTestAdmin', () => {
+    it('should return existing admin if already present', async () => {
+      const existing = { id: 'admin-1', username: 'admin', roles: [{ role: RolesEnum.Admin }] };
+      userRepo.findOne.mockResolvedValue(existing);
+
+      const result = await service.createTestAdmin();
+      expect(result).toEqual(existing);
+    });
+
+    it('should create new admin user when none exists', async () => {
+      userRepo.findOne.mockResolvedValue(null);
+      userRepo.find.mockResolvedValue([]); // No conflicts
+
+      const result = await service.createTestAdmin({ username: 'superadmin' });
+      expect(result).toBeDefined();
+    });
+  });
 });

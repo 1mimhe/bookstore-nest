@@ -8,10 +8,10 @@ Test results and code coverage metrics for the Bookstore NestJS API.
 
 | Test Suite | Framework | Total Suites | Total Tests | Status |
 | :--- | :--- | :---: | :---: | :---: |
-| **Unit Tests** | Jest | 22 | 125 | **100% PASSED** |
-| **End-to-End (E2E) Tests** | Supertest + Jest | 8 | 29 | **100% PASSED** |
+| **Unit Tests** | Jest | 22 | 127 | **100% PASSED** |
+| **End-to-End (E2E) Tests** | Supertest + Jest | 8 | 30 | **100% PASSED** |
 | **Static Analysis** | TypeScript Compiler | 1 | Full Codebase | **0 Errors / 0 Warnings** |
-| **Total Test Execution** | — | **30 Suites** | **154 Tests** | **100% PASS** |
+| **Total Test Execution** | — | **30 Suites** | **157 Tests** | **100% PASS** |
 
 ---
 
@@ -21,7 +21,7 @@ Executed via `npm run test:cov`:
 
 ```text
 Test Suites: 22 passed, 22 total
-Tests:       125 passed, 125 total
+Tests:       127 passed, 127 total
 Snapshots:   0 total
 ```
 
@@ -34,7 +34,7 @@ Snapshots:   0 total
 | `common/interceptors` | `SerializeInterceptor` | 3 | PASS |
 | `common/interceptors` | `TransformInterceptor` | 3 | PASS |
 | `common/services` | `CookieService` | 6 | PASS |
-| `auth` | `AuthService` | 6 | PASS |
+| `auth` | `AuthService` | 8 | PASS |
 | `authors` | `AuthorsService` | 7 | PASS |
 | `blogs` | `BlogsService` | 5 | PASS |
 | `books` | `BooksService` | 5 | PASS |
@@ -69,13 +69,13 @@ PASS test/discounts.e2e-spec.ts
 PASS test/tickets.e2e-spec.ts
 
 Test Suites: 8 passed, 8 total
-Tests:       29 passed, 29 total
+Tests:       30 passed, 30 total
 Snapshots:   0 total
 ```
 
 ### Key Scenarios Covered
 - **Health Probes (`test/health.e2e-spec.ts`)**: Terminus system health monitoring, database ping, memory heap, and memory RSS validation.
-- **Authentication (`test/auth.e2e-spec.ts`)**: Signin validation, credential verification, JWT cookie dispatch, and refresh flows.
+- **Authentication (`test/auth.e2e-spec.ts`)**: Signin validation, credential verification, JWT cookie dispatch, refresh flows, and portfolio demo admin provisioning.
 - **Catalog Browsing (`test/catalog.e2e-spec.ts`)**: Books pagination, detail lookups, trending entities, and view cookie attachment.
 - **Cart & Orders (`test/orders.e2e-spec.ts`)**: Adding books to cart, inventory tracking, removing items, checkout initiation, and order history.
 - **Reviews & Feedback (`test/reviews.e2e-spec.ts`)**: Review creation, polymorphic target linking, reactions (like/love), and review deletion.

@@ -224,10 +224,23 @@ export class AuthService {
       username: 'admin',
       password: 'AdminPass123!',
       firstName: 'Admin',
+      lastName: 'User',
       email: 'admin@test.com',
       phoneNumber: '+989123456789',
       ...overrides,
     };
+
+    const existingAdmin = await this.userRepo.findOne({
+      where: [
+        { username: defaultAdminData.username },
+        { contact: { email: defaultAdminData.email } },
+      ],
+      relations: { roles: true, contact: true },
+    });
+
+    if (existingAdmin) {
+      return existingAdmin;
+    }
 
     return this.signup(
       defaultAdminData,
