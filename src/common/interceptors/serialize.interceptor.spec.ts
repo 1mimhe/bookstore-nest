@@ -1,6 +1,6 @@
 import { SerializeInterceptor } from './serialize.interceptor';
 import { ExecutionContext, CallHandler } from '@nestjs/common';
-import { of } from 'rxjs';
+import { of, firstValueFrom } from 'rxjs';
 import { Expose } from 'class-transformer';
 
 class TestDto {
@@ -10,7 +10,7 @@ class TestDto {
   @Expose()
   name: string;
 
-  secret: string;
+  secret?: string;
 }
 
 describe('SerializeInterceptor', () => {
@@ -20,21 +20,19 @@ describe('SerializeInterceptor', () => {
     interceptor = new SerializeInterceptor(TestDto);
   });
 
-  it('should exclude extraneous properties for single object', (done) => {
+  it('should exclude extraneous properties for single object', async () => {
     const context = {} as ExecutionContext;
     const handler: CallHandler = {
       handle: () => of({ id: '1', name: 'Book', secret: 'hidden' }),
     };
 
-    interceptor.intercept(context, handler).subscribe((result) => {
-      expect(result).toHaveProperty('id', '1');
-      expect(result).toHaveProperty('name', 'Book');
-      expect(result).not.toHaveProperty('secret');
-      done();
-    });
+    const result = await firstValueFrom(interceptor.intercept(context, handler));
+    expect(result.id).toBe('1');
+    expect(result.name).toBe('Book');
+    expect(result.secret).toBeUndefined();
   });
 
-  it('should serialize array of objects', (done) => {
+  it('should serialize array of objects', async () => {
     const context = {} as ExecutionContext;
     const handler: CallHandler = {
       handle: () => of([
@@ -43,23 +41,19 @@ describe('SerializeInterceptor', () => {
       ]),
     };
 
-    interceptor.intercept(context, handler).subscribe((result) => {
-      expect(result).toHaveLength(2);
-      expect(result[0]).not.toHaveProperty('secret');
-      expect(result[1]).not.toHaveProperty('secret');
-      done();
-    });
+    const result = await firstValueFrom(interceptor.intercept(context, handler));
+    expect(result).toHaveLength(2);
+    expect(result[0].secret).toBeUndefined();
+    expect(result[1].secret).toBeUndefined();
   });
 
-  it('should pass through null or undefined', (done) => {
+  it('should pass through null or undefined', async () => {
     const context = {} as ExecutionContext;
     const handler: CallHandler = {
       handle: () => of(null),
     };
 
-    interceptor.intercept(context, handler).subscribe((result) => {
-      expect(result).toBeNull();
-      done();
-    });
+    const result = await firstValueFrom(interceptor.intercept(context, handler));
+    expect(result).toBeNull();
   });
 });

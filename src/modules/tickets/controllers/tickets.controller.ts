@@ -23,7 +23,7 @@ import {
 import { TicketsService } from '../services/tickets.service';
 import { CreateTicketDto } from '../dtos/create-ticket.dto';
 import { TicketQueryDto } from '../dtos/ticket-query.dto';
-import { TicketResponseDto } from '../dtos/ticket-response.dto';
+import { TicketResponseDto, TicketsListResponseDto } from '../dtos/ticket-response.dto';
 import { Serialize } from 'src/common/serialize.interceptor';
 import { AuthGuard } from '../../auth/guards/auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
@@ -69,7 +69,7 @@ export class TicketsController {
     RolesEnum.Customer
   )
   @UseGuards(AuthGuard, RolesGuard)
-  @Serialize(TicketResponseDto)
+  @Serialize(TicketsListResponseDto)
   @Get()
   async getAllTickets(
     @Query() query: TicketQueryDto,

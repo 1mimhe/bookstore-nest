@@ -39,6 +39,46 @@ export class ReviewsController {
   constructor(private reviewsService: ReviewsService) {}
 
   @ApiOperation({
+    summary: 'React to a review',
+  })
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard)
+  @Post('reactions')
+  async reactToReview(
+    @Body() body: ReactToReviewDto,
+    @CurrentUser('id') userId: string
+  ) {
+    return this.reviewsService.reactToReview(userId!, body);
+  }
+
+  @ApiOperation({
+    summary: 'Change a reaction by review id',
+  })
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard)
+  @Patch('reactions/:id')
+  async changeReaction(
+    @Param('id') id: string,
+    @Body() body: ChangeReactionDto,
+    @CurrentUser('id') userId: string
+  ) {
+    return this.reviewsService.changeReaction(userId, id, body.reaction);
+  }
+
+  @ApiOperation({
+    summary: 'Delete a reaction by review id',
+  })
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard)
+  @Delete('reactions/:id')
+  async deleteReaction(
+    @Param('id') id: string,
+    @CurrentUser('id') userId: string
+  ) {
+    return this.reviewsService.deleteReaction(id, userId);
+  }
+
+  @ApiOperation({
     summary: 'Create a review',
     description: 'You can create review for books, blogs, authors and publishers.'
   })
@@ -163,45 +203,5 @@ export class ReviewsController {
     @CurrentUser('id') userId: string
   ) {
     return this.reviewsService.delete(id, userId);
-  }
-
-  @ApiOperation({
-    summary: 'React to a review',
-  })
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard)
-  @Post('reactions')
-  async reactToReview(
-    @Body() body: ReactToReviewDto,
-    @CurrentUser('id') userId: string
-  ) {
-    return this.reviewsService.reactToReview(userId!, body);
-  }
-
-  @ApiOperation({
-    summary: 'Change a reaction by review id',
-  })
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard)
-  @Patch('reactions/:id')
-  async changeReaction(
-    @Param('id') id: string,
-    @Body() body: ChangeReactionDto,
-    @CurrentUser('id') userId: string
-  ) {
-    return this.reviewsService.changeReaction(userId, id, body.reaction);
-  }
-
-  @ApiOperation({
-    summary: 'Delete a reaction by review id',
-  })
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard)
-  @Delete('reactions/:id')
-  async deleteReaction(
-    @Param('id') id: string,
-    @CurrentUser('id') userId: string
-  ) {
-    return this.reviewsService.deleteReaction(id, userId);
   }
 }

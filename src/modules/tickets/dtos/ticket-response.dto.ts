@@ -1,4 +1,4 @@
-import { Expose } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
 import { TicketTypes, TicketStatuses } from '../ticket.entity';
 
 export class TicketResponseDto {
@@ -34,4 +34,13 @@ export class TicketResponseDto {
 
   @Expose()
   updatedAt: Date;
+}
+
+export class TicketsListResponseDto {
+  @Expose()
+  @Type(() => TicketResponseDto)
+  tickets: TicketResponseDto[];
+
+  @Expose()
+  total: number;
 }
