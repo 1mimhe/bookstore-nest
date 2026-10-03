@@ -1,27 +1,7 @@
-import { DataSource, Repository } from 'typeorm';
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
-
-// Define the Language entity inline to avoid import issues
-@Entity('languages')
-class Language {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
-  @Column({ unique: true, length: 10 })
-  code: string;
-
-  @Column({ length: 100 })
-  englishName: string;
-
-  @Column({ length: 100 })
-  persianName: string;
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
-}
+import { DataSource } from 'typeorm';
+import { AppDataSource } from '../../data-source';
+import { Language } from '../../modules/languages/entities/language.entity';
+import { logResult, runStandalone, upsert } from './seed-utils';
 
 const languagesData = [
   {
@@ -106,77 +86,44 @@ const languagesData = [
   },
 ];
 
-async function seedLanguages() {
-  const dataSource = new DataSource({
-    type: 'mysql',
-    host: 'localhost',
-    port: 3306,
-    username: 'root',
-    password: 'mysql',
-    database: 'bookstore-db',
-    entities: [Language],
-    synchronize: false,
-  });
+export async function seedLanguages(ds: DataSource = AppDataSource): Promise<void> {
+  const ownConnection = !ds.isInitialized;
+  if (ownConnection) {
+    await ds.initialize();
+    console.log('📦 Database connected');
+  }
 
   console.log('🌱 Starting languages seeding...');
-  
-  const languageRepository = dataSource.getRepository(Language);
-  try {
-    await dataSource.initialize();
-    console.log('📦 Database connected');
 
-    
-    // Safe deletion with existence check
-    await safeDeleteLanguages(languageRepository);
-    
-    // Seed languages
-    for (const languageData of languagesData) {
-      const language = languageRepository.create({
+  const languageRepository = ds.getRepository(Language);
+  let created = 0;
+  let updated = 0;
+
+  // Upsert only — never delete, languages may be referenced by books.
+  for (const languageData of languagesData) {
+    const { created: isNew } = await upsert(
+      languageRepository,
+      { code: languageData.code },
+      {
         code: languageData.code,
         englishName: languageData.englishName,
         persianName: languageData.persianName,
-      });
-      await languageRepository.save(language);
-      console.log(`✅ Created language: ${language.englishName} (${language.code})`);
+      },
+    );
+    if (isNew) {
+      created++;
+      console.log(`✅ Created language: ${languageData.englishName} (${languageData.code})`);
+    } else {
+      updated++;
     }
-    
-    console.log('🎉 Language seeding completed successfully!');
-    
-  } catch (error) {
-      console.error('❌ Language seeding failed:', error);
-      throw error;
   }
+
+  logResult('Languages', created, updated);
+  console.log('🎉 Language seeding completed successfully!');
+
+  if (ownConnection) await ds.destroy();
 }
 
-async function safeDeleteLanguages(languageRepository: Repository<Language>) {
-  try {
-    // Method 1: Use DELETE query (respects foreign keys)
-    const result = await languageRepository.createQueryBuilder()
-      .delete()
-      .from(Language)
-      .execute();
-    
-    console.log(`🗑️  Deleted ${result.affected || 0} existing languages`);
-    
-  } catch (error) {
-    // If deletion fails due to foreign key constraints, 
-    // it means there are books referencing languages
-    console.log('⚠️  Cannot delete languages that are referenced by books');
-    console.log('   Consider updating/deleting books first or use upsert instead');
-    
-    // Alternative: Just proceed with insert/update (upsert)
-    throw new Error('Cannot clear languages table due to foreign key constraints. Use upsert instead.');
-  }
+if (require.main === module) {
+  runStandalone('languages', seedLanguages).catch(() => process.exit(1));
 }
-
-
-// Run the seeder
-seedLanguages()
-  .then(() => {
-    console.log('✨ Languages seeding process finished');
-    process.exit(0);
-  })
-  .catch((error) => {
-    console.error('💥 Languages seeding process failed:', error);
-    process.exit(0);
-  });

@@ -1,57 +1,7 @@
-import { DataSource, Repository } from 'typeorm';
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, Index, Unique } from 'typeorm';
-
-// Define the TagType enum
-export enum TagType {
-  ThematicCategory = 'thematic_category',
-  StoryType = 'story_type',
-  FeaturedBooks = 'featured_books',
-  LiteratureAward = 'literature_award',
-  NationLiterature = 'nation_literature',
-  SystemTags = 'system_tags',
-  Collection = 'collection',
-  AgeGroup = 'age_group',
-  MoodTheme = 'mood_theme',
-  TimePeriod = 'time_period',
-  ContentWarnings = 'content_warnings',
-  DifficultyLevel = 'difficulty_level'
-}
-
-// Define the Tag entity inline to avoid import issues
-@Entity('tags')
-@Unique('TAG_NAME', ['name'])
-@Index(['slug'], { unique: true })
-class Tag {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
-  @Column()
-  name: string;
-
-  @Column()
-  slug: string;
-
-  @Column({ nullable: true })
-  description?: string;
-
-  @Column({
-    type: 'enum',
-    enum: TagType
-  })
-  type: TagType;
-
-  @Column({ nullable: true })
-  color?: string;
-
-  @Column({ default: true })
-  isActive: boolean;
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
-}
+import { DataSource } from 'typeorm';
+import { AppDataSource } from '../../data-source';
+import { Tag, TagType } from '../../modules/tags/entities/tag.entity';
+import { logResult, runStandalone, upsert } from './seed-utils';
 
 const tagsData = [
   // Thematic Category
@@ -865,132 +815,63 @@ const tagsData = [
   }
 ];
 
-async function seedTags() {
-  const dataSource = new DataSource({
-    type: 'mysql',
-    host: 'localhost',
-    port: 3306,
-    username: 'root',
-    password: 'mysql',
-    database: 'bookstore-db',
-    entities: [Tag],
-    synchronize: false,
-  });
+export async function seedTags(ds: DataSource = AppDataSource): Promise<void> {
+  const ownConnection = !ds.isInitialized;
+  if (ownConnection) {
+    await ds.initialize();
+    console.log('📦 Database connected');
+  }
 
   console.log('🏷️  Starting tags seeding...');
-  
-  const tagRepository = dataSource.getRepository(Tag);
-  
-  try {
-    await dataSource.initialize();
-    console.log('📦 Database connected');
 
-    // Safe deletion with existence check
-    await safeDeleteTags(tagRepository);
-    
-    // Seed tags
-    for (const tagData of tagsData) {
-      const tag = tagRepository.create({
+  const tagRepository = ds.getRepository(Tag);
+  let created = 0;
+  let updated = 0;
+
+  // Upsert only — never delete, tags may be referenced by titles or blogs.
+  for (const tagData of tagsData) {
+    const { created: isNew } = await upsert(
+      tagRepository,
+      { slug: tagData.slug },
+      {
         name: tagData.name,
         slug: tagData.slug,
         description: tagData.description,
         type: tagData.type,
         color: tagData.color,
         isActive: true,
-      });
-      
-      await tagRepository.save(tag);
-      console.log(`✅ Created tag: ${tag.name} (${tag.slug}) - ${tag.type}`);
+      },
+    );
+    if (isNew) {
+      created++;
+      console.log(`✅ Created tag: ${tagData.name} (${tagData.slug}) - ${tagData.type}`);
+    } else {
+      updated++;
     }
-    
-    console.log('🎉 Tags seeding completed successfully!');
-    console.log(`📊 Total tags created: ${tagsData.length}`);
-    
-    // Print summary by type
-    const typeCounts = tagsData.reduce((acc, tag) => {
+  }
+
+  logResult('Tags', created, updated);
+  console.log(`📊 Total tags in seed data: ${tagsData.length}`);
+
+  // Print summary by type
+  const typeCounts = tagsData.reduce(
+    (acc, tag) => {
       acc[tag.type] = (acc[tag.type] || 0) + 1;
       return acc;
-    }, {} as Record<TagType, number>);
-    
-    console.log('\n📈 Tags by type:');
-    Object.entries(typeCounts).forEach(([type, count]) => {
-      console.log(`   ${type}: ${count} tags`);
-    });
-    
-  } catch (error) {
-    console.error('❌ Tags seeding failed:', error);
-    throw error;
-  }
-}
+    },
+    {} as Record<TagType, number>,
+  );
 
-async function safeDeleteTags(tagRepository: Repository<Tag>) {
-  try {
-    // Method 1: Use DELETE query (respects foreign keys)
-    const result = await tagRepository.createQueryBuilder()
-      .delete()
-      .from(Tag)
-      .execute();
-    
-    console.log(`🗑️  Deleted ${result.affected || 0} existing tags`);
-    
-  } catch (error) {
-    // If deletion fails due to foreign key constraints
-    console.log('⚠️  Cannot delete tags that are referenced by titles or blogs');
-    console.log('   Consider updating/deleting related records first or use upsert instead');
-    
-    // Alternative: Just proceed with insert/update (upsert)
-    throw new Error('Cannot clear tags table due to foreign key constraints. Use upsert instead.');
-  }
-}
-
-// Alternative upsert method if deletion fails
-export async function upsertTags(tagRepository: Repository<Tag>) {
-  console.log('🔄 Using upsert method instead...');
-  
-  for (const tagData of tagsData) {
-    try {
-      // Try to find existing tag by slug
-      const existingTag = await tagRepository.findOne({
-        where: { slug: tagData.slug }
-      });
-      
-      if (existingTag) {
-        // Update existing tag
-        await tagRepository.update(existingTag.id, {
-          name: tagData.name,
-          description: tagData.description,
-          type: tagData.type,
-          color: tagData.color,
-          isActive: true,
-        });
-        console.log(`🔄 Updated tag: ${tagData.name} (${tagData.slug})`);
-      } else {
-        // Create new tag
-        const tag = tagRepository.create({
-          name: tagData.name,
-          slug: tagData.slug,
-          description: tagData.description,
-          type: tagData.type,
-          color: tagData.color,
-          isActive: true,
-        });
-        
-        await tagRepository.save(tag);
-        console.log(`✅ Created tag: ${tagData.name} (${tagData.slug})`);
-      }
-    } catch (error) {
-      console.error(`❌ Error processing tag ${tagData.slug}:`, error);
-    }
-  }
-}
-
-// Run the seeder
-seedTags()
-  .then(() => {
-    console.log('✨ Tags eeding process finished');
-    process.exit(0);
-  })
-  .catch((error) => {
-    console.error('💥 Tags seeding process failed:', error);
-    process.exit(0);
+  console.log('\n📈 Tags by type:');
+  Object.entries(typeCounts).forEach(([type, count]) => {
+    console.log(`   ${type}: ${count} tags`);
   });
+
+  console.log('🎉 Tags seeding completed successfully!');
+
+  if (ownConnection) await ds.destroy();
+}
+
+if (require.main === module) {
+  runStandalone('tags', seedTags).catch(() => process.exit(1));
+}
