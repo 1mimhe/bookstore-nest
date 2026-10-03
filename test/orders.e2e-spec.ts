@@ -39,6 +39,20 @@ describe('OrdersController (e2e)', () => {
     getAllOrders: jest.fn().mockResolvedValue([
       { id: validUuid, orderNumber: 'ORD-2026-001', finalPrice: 90, payablePrice: 105 },
     ]),
+    getOrderByNumber: jest.fn().mockResolvedValue({
+      id: validUuid,
+      orderNumber: 'ORD-2026-001',
+      finalPrice: 90,
+      payablePrice: 105,
+    }),
+    cancelOrder: jest.fn().mockResolvedValue({
+      id: validUuid,
+      orderStatus: 'canceled',
+    }),
+    returnOrder: jest.fn().mockResolvedValue({
+      id: validUuid,
+      orderStatus: 'returned',
+    }),
   };
 
   beforeAll(async () => {
@@ -155,6 +169,45 @@ describe('OrdersController (e2e)', () => {
 
       expect(res.body.success).toBe(true);
       expect(Array.isArray(res.body.data)).toBe(true);
+    });
+  });
+
+  describe('GET /orders/number/:orderNumber', () => {
+    it('should fetch one of the caller\'s orders by order number', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/orders/number/ORD-2026-001')
+        .expect(200);
+
+      expect(res.body.success).toBe(true);
+      expect(res.body.data).toHaveProperty('orderNumber', 'ORD-2026-001');
+      expect(mockOrdersService.getOrderByNumber).toHaveBeenCalledWith(
+        validUuid,
+        'ORD-2026-001',
+      );
+    });
+  });
+
+  describe('POST /orders/cancel', () => {
+    it('should cancel a pending order', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/orders/cancel')
+        .send({ orderId: validUuid })
+        .expect(200);
+
+      expect(res.body.success).toBe(true);
+      expect(res.body.data).toHaveProperty('orderStatus', 'canceled');
+    });
+  });
+
+  describe('POST /orders/return', () => {
+    it('should return a delivered order', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/orders/return')
+        .send({ orderId: validUuid })
+        .expect(200);
+
+      expect(res.body.success).toBe(true);
+      expect(res.body.data).toHaveProperty('orderStatus', 'returned');
     });
   });
 });

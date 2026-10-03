@@ -13,9 +13,12 @@ import { createMockRepository } from '../../../../test/mocks/repository.mock';
 import { createMockDataSource } from '../../../../test/mocks/data-source.mock';
 import {
   BadRequestException,
+  ForbiddenException,
+  NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { PAYMENT_GATEWAY } from '../../payments/payment.gateway';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 describe('OrdersService', () => {
   let service: OrdersService;
@@ -23,6 +26,8 @@ describe('OrdersService', () => {
   let orderRepo: ReturnType<typeof createMockRepository>;
   let shippingPriceRepo: ReturnType<typeof createMockRepository>;
   let cacheManager: { get: jest.Mock; set: jest.Mock; del: jest.Mock };
+  let dataSource: ReturnType<typeof createMockDataSource>;
+  let eventEmitter: { emit: jest.Mock };
   let paymentGateway: {
     initiatePayment: jest.Mock;
     verifyPayment: jest.Mock;
@@ -44,6 +49,8 @@ describe('OrdersService', () => {
       }),
       verifyPayment: jest.fn().mockResolvedValue({ verified: true }),
     };
+    dataSource = createMockDataSource();
+    eventEmitter = { emit: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -51,7 +58,7 @@ describe('OrdersService', () => {
         { provide: getRepositoryToken(Book), useValue: bookRepo },
         { provide: getRepositoryToken(Order), useValue: orderRepo },
         { provide: getRepositoryToken(ShippingPrice), useValue: shippingPriceRepo },
-        { provide: DataSource, useValue: createMockDataSource() },
+        { provide: DataSource, useValue: dataSource },
         { provide: CACHE_MANAGER, useValue: cacheManager },
         {
           provide: BooksService,
@@ -68,6 +75,10 @@ describe('OrdersService', () => {
         {
           provide: PAYMENT_GATEWAY,
           useValue: paymentGateway,
+        },
+        {
+          provide: EventEmitter2,
+          useValue: eventEmitter,
         },
       ],
     }).compile();
@@ -226,6 +237,153 @@ describe('OrdersService', () => {
       ).rejects.toThrow('Order has already been processed.');
 
       expect(paymentGateway.verifyPayment).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getOrderByNumber', () => {
+    const userId = 'user-1';
+    const orderId = '123e4567-e89b-12d3-a456-426614174000';
+
+    it('should resolve an owned order by its derived order number', async () => {
+      orderRepo.find.mockResolvedValue([
+        {
+          id: orderId,
+          userId,
+          finalPrice: 90000,
+          createdAt: new Date('2026-03-10T00:00:00Z'),
+        },
+      ]);
+
+      const result = await service.getOrderByNumber(userId, 'ORD-2026-123E4567');
+
+      expect(result).toMatchObject({
+        orderNumber: 'ORD-2026-123E4567',
+        payablePrice: 90000,
+      });
+    });
+
+    it('should throw NotFound when no owned order matches', async () => {
+      orderRepo.find.mockResolvedValue([]);
+
+      await expect(
+        service.getOrderByNumber(userId, 'ORD-2026-123E4567'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should reject malformed order numbers without hitting the database', async () => {
+      await expect(
+        service.getOrderByNumber(userId, 'not-an-order-number'),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(orderRepo.find).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('cancelOrder', () => {
+    const orderId = 'order-1';
+    const userId = 'user-1';
+
+    it('should cancel an owned pending order', async () => {
+      orderRepo.findOneOrFail.mockResolvedValue({
+        id: orderId,
+        userId,
+        orderStatus: OrderStatuses.Pending,
+        orderBooks: [],
+      });
+
+      await service.cancelOrder(userId, orderId);
+
+      expect(orderRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderStatus: OrderStatuses.Canceled,
+          paymentStatus: PaymentStatuses.Unpaid,
+        }),
+      );
+      expect(eventEmitter.emit).toHaveBeenCalledWith(
+        'order.cancelled',
+        expect.objectContaining({ orderId, userId }),
+      );
+    });
+
+    it('should reject canceling another user\'s order', async () => {
+      orderRepo.findOneOrFail.mockResolvedValue({
+        id: orderId,
+        userId: 'someone-else',
+        orderStatus: OrderStatuses.Pending,
+        orderBooks: [],
+      });
+
+      await expect(service.cancelOrder(userId, orderId)).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
+
+    it('should reject canceling a non-pending order', async () => {
+      orderRepo.findOneOrFail.mockResolvedValue({
+        id: orderId,
+        userId,
+        orderStatus: OrderStatuses.Processing,
+        orderBooks: [],
+      });
+
+      await expect(service.cancelOrder(userId, orderId)).rejects.toThrow(
+        'Only pending orders can be canceled.',
+      );
+    });
+  });
+
+  describe('returnOrder', () => {
+    const orderId = 'order-1';
+    const userId = 'user-1';
+
+    const setupDeliveredOrder = () => {
+      orderRepo.findOneOrFail.mockResolvedValue({
+        id: orderId,
+        userId,
+        orderStatus: OrderStatuses.Delivered,
+        orderBooks: [{ bookId: 'book-1', quantity: 2 }],
+      });
+    };
+
+    it('should restock and mark a delivered order as returned', async () => {
+      setupDeliveredOrder();
+
+      const result = await service.returnOrder(userId, orderId);
+
+      expect(dataSource.transaction).toHaveBeenCalled();
+      expect(result.orderStatus).toBe(OrderStatuses.Returned);
+      expect(eventEmitter.emit).toHaveBeenCalledWith(
+        'order.returned',
+        expect.objectContaining({ orderId: expect.any(String), userId }),
+      );
+    });
+
+    it('should reject returning an order that is not delivered', async () => {
+      orderRepo.findOneOrFail.mockResolvedValue({
+        id: orderId,
+        userId,
+        orderStatus: OrderStatuses.Processing,
+        orderBooks: [],
+      });
+
+      await expect(service.returnOrder(userId, orderId)).rejects.toThrow(
+        'Only delivered orders can be returned.',
+      );
+
+      expect(dataSource.transaction).not.toHaveBeenCalled();
+    });
+
+    it('should reject returning another user\'s order', async () => {
+      orderRepo.findOneOrFail.mockResolvedValue({
+        id: orderId,
+        userId: 'someone-else',
+        orderStatus: OrderStatuses.Delivered,
+        orderBooks: [],
+      });
+
+      await expect(service.returnOrder(userId, orderId)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
   });
 });
