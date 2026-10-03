@@ -6,7 +6,7 @@ import { OrdersController } from '../src/modules/orders/controllers/orders.contr
 import { OrdersService } from '../src/modules/orders/services/orders.service';
 import { TransformInterceptor } from '../src/common/interceptors/transform.interceptor';
 import { AuthGuard } from '../src/modules/auth/guards/auth.guard';
-import { PaymentStatuses, ShippingTypes } from '../src/modules/orders/entities/order.entity';
+import { ShippingTypes } from '../src/modules/orders/entities/order.entity';
 
 describe('OrdersController (e2e)', () => {
   let app: INestApplication;
@@ -126,18 +126,24 @@ describe('OrdersController (e2e)', () => {
   });
 
   describe('POST /orders/submit', () => {
-    it('should finalize order and return paid status', async () => {
+    it('should verify payment server-side and finalize the order', async () => {
       const res = await request(app.getHttpServer())
         .post('/orders/submit')
         .send({
           orderId: validUuid,
-          paymentId: '12345678',
-          status: PaymentStatuses.Paid,
+          paymentId: 'MOCK-123E4567-105',
         })
         .expect(200);
 
       expect(res.body.success).toBe(true);
       expect(res.body.data).toHaveProperty('paymentStatus', 'paid');
+
+      // The legacy client-supplied `status` field must no longer be accepted
+      // as part of the request contract.
+      expect(mockOrdersService.submitOrder).toHaveBeenCalledWith(
+        validUuid,
+        expect.not.objectContaining({ status: expect.anything() }),
+      );
     });
   });
 
