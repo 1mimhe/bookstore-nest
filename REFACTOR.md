@@ -253,7 +253,20 @@ The codebase was refactored to resolve architectural issues, security vulnerabil
 
 ---
 
-## 15. Summary Matrix
+## 15. Dependency Vulnerability Triage
+
+### Previous State
+- `npm audit --omit=dev` reported 23 prod-tree vulnerabilities (15 high), including a TypeORM SQL-injection chain, NestJS `path-to-regexp` injection via `@nestjs/core`, prototype-pollution in `joi`/`lodash`, auth-downgrade in `mysql2`, and HMAC-verification in `jws`.
+
+### Changes Implemented
+- Pinned semver-compatible upgrades (no majors): `@nestjs/{common,core,platform-express}` → `^11.2.7`, `@nestjs/swagger` → `^11.4.7`, `@nestjs/config` → `^4.0.4`, `joi` → `^17.13.8`, `typeorm` → `^0.3.31`, `mysql2` → `^3.24.5`, `uuid` → `^11.1.1`, `jsonwebtoken` → `^9.0.3`.
+- Added `overrides` for transitives whose parents no longer release compatible lines: `diff` → `^4.0.4` (via `ts-node`), `validator` → `^13.15.35` (via `class-validator`).
+- Result: prod audit 23 → 2 moderate (both the `js-yaml` merge-key DoS under `@nestjs/swagger`, fixable only via the breaking `@nestjs/swagger@12` line — deferred, Swagger serves dev-time API docs; revisit with the Nest 12 upgrade).
+- Verified: lint, build, `tsc --noUnusedLocals`, unit 25/154 and E2E 8/33 all green on the upgraded tree.
+
+---
+
+## 16. Summary Matrix
 
 | Area | Before | After |
 | :--- | :--- | :--- |
@@ -277,6 +290,7 @@ The codebase was refactored to resolve architectural issues, security vulnerabil
 | **E2E Tests** | None | 8 suites / 33 passing Supertest E2E tests |
 | **Order Lookup** | List-only (`GET /orders`) | Owner-scoped `GET /orders/number/:orderNumber` (derived match) |
 | **Cancel / Return** | Cron-only expiry; terminal `Delivered` | `POST /orders/cancel` (Pending), `POST /orders/return` (Delivered + atomic restock + `order.returned`) |
+| **Dependencies** | 23 prod audit findings (15 high) | 2 moderate remaining (js-yaml, swagger-12-only fix deferred) |
 | **Unused Imports** | 30+ unused imports/locals | 0 warnings (`tsc --noUnusedLocals`) |
 | **Payment Flow** | Client-supplied `status` (spoofable) | Server-side gateway verification + payment sessions + signed webhook |
 | **Payment History** | None | `payments` table, idempotent by `paymentId`, push + pull paths |
