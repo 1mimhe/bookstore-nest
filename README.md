@@ -45,6 +45,7 @@ Technical guides for developing, testing, and running the Bookstore API:
 - [Event-Driven Architecture](./docs/06_EVENT_DRIVEN_ARCHITECTURE.md) - Domain events, event names constants, and asynchronous listeners.
 - [Testing Guide](./docs/07_TESTING_GUIDE.md) - Unit tests, Supertest E2E tests, and mock infrastructure.
 - [DevOps & Deployment](./docs/08_DEVOPS_AND_DEPLOYMENT.md) - Docker Compose, environment variables, health probes, and CI/CD.
+- [Roadmap](./ROADMAP.md) - Completed refactoring phases and post-1.0 improvement plans (payments, observability, scaling).
 
 ---
 
@@ -55,6 +56,7 @@ Technical guides for developing, testing, and running the Bookstore API:
 - **🏷️ Tagging System** - Hierarchical category tags with root tag management
 - **📝 Content Management** - Blogs, reviews, and curated collections
 - **🛒 E-commerce** - Cart management, race-condition-safe atomic order processing, and discount codes
+- **💳 Payment Integrity** - Provider-agnostic payment gateway with server-side verification (client-supplied payment statuses are never trusted); orders receive a payment session (`paymentId` + `paymentUrl`), `orderNumber`, and `payablePrice` at checkout
 - **⭐ Review System** - Multi-entity reviews with replies and emoji reactions
 - **📊 Real-time Analytics** - Non-blocking Redis view tracking and trending content
 - **🔖 Bookmarks** - User bookmarks (reading lists, favorites, personal libraries)

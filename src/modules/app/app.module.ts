@@ -1,4 +1,4 @@
-import { MiddlewareConsumer, Module, ValidationPipe } from '@nestjs/common';
+import { MiddlewareConsumer, Module, OnApplicationShutdown, ValidationPipe } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { APP_PIPE, APP_GUARD } from '@nestjs/core';
@@ -28,6 +28,44 @@ import { HealthModule } from '../health/health.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { CommonModule } from 'src/common/common.module';
+import Joi from 'joi';
+
+/**
+ * Fail-fast environment validation. The application refuses to boot when a
+ * required variable is missing or malformed, instead of crashing later at
+ * request time (e.g. on the first JWT signature).
+ */
+const envValidationSchema = Joi.object({
+  NODE_ENV: Joi.string().valid('development', 'production', 'test').default('development'),
+  PORT: Joi.number().default(3000),
+  ALLOWED_ORIGINS: Joi.string().default('http://localhost:3000,http://localhost:5173'),
+
+  DB_HOST: Joi.string().default('localhost'),
+  DB_PORT: Joi.number().default(3306),
+  DB_USERNAME: Joi.string().required(),
+  DB_PASSWORD: Joi.string().required(),
+  DB_NAME: Joi.string().required(),
+
+  REDIS_URL: Joi.string().uri().required(),
+  REDIS_VIEWS_URL: Joi.string().uri().required(),
+  REDIS_SESSION_URL: Joi.string().uri().required(),
+
+  SESSION_SECRET: Joi.string().min(16).required(),
+  COOKIE_SECRET: Joi.string().min(16).required(),
+  JWT_ACCESS_SECRET_KEY: Joi.string().min(16).required(),
+  JWT_REFRESH_SECRET_KEY: Joi.string().min(16).required(),
+
+  PAYMENT_PROVIDER: Joi.string().valid('mock').default('mock'),
+
+  ADMIN_USERNAME: Joi.string().required(),
+  ADMIN_PASSWORD: Joi.string().min(8).required(),
+  ADMIN_EMAIL: Joi.string().required(),
+  ADMIN_PHONE: Joi.string().required(),
+
+  COOKIE_MAX_AGE: Joi.number().optional(),
+  CART_CACHE_TIME: Joi.number().optional(),
+  MAX_RECENT_VIEWS: Joi.number().optional(),
+});
 
 @Module({
   imports: [
@@ -36,6 +74,7 @@ import { CommonModule } from 'src/common/common.module';
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: `.env.${process.env.NODE_ENV}`,
+      validationSchema: envValidationSchema,
     }),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
@@ -101,7 +140,9 @@ import { CommonModule } from 'src/common/common.module';
     },
   ],
 })
-export class AppModule {
+export class AppModule implements OnApplicationShutdown {
+  private sessionRedisClient: Awaited<ReturnType<typeof createClient>> | null = null;
+
   constructor(
     private readonly config: ConfigService
   ) {}
@@ -110,6 +151,7 @@ export class AppModule {
     const redisClient = await createClient({
       url: this.config.getOrThrow<string>('REDIS_SESSION_URL')
     }).connect();
+    this.sessionRedisClient = redisClient;
 
     consumer
       .apply(
@@ -135,5 +177,9 @@ export class AppModule {
       .apply(
         cookieParser(this.config.get<string>('COOKIE_SECRET'))
       ).forRoutes('*');
+  }
+
+  async onApplicationShutdown() {
+    await this.sessionRedisClient?.quit().catch(() => undefined);
   }
 }

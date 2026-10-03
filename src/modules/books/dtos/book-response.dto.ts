@@ -58,7 +58,13 @@ export class BookResponseDto extends BookCompactResponseDto {
   titleId: string;
 
   @Expose()
+  title?: { id: string; name: string; slug?: string; summary?: string };
+
+  @Expose()
   publisherId: string;
+
+  @Expose()
+  publisher?: { id: string; publisherName: string; slug?: string; description?: string; logoUrl?: string };
 
   @Exclude()
   languageId: string;

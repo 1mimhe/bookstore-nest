@@ -9,6 +9,7 @@ import {
   Res,
   Session,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { SignupUserDto } from '../dtos/sign-up.dto';
 import { AuthService } from '../services/auth.service';
 import {
@@ -37,6 +38,7 @@ import { TokenService } from '../../token/token.service';
 import { CookieService } from 'src/common/services/cookie.service';
 import { SigninTestDto } from '../dtos/sign-up-test.dto';
 
+@Throttle({ default: { limit: 5, ttl: 60000 } })
 @Controller('auth')
 export class AuthController {
   constructor(

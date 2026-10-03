@@ -173,5 +173,5 @@ export class StaffAction extends BaseEntity {
   newValue?: any;
 
   @Column('json', { nullable: true })
-  metadata?: Object;
+  metadata?: object;
 }

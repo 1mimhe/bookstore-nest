@@ -118,7 +118,8 @@ export class BooksService {
     const qb = this.bookRepo
       .createQueryBuilder('book')
       .leftJoinAndSelect('book.images', 'images')
-      .leftJoin('book.title', 'title')
+      .leftJoinAndSelect('book.title', 'title')
+      .leftJoinAndSelect('book.publisher', 'publisher')
       .addSelect('title.views');
 
     // Add authorId filter

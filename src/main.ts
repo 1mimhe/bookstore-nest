@@ -69,5 +69,9 @@ async function bootstrap() {
 
   const PORT = config.get<number>('PORT', 3000);
   await app.listen(PORT, () => logger.log(`Application listening on port ${PORT}`));
+
+  // Enables SIGTERM/SIGINT handlers (Docker/K8s stop, CI teardown) so open
+  // connections and providers with onApplicationShutdown hooks are closed.
+  app.enableShutdownHooks();
 }
 bootstrap();

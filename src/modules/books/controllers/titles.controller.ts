@@ -48,6 +48,8 @@ import { TrendingPeriod, ViewEntityTypes } from '../../views/views.types';
 import { RecentViewTypes } from 'src/common/types/recent-view.type';
 import { TrackRecentView } from 'src/common/decorators/track-recent-view.decorator';
 import { RecentViewsInterceptor } from 'src/common/interceptors/recent-views.interceptor';
+import { BookQueryDto } from '../dtos/book-query.dto';
+import { ApiQueryPagination } from 'src/common/decorators/query.decorators';
 
 @Controller(['titles', 'books/titles'])
 @ApiTags('Titles')
@@ -56,6 +58,19 @@ export class TitlesController {
     private titlesService: TitlesService,
     private viewsService: ViewsService,
   ) {}
+
+  @ApiOperation({
+    summary: 'Retrieves all titles',
+    description: 'With pagination, filtering, search and sorting.',
+  })
+  @ApiQueryPagination()
+  @Serialize(TitleResponseDto)
+  @Get()
+  async getAllTitles(
+    @Query() query: BookQueryDto,
+  ): Promise<TitleResponseDto[]> {
+    return this.titlesService.getAll(query);
+  }
 
   @ApiOperation({
     summary: 'Create a title (For Admin, ContentManager, InventoryManager)',
