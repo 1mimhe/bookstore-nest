@@ -28,6 +28,7 @@ import { HealthModule } from '../health/health.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { CommonModule } from 'src/common/common.module';
+import { RequestIdMiddleware } from 'src/common/middlewares/request-id.middleware';
 import Joi from 'joi';
 
 /**
@@ -153,6 +154,11 @@ export class AppModule implements OnApplicationShutdown {
       url: this.config.getOrThrow<string>('REDIS_SESSION_URL')
     }).connect();
     this.sessionRedisClient = redisClient;
+
+    // Correlation ids first so every downstream log line carries `requestId`.
+    consumer
+      .apply(RequestIdMiddleware)
+      .forRoutes('*');
 
     consumer
       .apply(

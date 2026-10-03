@@ -8,10 +8,14 @@ import helmet from 'helmet';
 import { Reflector } from '@nestjs/core';
 import { TypeOrmExceptionFilter } from './common/filters/typeorm-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { JsonLogger } from './common/logging/json.logger';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule);
+  // Structured JSON logs for every `Logger` call site (single line per call,
+  // request-correlated inside HTTP requests via `RequestIdMiddleware`).
+  app.useLogger(new JsonLogger());
   const config = app.get(ConfigService);
   const reflector = app.get(Reflector);
 

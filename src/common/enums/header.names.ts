@@ -1,3 +1,4 @@
 export enum HeaderNames {
-  Auth = 'authorization'
+  Auth = 'authorization',
+  RequestId = 'x-request-id'
 }

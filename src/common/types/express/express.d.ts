@@ -5,6 +5,7 @@ declare global {
     interface Request {
       session: SessionData;
       user?: Partial<User>;
+      requestId?: string;
     }
   }
 }
