@@ -13,6 +13,10 @@ tracked in [REFACTOR.md](./REFACTOR.md); current test status in
 - Phase 11: payment integrity (server-side payment verification via a
   provider-agnostic gateway), auth rate limits, environment validation,
   graceful shutdown, full CI pipeline, and project metadata/docs polish.
+- Post-1.0.0: async payment webhook with auditable `Payment` history,
+  order lifecycle (lookup by order number, cancel, return with restock),
+  and dependency vulnerability triage (prod audit 23 → 2, rest deferred to
+  the Nest 12 line).
 
 ## 🎯 Next Steps
 
