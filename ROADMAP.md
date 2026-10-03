@@ -27,11 +27,12 @@ tracked in [REFACTOR.md](./REFACTOR.md); current test status in
   changes required; just add a case to the `PAYMENT_PROVIDER` factory.
 
 ### 2. Order Lifecycle Expansion
-- Expose `orderNumber` in a dedicated order-detail endpoint and support
-  lookup-by-order-number for guest-style order tracking.
-- Add cancel/return workflows with inventory restock events.
-- Move per-order payment status polling to an outbox/saga if PSP latency makes
-  synchronous verification unreliable.
+- [x] Expose `orderNumber` in a dedicated order-detail endpoint with
+  owner-scoped lookup-by-order-number (`GET /orders/number/:orderNumber`,
+  derived match — no migration, no cross-user disclosure).
+- [x] Cancel/return workflows with inventory restock events (`POST
+  /orders/cancel` for unpaid `Pending` orders; `POST /orders/return` for
+  `Delivered` orders with atomic restock + `order.returned` event).
 
 ### 3. Security Hardening (Continued)
 - Move rate limiting to a Redis store so throttling survives horizontal

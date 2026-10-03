@@ -11,6 +11,7 @@ export enum EventNames {
   OrderPlaced = 'order.placed',
   OrderCancelled = 'order.cancelled',
   OrderCompleted = 'order.completed',
+  OrderReturned = 'order.returned',
 
   // Payment Events (pushed via PSP webhook)
   PaymentSucceeded = 'payment.succeeded',

@@ -238,7 +238,22 @@ The codebase was refactored to resolve architectural issues, security vulnerabil
 
 ---
 
-## 14. Summary Matrix
+## 14. Order Lifecycle: Lookup, Cancel & Return
+
+### Previous State
+- Orders could only be listed (`GET /orders`) — no way to fetch one by its `orderNumber`.
+- No cancel workflow: unpaid `Pending` orders could only die via the 15-minute cleanup cron or a failed `submitOrder` verification.
+- No return workflow: `Delivered` was terminal (`Returned` existed in the enum but nothing set it), and stock/sold adjustments were one-directional.
+
+### Changes Implemented
+- `GET /orders/number/:orderNumber` (owner-scoped, `AuthGuard`): validates `ORD-<year>-<8HEX>` (400 otherwise), matches the derived reference against the caller's own orders (404 on miss) — no migration, no cross-user disclosure.
+- `POST /orders/cancel` (`CancelOrderDto`): owner-only, `Pending` → `Canceled`/`Unpaid`, emits `order.cancelled`. No restock (stock is decremented only after payment in `processOrder`).
+- `POST /orders/return` (`ReturnOrderDto`): owner-only, `Delivered` → `Returned` with an atomic inverse restock (`stock + qty`, `sold - qty WHERE sold >= qty`, `ConflictException` on mismatch) mirroring `processOrder`'s conditional decrement; emits `order.returned` (`OrderReturnedEvent`) with no `OrdersModule` ↔ `StaffModule` cycle.
+- Tests: 9 new `OrdersService` unit tests (lookup hit/miss/format, cancel ok/forbidden/wrong-state, return ok/guard/restock + forbidden) and 3 new Supertest E2E cases (lookup, cancel, return).
+
+---
+
+## 15. Summary Matrix
 
 | Area | Before | After |
 | :--- | :--- | :--- |
@@ -258,8 +273,10 @@ The codebase was refactored to resolve architectural issues, security vulnerabil
 | **Health Probes** | None | Terminus `/health` (DB, memory heap, RSS) |
 | **Response Format** | Inconsistent JSON formats | Standard envelope `{ statusCode, timestamp, data }` |
 | **DevOps** | None | `docker-compose.yml` + GitHub Actions CI |
-| **Unit Tests** | Broken boilerplate specs | 25 suites / 145 passing unit tests |
-| **E2E Tests** | None | 8 suites / 30 passing Supertest E2E tests |
+| **Unit Tests** | Broken boilerplate specs | 25 suites / 154 passing unit tests |
+| **E2E Tests** | None | 8 suites / 33 passing Supertest E2E tests |
+| **Order Lookup** | List-only (`GET /orders`) | Owner-scoped `GET /orders/number/:orderNumber` (derived match) |
+| **Cancel / Return** | Cron-only expiry; terminal `Delivered` | `POST /orders/cancel` (Pending), `POST /orders/return` (Delivered + atomic restock + `order.returned`) |
 | **Unused Imports** | 30+ unused imports/locals | 0 warnings (`tsc --noUnusedLocals`) |
 | **Payment Flow** | Client-supplied `status` (spoofable) | Server-side gateway verification + payment sessions + signed webhook |
 | **Payment History** | None | `payments` table, idempotent by `paymentId`, push + pull paths |

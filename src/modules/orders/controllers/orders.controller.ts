@@ -1,4 +1,4 @@
-import { Body, Controller, DefaultValuePipe, Get, HttpCode, HttpStatus, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, DefaultValuePipe, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { OrdersService } from '../services/orders.service';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiUnprocessableEntityResponse } from '@nestjs/swagger';
 import { UnprocessableEntityMessages } from 'src/common/enums/error.messages';
@@ -12,6 +12,8 @@ import { InitiateOrderDto } from '../dtos/initiate-order.dto';
 import { SubmitOrderDto } from '../dtos/submit-order.dto';
 import { ApiQueryPagination } from 'src/common/decorators/query.decorators';
 import { OrderResponseDto } from '../dtos/order-response.dto';
+import { CancelOrderDto } from '../dtos/cancel-order.dto';
+import { ReturnOrderDto } from '../dtos/return-order.dto';
 
 @Controller('orders')
 export class OrdersController {
@@ -139,5 +141,67 @@ export class OrdersController {
     @CurrentUser('id') userId: string
   ) {
     return this.ordersService.getAllOrders(userId, page, limit);
+  }
+
+  @ApiOperation({
+    summary: 'Get an order by its order number',
+    description: `Looks up one of the caller's own orders by its human-friendly
+      reference (e.g. \`ORD-2026-1A2B3C4D\`). The reference is derived from the
+      order id, so no two users can resolve each other's orders.`
+  })
+  @ApiOkResponse({
+    type: OrderResponseDto
+  })
+  @ApiBearerAuth()
+  @Serialize(OrderResponseDto)
+  @UseGuards(AuthGuard)
+  @Get('number/:orderNumber')
+  async getOrderByNumber(
+    @Param('orderNumber') orderNumber: string,
+    @CurrentUser('id') userId: string
+  ) {
+    return this.ordersService.getOrderByNumber(userId, orderNumber);
+  }
+
+  @ApiOperation({
+    summary: 'Cancel a pending order',
+    description: `Cancels one of the caller's own unpaid orders. Only orders in
+      \`pending\` status can be canceled; stock was never decremented for them,
+      so no restock occurs.`
+  })
+  @ApiOkResponse({
+    type: OrderResponseDto
+  })
+  @ApiBearerAuth()
+  @Serialize(OrderResponseDto)
+  @UseGuards(AuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @Post('cancel')
+  async cancelOrder(
+    @Body() body: CancelOrderDto,
+    @CurrentUser('id') userId: string
+  ) {
+    return this.ordersService.cancelOrder(userId, body.orderId);
+  }
+
+  @ApiOperation({
+    summary: 'Return a delivered order',
+    description: `Returns one of the caller's own delivered orders. Returned
+      quantities are restocked atomically and an \`order.returned\` domain
+      event is emitted.`
+  })
+  @ApiOkResponse({
+    type: OrderResponseDto
+  })
+  @ApiBearerAuth()
+  @Serialize(OrderResponseDto)
+  @UseGuards(AuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @Post('return')
+  async returnOrder(
+    @Body() body: ReturnOrderDto,
+    @CurrentUser('id') userId: string
+  ) {
+    return this.ordersService.returnOrder(userId, body.orderId);
   }
 }

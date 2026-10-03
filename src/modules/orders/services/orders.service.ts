@@ -31,6 +31,9 @@ import { OrderBookDto } from '../dtos/order-response.dto';
 import { Cron } from '@nestjs/schedule';
 import { DiscountCodesService } from '../../discount-codes/discount-codes.service';
 import { PAYMENT_GATEWAY, PaymentGateway } from '../../payments/payment.gateway';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { EventNames } from 'src/common/enums/event.names';
+import { OrderReturnedEvent } from 'src/common/events/orders/order-returned.event';
 
 @Injectable()
 export class OrdersService {
@@ -46,7 +49,8 @@ export class OrdersService {
     private booksService: BooksService,
     config: ConfigService,
     private discountCodesService: DiscountCodesService,
-    @Inject(PAYMENT_GATEWAY) private paymentGateway: PaymentGateway
+    @Inject(PAYMENT_GATEWAY) private paymentGateway: PaymentGateway,
+    private eventEmitter: EventEmitter2
   ) {
     this.cartCacheTime = config.get<number>('CART_CACHE_TIME', 2 * 24 * 60 * 60 * 1000);
   }
@@ -349,6 +353,143 @@ export class OrdersService {
       orderNumber: this.getOrderNumber(order),
       payablePrice: order.finalPrice,
     }));
+  }
+
+  /**
+   * Owner-scoped lookup by the human-friendly order reference
+   * (e.g. `ORD-2026-1A2B3C4D`). The reference is derived from the order id,
+   * so resolution matches it against the caller's own orders — no extra
+   * column or migration, and no cross-user disclosure.
+   */
+  async getOrderByNumber(userId: string, orderNumber: string): Promise<Order> {
+    const normalized = orderNumber.toUpperCase();
+    if (!/^ORD-\d{4}-[0-9A-F]{8}$/.test(normalized)) {
+      throw new BadRequestException('Invalid order number format.');
+    }
+
+    const orders = await this.orderRepo.find({
+      where: { userId },
+      relations: {
+        shippingAddress: true,
+        orderBooks: {
+          book: {
+            title: true,
+            publisher: true,
+            images: true,
+          }
+        }
+      },
+    });
+
+    const order = orders.find(o => this.getOrderNumber(o) === normalized);
+    if (!order) {
+      throw new NotFoundException(NotFoundMessages.Order);
+    }
+
+    return {
+      ...order,
+      orderNumber: this.getOrderNumber(order),
+      payablePrice: order.finalPrice,
+    } as Order;
+  }
+
+  /**
+   * Cancel an unpaid `Pending` order. Stock was never decremented for such
+   * orders (decrements happen only in `processOrder` after payment), so no
+   * restock is needed — the status flip mirrors the existing cancel paths in
+   * `submitOrder` and the pending-order cleanup job.
+   */
+  async cancelOrder(userId: string, orderId: string): Promise<Order> {
+    const order = await this.orderRepo.findOneOrFail({
+      where: { id: orderId },
+      relations: { orderBooks: true },
+    }).catch((error: Error) => {
+      if (error instanceof EntityNotFoundError) {
+        throw new NotFoundException(NotFoundMessages.Order);
+      }
+      throw error;
+    });
+
+    if (order.userId !== userId) {
+      throw new ForbiddenException(AuthMessages.AccessDenied);
+    }
+
+    if (order.orderStatus !== OrderStatuses.Pending) {
+      throw new BadRequestException('Only pending orders can be canceled.');
+    }
+
+    order.paymentStatus = PaymentStatuses.Unpaid;
+    order.orderStatus = OrderStatuses.Canceled;
+    const canceled = await this.orderRepo.save(order);
+
+    this.eventEmitter.emit(EventNames.OrderCancelled, {
+      orderId: canceled.id,
+      userId,
+    });
+
+    return canceled;
+  }
+
+  /**
+   * Return a `Delivered` order. Returned quantities are restocked atomically
+   * (the inverse of `processOrder`'s conditional decrement) and an
+   * `order.returned` domain event is emitted for audit/consumers.
+   */
+  async returnOrder(userId: string, orderId: string): Promise<Order> {
+    const order = await this.orderRepo.findOneOrFail({
+      where: { id: orderId },
+      relations: { orderBooks: true },
+    }).catch((error: Error) => {
+      if (error instanceof EntityNotFoundError) {
+        throw new NotFoundException(NotFoundMessages.Order);
+      }
+      throw error;
+    });
+
+    if (order.userId !== userId) {
+      throw new ForbiddenException(AuthMessages.AccessDenied);
+    }
+
+    if (order.orderStatus !== OrderStatuses.Delivered) {
+      throw new BadRequestException('Only delivered orders can be returned.');
+    }
+
+    const updatedOrder = await this.dataSource.transaction(async manager => {
+      for (const ob of order.orderBooks) {
+        const updateResult = await manager
+          .createQueryBuilder()
+          .update(Book)
+          .set({
+            stock: () => `stock + ${ob.quantity}`,
+            sold: () => `sold - ${ob.quantity}`,
+          })
+          .where('id = :id AND sold >= :quantity', {
+            id: ob.bookId,
+            quantity: ob.quantity,
+          })
+          .execute();
+
+        if (updateResult.affected === 0) {
+          throw new ConflictException(
+            `Book with ID "${ob.bookId}" cannot be restocked for this return.`,
+          );
+        }
+      }
+
+      order.orderStatus = OrderStatuses.Returned;
+      return manager.save(Order, order);
+    });
+
+    this.eventEmitter.emit(
+      EventNames.OrderReturned,
+      new OrderReturnedEvent(
+        updatedOrder.id,
+        userId,
+        updatedOrder.orderBooks?.length ?? 0,
+      ),
+    );
+
+    return updatedOrder;
   }
 
   // Cron job for cleaning unpaid orders
