@@ -10,7 +10,7 @@ import {
   UnprocessableEntityException
 } from '@nestjs/common';
 import { Cache } from 'cache-manager';
-import { AddBookToCartDto } from '../dto/add-book.dto';
+import { AddBookToCartDto } from '../dtos/add-book.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Book } from '../../books/entities/book.entity';
 import { DataSource, EntityNotFoundError, In, LessThan, Repository } from 'typeorm';
@@ -18,18 +18,19 @@ import { dbErrorHandler } from 'src/common/utilities/error-handler';
 import { AuthMessages, NotFoundMessages, UnprocessableEntityMessages } from 'src/common/enums/error.messages';
 import { Cart } from '../orders.types';
 import { BooksService } from '../../books/books.service';
-import { CartResponseDto, UnprocessableDto } from '../dto/cart-response.dto';
-import { RemoveBookFromCartDto } from '../dto/remove-book.dto';
+import { CartResponseDto, UnprocessableDto } from '../dtos/cart-response.dto';
+import { RemoveBookFromCartDto } from '../dtos/remove-book.dto';
 import { ConfigService } from '@nestjs/config';
 import { Order, OrderStatuses, PaymentStatuses, ShippingTypes } from '../entities/order.entity';
 import { ShippingPrice } from '../entities/shipping-price.entity';
-import { InitiateOrderDto as InitiateOrderDto } from '../dto/initiate-order.dto';
+import { InitiateOrderDto as InitiateOrderDto } from '../dtos/initiate-order.dto';
 import { OrderBook } from '../entities/order-book.entity';
 import { Address } from '../../users/entities/address.entity';
-import { SubmitOrderDto } from '../dto/submit-order.dto';
-import { OrderBookDto } from '../dto/order-response.dto';
+import { SubmitOrderDto } from '../dtos/submit-order.dto';
+import { OrderBookDto } from '../dtos/order-response.dto';
 import { Cron } from '@nestjs/schedule';
 import { DiscountCodesService } from '../../discount-codes/discount-codes.service';
+import { PAYMENT_GATEWAY, PaymentGateway } from '../../payments/payment.gateway';
 
 @Injectable()
 export class OrdersService {
@@ -44,7 +45,8 @@ export class OrdersService {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private booksService: BooksService,
     config: ConfigService,
-    private discountCodesService: DiscountCodesService
+    private discountCodesService: DiscountCodesService,
+    @Inject(PAYMENT_GATEWAY) private paymentGateway: PaymentGateway
   ) {
     this.cartCacheTime = config.get<number>('CART_CACHE_TIME', 2 * 24 * 60 * 60 * 1000);
   }
@@ -183,12 +185,9 @@ export class OrdersService {
       discountCode
     }: InitiateOrderDto
   ) {
-    let {
-      books,
-      totalPrice,
-      discount,
-      finalPrice
-    } = await this.getCart(userId);
+    const cart = await this.getCart(userId);
+    const { books, totalPrice, discount } = cart;
+    let { finalPrice } = cart;
 
     // Sub shipping price
     let shippingPrice = 0;
@@ -243,21 +242,29 @@ export class OrdersService {
         finalPrice
       });
       
-      return manager.save(Order, order);
+      const savedOrder = await manager.save(Order, order);
+
+      // Create the payment session so the client gets everything needed to
+      // pay (reference + checkout URL). Amounts are bound to the order total.
+      const payment = await this.initiatePaymentSession(savedOrder);
+
+      return {
+        order: {
+          ...savedOrder,
+          orderNumber: this.getOrderNumber(savedOrder),
+          payablePrice: savedOrder.finalPrice,
+        },
+        payment,
+      };
     }).catch(error => {
       dbErrorHandler(error);
       throw error;
     });
-    // TODO: It should also return payment info
   }
 
   async submitOrder(
     userId: string,
-    {
-      orderId,
-      paymentId,
-      status
-    }: SubmitOrderDto
+    { orderId, paymentId }: SubmitOrderDto
   ) {
     const order = await this.orderRepo.findOneOrFail({
       where: { id: orderId },
@@ -279,22 +286,25 @@ export class OrdersService {
       throw new BadRequestException('Order has already been processed.');
     }
 
-    // TODO: Check payment status (Simplified)
-    if (status === PaymentStatuses.Paid) {
-      // TODO: Verify payment
-      // if (!paymentVerified) {
-        // throw new BadRequestException('Payment verification failed');
-      // }
+    // SECURITY: payment success is verified server-side through the gateway.
+    // Clients can no longer assert their own "paid" status.
+    const verification = await this.paymentGateway.verifyPayment(
+      paymentId,
+      order.finalPrice
+    );
 
-      order.paymentId = paymentId;
-      return this.processOrder(order);
-    } else if (status === PaymentStatuses.Unpaid) {
+    if (!verification.verified) {
       order.paymentStatus = PaymentStatuses.Unpaid;
       order.orderStatus = OrderStatuses.Canceled;
-      return this.orderRepo.save(order);
+      await this.orderRepo.save(order);
+
+      throw new BadRequestException(
+        verification.reason ?? 'Payment verification failed.'
+      );
     }
 
-    return order;
+    order.paymentId = paymentId;
+    return this.processOrder(order);
   }
 
   async getAllOrders(
@@ -303,7 +313,7 @@ export class OrdersService {
     limit = 10
   ): Promise<Order[]> {
     const skip = (page - 1) * limit;
-    return this.orderRepo.find({
+    const orders = await this.orderRepo.find({
       where: { userId },
       select: {
         id: true,
@@ -333,6 +343,12 @@ export class OrdersService {
       skip,
       take: limit
     });
+
+    return orders.map(order => ({
+      ...order,
+      orderNumber: this.getOrderNumber(order),
+      payablePrice: order.finalPrice,
+    }));
   }
 
   // Cron job for cleaning unpaid orders
@@ -371,6 +387,23 @@ export class OrdersService {
     this.logger.log(
       `Successfully updated ${updateResult.affected} orders to \`unpaid\` status.`,
     );
+  }
+
+  /**
+   * Creates a payment session for a persisted order through the configured
+   * gateway. Kept separate so the initiation flow stays gateway-agnostic.
+   */
+  private initiatePaymentSession(order: Order) {
+    return this.paymentGateway.initiatePayment(order.id, order.finalPrice);
+  }
+
+  /**
+   * Human-friendly, collision-free order reference derived from the order id
+   * (no extra column/migration needed). Example: `ORD-2026-1A2B3C4D`.
+   */
+  private getOrderNumber(order: Order): string {
+    const year = order.createdAt?.getFullYear() ?? new Date().getFullYear();
+    return `ORD-${year}-${order.id.slice(0, 8).toUpperCase()}`;
   }
 
   private async processOrder(order: Order): Promise<Order> {
