@@ -223,7 +223,22 @@ The codebase was refactored to resolve architectural issues, security vulnerabil
 
 ---
 
-## 13. Summary Matrix
+## 13. Async Payment Webhook & Auditable History
+
+### Previous State
+- Payment verification was pull-only (`verifyPayment` in `submitOrder`); a PSP pushing outcomes asynchronously had no endpoint.
+- No persisted payment history — verification attempts left no auditable trail.
+
+### Changes Implemented
+- Added `Payment` entity (`paymentId` unique, `orderId` indexed, `amount`, `provider`, `status` pending/succeeded/failed, `rawPayload`) with migration `1762100000000-CreatePaymentsTable`.
+- Added `POST /payments/webhook` (30 req/min): verifies `x-payment-signature` HMAC-SHA256 over the JSON body with `PAYMENT_WEBHOOK_SECRET` via `timingSafeEqual`, persists idempotently by `paymentId` through `PaymentsService`, and emits `payment.succeeded` / `payment.failed` so order finalization can react without a `PaymentsModule` ↔ `OrdersModule` cycle.
+- `OrdersService` pull flow untouched (no new dependencies, no spec breakage); webhook is the additive push path.
+- Env: `PAYMENT_WEBHOOK_SECRET` in Joi schema + `.env.example`.
+- Tests: `payments.service.spec.ts` (3) + `payments.controller.spec.ts` (3) covering upsert, idempotent retry, lookup, valid/forged/missing signatures.
+
+---
+
+## 14. Summary Matrix
 
 | Area | Before | After |
 | :--- | :--- | :--- |
@@ -243,10 +258,11 @@ The codebase was refactored to resolve architectural issues, security vulnerabil
 | **Health Probes** | None | Terminus `/health` (DB, memory heap, RSS) |
 | **Response Format** | Inconsistent JSON formats | Standard envelope `{ statusCode, timestamp, data }` |
 | **DevOps** | None | `docker-compose.yml` + GitHub Actions CI |
-| **Unit Tests** | Broken boilerplate specs | 22 suites / 127 passing unit tests |
+| **Unit Tests** | Broken boilerplate specs | 25 suites / 145 passing unit tests |
 | **E2E Tests** | None | 8 suites / 30 passing Supertest E2E tests |
 | **Unused Imports** | 30+ unused imports/locals | 0 warnings (`tsc --noUnusedLocals`) |
-| **Payment Flow** | Client-supplied `status` (spoofable) | Server-side gateway verification + payment sessions |
+| **Payment Flow** | Client-supplied `status` (spoofable) | Server-side gateway verification + payment sessions + signed webhook |
+| **Payment History** | None | `payments` table, idempotent by `paymentId`, push + pull paths |
 | **Auth Rate Limits** | Global throttle only (100 req/min) | 5 req/min on all auth endpoints |
 | **Env Validation** | None (runtime failures) | Fail-fast Joi schema at boot |
 | **Graceful Shutdown** | No signal handling | `enableShutdownHooks` + Redis client cleanup |

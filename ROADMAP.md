@@ -17,13 +17,14 @@ tracked in [REFACTOR.md](./REFACTOR.md); current test status in
 ## 🎯 Next Steps
 
 ### 1. Real Payment Provider Integration
-- Replace `MockPaymentGateway` with a real PSP adapter (e.g. Zarinpal, IDPay,
+- [x] Signed webhook endpoint (`POST /payments/webhook`) with idempotent
+  delivery handling — verification can now be pushed asynchronously in
+  addition to pull-only `verifyPayment`.
+- [x] `Payment` entity (paymentId, order, amount, provider, status,
+  timestamps) with a migration for an auditable payment history.
+- [ ] Replace `MockPaymentGateway` with a real PSP adapter (e.g. Zarinpal, IDPay,
   Stripe) behind the existing `PaymentGateway` interface — no order-logic
   changes required; just add a case to the `PAYMENT_PROVIDER` factory.
-- Add a signed webhook endpoint (`POST /payments/webhook`) so verification can
-  also be pushed asynchronously instead of pull-only `verifyPayment`.
-- Persist a `Payment` entity (paymentId, order, amount, provider, status,
-  timestamps) with a migration for an auditable payment history.
 
 ### 2. Order Lifecycle Expansion
 - Expose `orderNumber` in a dedicated order-detail endpoint and support

@@ -12,6 +12,10 @@ export enum EventNames {
   OrderCancelled = 'order.cancelled',
   OrderCompleted = 'order.completed',
 
+  // Payment Events (pushed via PSP webhook)
+  PaymentSucceeded = 'payment.succeeded',
+  PaymentFailed = 'payment.failed',
+
   // User / Auth Events
   UserRegistered = 'user.registered',
   UserLoggedIn = 'user.logged_in',

@@ -56,6 +56,7 @@ const envValidationSchema = Joi.object({
   JWT_REFRESH_SECRET_KEY: Joi.string().min(16).required(),
 
   PAYMENT_PROVIDER: Joi.string().valid('mock').default('mock'),
+  PAYMENT_WEBHOOK_SECRET: Joi.string().min(16).default('dev-webhook-secret-0123456789'),
 
   ADMIN_USERNAME: Joi.string().required(),
   ADMIN_PASSWORD: Joi.string().min(8).required(),
