@@ -2,13 +2,32 @@ name: CI Pipeline
 
 on:
   push:
-    branches: [master, main]
+    branches: [master, main, 'feat/**']
   pull_request:
     branches: [master, main]
 
 jobs:
   test-and-build:
     runs-on: ubuntu-latest
+    env:
+      NODE_ENV: test
+      DB_HOST: localhost
+      DB_PORT: 3306
+      DB_USERNAME: root
+      DB_PASSWORD: mysql
+      DB_NAME: bookstore-db
+      REDIS_URL: redis://localhost:6379/0
+      REDIS_VIEWS_URL: redis://localhost:6379/1
+      REDIS_SESSION_URL: redis://localhost:6379/2
+      SESSION_SECRET: ci-session-secret-0123456789
+      COOKIE_SECRET: ci-cookie-secret-0123456789
+      JWT_ACCESS_SECRET_KEY: ci-jwt-access-secret-0123456789
+      JWT_REFRESH_SECRET_KEY: ci-jwt-refresh-secret-0123456789
+      ADMIN_USERNAME: admin
+      ADMIN_PASSWORD: AdminPass123!
+      ADMIN_EMAIL: admin@bookstore.com
+      ADMIN_PHONE: +989120000000
+      PAYMENT_PROVIDER: mock
 
     services:
       mysql:
@@ -37,7 +56,11 @@ jobs:
           cache: 'npm'
 
       - name: Install Dependencies
-        run: npm ci
+        run: |
+          npm config set fetch-retries 5
+          npm config set fetch-retry-mintimeout 10000
+          npm config set fetch-retry-maxtimeout 60000
+          npm ci --no-audit --no-fund || (npm cache clean --force && npm ci --no-audit --no-fund)
 
       - name: Lint Code
         run: npm run lint
@@ -45,5 +68,19 @@ jobs:
       - name: Compile & Build
         run: npm run build
 
-      - name: Run Core Unit Tests
-        run: npm test -- "src/modules/(auth|orders)/.*\.service\.spec\.ts"
+      - name: TypeScript Strict Check (unused imports/locals)
+        run: npx tsc --noEmit --noUnusedLocals
+
+      - name: Run All Unit Tests (with coverage)
+        run: npm run test:cov
+
+      - name: Run All E2E Tests
+        run: npm run test:e2e
+
+      - name: Upload Unit Coverage Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-coverage
+          path: coverage/
+          retention-days: 7
