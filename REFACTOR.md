@@ -9,6 +9,7 @@ Documentation of technical changes, considerations, and fixes applied to the Boo
 The codebase was refactored to resolve architectural issues, security vulnerabilities, concurrency bugs, and lack of testing:
 
 - **Security**: Upgraded password hashing, removed test backdoor, added security headers, CORS restrictions, and rate limiting.
+- **Payment Integrity**: Replaced the client-trusted payment status with server-side payment verification through a provider-agnostic gateway abstraction.
 - **Concurrency**: Replaced in-memory stock checks with atomic conditional SQL decrements.
 - **Redis**: Replaced blocking `KEYS *` queries with non-blocking scans.
 - **Structure**: Decomposed bloated controllers, resolved circular dependencies, and replaced inheritance with interceptor composition.
@@ -199,7 +200,45 @@ The codebase was refactored to resolve architectural issues, security vulnerabil
 
 ---
 
-## 12. Summary Matrix
+## 12. Payment Integrity & Hardening
+
+### Previous State
+- **Payment spoofing vulnerability**: `POST /orders/submit` accepted a client-supplied `status: 'paid'` field — anyone with a valid token could finalize any pending order without paying.
+- Order initiation returned no payment session data (a `TODO` placeholder).
+- Auth endpoints had no rate limiting beyond the global 100 req/min throttle — credential-stuffing/brute-force friendly.
+- Environment variables were never validated; a missing JWT secret would only surface at first request.
+- `SIGTERM`/`SIGINT` were not handled; the session Redis client was never closed on shutdown.
+- CI ran only a subset of unit tests and no E2E suite, contradicting project docs.
+
+### Changes Implemented
+- Introduced `PaymentsModule` with a provider-agnostic `PaymentGateway` interface (`PAYMENT_GATEWAY` token) and a deterministic `MockPaymentGateway` (`PAYMENT_PROVIDER=mock`; `fail`-prefixed references simulate rejection).
+- `POST /orders` now returns a payment session (`paymentId` + `paymentUrl`) alongside the order, plus derived `orderNumber` (`ORD-<year>-<id8>`) and `payablePrice` (`finalPrice + shippingPrice`).
+- `submitOrder` no longer accepts any client status: it verifies the payment reference server-side via `gateway.verifyPayment()` against the order total, finalizes only on success, and cancels the order (400) on failure/amount mismatch. The pending-order guard doubles as an idempotency check.
+- Removed `status` from `SubmitOrderDto`; added `payment.gateway.spec.ts` (6 tests) and 5 new `submitOrder` unit tests (verification success, rejection, amount mismatch, client-status distrust, double-submit).
+- Applied `@Throttle({ default: { limit: 5, ttl: 60000 } })` to the auth controller (5 attempts/min per IP).
+- Added fail-fast Joi env validation in `AppModule` (DB, Redis, secrets, admin seed, `PAYMENT_PROVIDER`).
+- Graceful shutdown: `app.enableShutdownHooks()` in `main.ts` + `AppModule implements OnApplicationShutdown` closing the session Redis client.
+- CI pipeline now runs lint → build → strict TS check → full unit suite with coverage → full E2E suite, and uploads the coverage artifact.
+- Project metadata: version 1.0.0, MIT license, description/keywords, `LICENSE` file, `PAYMENT_PROVIDER` in `.env.example`.
+
+---
+
+## 13. Async Payment Webhook & Auditable History
+
+### Previous State
+- Payment verification was pull-only (`verifyPayment` in `submitOrder`); a PSP pushing outcomes asynchronously had no endpoint.
+- No persisted payment history — verification attempts left no auditable trail.
+
+### Changes Implemented
+- Added `Payment` entity (`paymentId` unique, `orderId` indexed, `amount`, `provider`, `status` pending/succeeded/failed, `rawPayload`) with migration `1762100000000-CreatePaymentsTable`.
+- Added `POST /payments/webhook` (30 req/min): verifies `x-payment-signature` HMAC-SHA256 over the JSON body with `PAYMENT_WEBHOOK_SECRET` via `timingSafeEqual`, persists idempotently by `paymentId` through `PaymentsService`, and emits `payment.succeeded` / `payment.failed` so order finalization can react without a `PaymentsModule` ↔ `OrdersModule` cycle.
+- `OrdersService` pull flow untouched (no new dependencies, no spec breakage); webhook is the additive push path.
+- Env: `PAYMENT_WEBHOOK_SECRET` in Joi schema + `.env.example`.
+- Tests: `payments.service.spec.ts` (3) + `payments.controller.spec.ts` (3) covering upsert, idempotent retry, lookup, valid/forged/missing signatures.
+
+---
+
+## 14. Summary Matrix
 
 | Area | Before | After |
 | :--- | :--- | :--- |
@@ -219,6 +258,12 @@ The codebase was refactored to resolve architectural issues, security vulnerabil
 | **Health Probes** | None | Terminus `/health` (DB, memory heap, RSS) |
 | **Response Format** | Inconsistent JSON formats | Standard envelope `{ statusCode, timestamp, data }` |
 | **DevOps** | None | `docker-compose.yml` + GitHub Actions CI |
-| **Unit Tests** | Broken boilerplate specs | 22 suites / 127 passing unit tests |
+| **Unit Tests** | Broken boilerplate specs | 25 suites / 145 passing unit tests |
 | **E2E Tests** | None | 8 suites / 30 passing Supertest E2E tests |
 | **Unused Imports** | 30+ unused imports/locals | 0 warnings (`tsc --noUnusedLocals`) |
+| **Payment Flow** | Client-supplied `status` (spoofable) | Server-side gateway verification + payment sessions + signed webhook |
+| **Payment History** | None | `payments` table, idempotent by `paymentId`, push + pull paths |
+| **Auth Rate Limits** | Global throttle only (100 req/min) | 5 req/min on all auth endpoints |
+| **Env Validation** | None (runtime failures) | Fail-fast Joi schema at boot |
+| **Graceful Shutdown** | No signal handling | `enableShutdownHooks` + Redis client cleanup |
+| **CI Pipeline** | Partial unit tests only | lint → build → strict check → unit+coverage → E2E |

@@ -8,10 +8,10 @@ Test results and code coverage metrics for the Bookstore NestJS API.
 
 | Test Suite | Framework | Total Suites | Total Tests | Status |
 | :--- | :--- | :---: | :---: | :---: |
-| **Unit Tests** | Jest | 22 | 127 | **100% PASSED** |
+| **Unit Tests** | Jest | 25 | 145 | **100% PASSED** |
 | **End-to-End (E2E) Tests** | Supertest + Jest | 8 | 30 | **100% PASSED** |
 | **Static Analysis** | TypeScript Compiler | 1 | Full Codebase | **0 Errors / 0 Warnings** |
-| **Total Test Execution** | — | **30 Suites** | **157 Tests** | **100% PASS** |
+| **Total Test Execution** | — | **33 Suites** | **175 Tests** | **100% PASS** |
 
 ---
 
@@ -20,8 +20,8 @@ Test results and code coverage metrics for the Bookstore NestJS API.
 Executed via `npm run test:cov`:
 
 ```text
-Test Suites: 22 passed, 22 total
-Tests:       127 passed, 127 total
+Test Suites: 25 passed, 25 total
+Tests:       145 passed, 145 total
 Snapshots:   0 total
 ```
 
@@ -42,7 +42,10 @@ Snapshots:   0 total
 | `collections` | `CollectionsService` | 6 | PASS |
 | `discount-codes` | `DiscountCodesService` | 8 | PASS |
 | `languages` | `LanguagesService` | 4 | PASS |
-| `orders` | `OrdersService` | 9 | PASS |
+| `orders` | `OrdersService` | 10 | PASS |
+| `payments` | `MockPaymentGateway` | 6 | PASS |
+| `payments` | `PaymentsService` | 3 | PASS |
+| `payments` | `PaymentsController` (webhook) | 3 | PASS |
 | `publishers` | `PublishersService` | 6 | PASS |
 | `reviews` | `ReviewsService` | 7 | PASS |
 | `staffs` | `StaffsService` | 4 | PASS |
@@ -77,7 +80,8 @@ Snapshots:   0 total
 - **Health Probes (`test/health.e2e-spec.ts`)**: Terminus system health monitoring, database ping, memory heap, and memory RSS validation.
 - **Authentication (`test/auth.e2e-spec.ts`)**: Signin validation, credential verification, JWT cookie dispatch, refresh flows, and portfolio demo admin provisioning.
 - **Catalog Browsing (`test/catalog.e2e-spec.ts`)**: Books pagination, detail lookups, trending entities, and view cookie attachment.
-- **Cart & Orders (`test/orders.e2e-spec.ts`)**: Adding books to cart, inventory tracking, removing items, checkout initiation, and order history.
+- **Cart & Orders (`test/orders.e2e-spec.ts`)**: Adding books to cart, inventory tracking, removing items, checkout initiation, server-side payment verification on submit, and order history.
+- **Payment Gateway (`src/modules/payments/payment.gateway.spec.ts`)**: Payment session creation, amount-bound verification, rejection handling (`fail` prefix), unknown-reference rejection, and amount-mismatch detection.
 - **Reviews & Feedback (`test/reviews.e2e-spec.ts`)**: Review creation, polymorphic target linking, reactions (like/love), and review deletion.
 - **Curated Collections (`test/collections.e2e-spec.ts`)**: Collection creation, public listing, slug lookups, and deletion.
 - **Customer Support Tickets (`test/tickets.e2e-spec.ts`)**: Support ticket creation, query filtering, staff status updates, and soft deletion.
@@ -99,4 +103,7 @@ npm run test:e2e
 
 # Run TypeScript static check for unused variables and imports
 npx tsc --noEmit --noUnusedLocals
+
+# Run ESLint across source and test files
+npm run lint
 ```

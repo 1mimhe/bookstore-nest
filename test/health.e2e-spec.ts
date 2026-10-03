@@ -8,7 +8,7 @@ describe('HealthController (e2e)', () => {
   let app: INestApplication;
 
   const mockHealthService = {
-    check: jest.fn().mockImplementation((checks) => {
+    check: jest.fn().mockImplementation((_checks) => {
       return Promise.resolve({
         status: 'ok',
         info: { database: { status: 'up' }, memory_heap: { status: 'up' } },

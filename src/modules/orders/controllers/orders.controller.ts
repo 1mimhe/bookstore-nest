@@ -4,14 +4,14 @@ import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiUnprocessableEntityRespo
 import { UnprocessableEntityMessages } from 'src/common/enums/error.messages';
 import { AuthGuard } from '../../auth/guards/auth.guard';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
-import { AddBookToCartDto } from '../dto/add-book.dto';
+import { AddBookToCartDto } from '../dtos/add-book.dto';
 import { Serialize } from 'src/common/serialize.interceptor';
-import { CartResponseDto } from '../dto/cart-response.dto';
-import { RemoveBookFromCartDto } from '../dto/remove-book.dto';
-import { InitiateOrderDto } from '../dto/initiate-order.dto';
-import { SubmitOrderDto } from '../dto/submit-order.dto';
+import { CartResponseDto } from '../dtos/cart-response.dto';
+import { RemoveBookFromCartDto } from '../dtos/remove-book.dto';
+import { InitiateOrderDto } from '../dtos/initiate-order.dto';
+import { SubmitOrderDto } from '../dtos/submit-order.dto';
 import { ApiQueryPagination } from 'src/common/decorators/query.decorators';
-import { OrderResponseDto } from '../dto/order-response.dto';
+import { OrderResponseDto } from '../dtos/order-response.dto';
 
 @Controller('orders')
 export class OrdersController {
@@ -83,8 +83,10 @@ export class OrdersController {
 
   @ApiOperation({
     summary: 'Initiate an Order from Cart',
-    description: `Creates a pending order based on the user's cart.
-      The order is finalized as \`paid\`/\`unpaid\` upon payment confirmation via webhook.`,
+    description: `Creates a pending order based on the user's cart and opens a payment session.
+      Returns the order (with \`orderNumber\` and \`payablePrice\`) plus the payment
+      reference and checkout URL. The order is finalized only after the payment
+      is verified server-side via \`POST /orders/submit\`.`,
   })
   @ApiOkResponse({
     type: OrderResponseDto
@@ -100,10 +102,11 @@ export class OrdersController {
   }
 
   @ApiOperation({
-    summary: 'Simulate Payment Confirmation for Order (MVP)',
-    description: `A test webhook endpoint for simulating payment confirmation in an MVP environment.
-      Accepts a payment status to update the order status. This endpoint is designed for testing purposes
-      without a real payment gateway.`
+    summary: 'Verify payment and finalize the order',
+    description: `Submits the payment reference returned by the payment session for server-side
+      verification. The order is finalized as \`paid\` only when the gateway confirms
+      the transaction amount; otherwise it is canceled with a 400 response.
+      The legacy client-supplied \`status\` field has been removed for security.`
   })
   @ApiOkResponse({
     type: OrderResponseDto

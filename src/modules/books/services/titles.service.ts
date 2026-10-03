@@ -220,6 +220,58 @@ export class TitlesService {
     });
   }
 
+  async getAll({
+    page = 1,
+    limit = 12,
+    search,
+    authorId,
+    publisherId,
+    tags = [],
+    decades = [],
+    sortBy,
+  }: BookQueryDto = {}): Promise<Title[]> {
+    const skip = (page - 1) * limit;
+    const qb = this.titleRepo
+      .createQueryBuilder('title')
+      .leftJoinAndSelect('title.authors', 'authors')
+      .leftJoinAndSelect('title.tags', 'tags')
+      .leftJoinAndSelect('title.defaultBook', 'defaultBook')
+      .leftJoinAndSelect('defaultBook.images', 'images')
+      .leftJoinAndSelect('defaultBook.publisher', 'defaultPublisher')
+      .leftJoinAndSelect('title.books', 'books')
+      .leftJoinAndSelect('books.publisher', 'bookPublisher');
+
+    if (search) {
+      qb.andWhere(
+        '(LOWER(title.name) LIKE LOWER(:search) OR LOWER(title.summary) LIKE LOWER(:search))',
+        { search: `%${search}%` },
+      );
+    }
+
+    if (authorId) {
+      qb.andWhere(
+        '(authors.id = :authorId OR books.id IN (SELECT b2.id FROM books b2 INNER JOIN book_translators bt ON bt.bookId = b2.id WHERE bt.authorId = :authorId))',
+        { authorId },
+      );
+    }
+
+    if (publisherId) {
+      qb.andWhere('books.publisherId = :publisherId', { publisherId });
+    }
+
+    if (tags && tags.length > 0) {
+      this.buildTagsConditions(qb, tags);
+    }
+
+    if (decades && decades.length > 0) {
+      this.buildDecadeConditions(qb, decades);
+    }
+
+    this.buildOrderBy(qb, sortBy);
+
+    return qb.skip(skip).take(limit).getMany();
+  }
+
   async getAllByTag(
     tagSlug: string,
     {
@@ -534,7 +586,7 @@ export class TitlesService {
     by: BookSortBy = BookSortBy.Newest
   ): void {
     switch (by) {
-      case BookSortBy.MostLiked:
+      case BookSortBy.MostLiked: {
         const sq = this.titleRepo.createQueryBuilder('sub_title')
           .select('SUM(sub_book.rateCount) + SUM(sub_book.bookmarkCount)', 'totalLikedCount')
           .leftJoin('sub_title.books', 'sub_book')
@@ -543,7 +595,8 @@ export class TitlesService {
           qb.addSelect(`(${sq})`, 'titleLikedCount');
           qb.orderBy('titleLikedCount', 'DESC');
         break;
-      case BookSortBy.MostSale:
+      }
+      case BookSortBy.MostSale: {
         const soldSubQuery = this.titleRepo.createQueryBuilder('sub_title')
           .select('SUM(sub_book.sold)', 'totalSold')
           .leftJoin('sub_title.books', 'sub_book')
@@ -552,6 +605,7 @@ export class TitlesService {
         qb.addSelect(`(${soldSubQuery})`, 'title_sold');
         qb.orderBy('title_sold', 'DESC')
         break;
+      }
       case BookSortBy.MostViews:
         qb.orderBy('title.views', 'DESC');
         break;

@@ -407,7 +407,7 @@ export class UsersService {
           }
           
           return null;
-        } catch (error) {          
+        } catch {
           return null;
         }
       });

@@ -12,7 +12,7 @@ import {
 
 @ValidatorConstraint({ name: 'isUsernameOrEmailOrPhone', async: false })
 export class IsUsernameOrEmailOrPhoneConstraint implements ValidatorConstraintInterface {
-  validate(value: string, args: ValidationArguments) {
+  validate(value: string, _args: ValidationArguments) {
     if (!value || typeof value !== 'string') {
       return false;
     }
@@ -24,7 +24,7 @@ export class IsUsernameOrEmailOrPhoneConstraint implements ValidatorConstraintIn
     return false;
   }
 
-  defaultMessage(args: ValidationArguments) {
+  defaultMessage(_args: ValidationArguments) {
     return 'Identifier must be a valid username (alphanumeric), email, or phone number';
   }
 }

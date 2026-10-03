@@ -43,6 +43,14 @@ export class OrderResponseDto {
   @Expose()
   id: string;
 
+  @ApiProperty({ example: 'ORD-2026-1A2B3C4D' })
+  @Expose()
+  orderNumber: string;
+
+  @ApiProperty({ description: 'finalPrice + shippingPrice (the amount charged to the customer)' })
+  @Expose()
+  payablePrice: number;
+
   @Type(() => OrderBookDto)
   @Expose()
   orderBooks: OrderBookDto;
