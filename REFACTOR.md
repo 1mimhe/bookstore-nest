@@ -266,7 +266,23 @@ The codebase was refactored to resolve architectural issues, security vulnerabil
 
 ---
 
-## 16. Summary Matrix
+## 16. Observability: Logging, Metrics & Alert Hooks
+
+### Previous State
+- Console text logs with no structure and no way to tie lines to requests.
+- No metrics endpoint for Prometheus-style scraping.
+- `/health` probes existed but nothing watched them — failures were silent until a human checked.
+
+### Changes Implemented
+- `JsonLogger` (`src/common/logging/`): drop-in `LoggerService` writing one JSON object per line (`level`, `timestamp`, `context`, `message`, `requestId` when in-request, `trace` on errors); wired via `app.useLogger()` so all existing `new Logger(ctx)` call sites are unchanged.
+- Request correlation: `RequestIdMiddleware` (first in `AppModule.configure`) echoes or mints `x-request-id` (header enum + `Express.Request.requestId` typing), publishes it through an `AsyncLocalStorage` `RequestContextService`.
+- `MetricsModule` (`src/modules/metrics/`): dependency-free Prometheus exposition — `MetricsService` (per-controller/handler histograms, 5xx counters, `monitorEventLoopDelay` lag, uptime), global `MetricsInterceptor` (skips its own scrape endpoint), public `GET /metrics` with `@BypassTransform()` and the Prometheus content type.
+- `HealthAlertService` (`HealthModule`, `@Cron('0 * * * * *')`): re-runs the controller's Terminus probes each minute; on failure writes a structured error and emits `health.degraded` once until recovery (new `EventNames.HealthDegraded`). No credentials needed — Slack/email delivery stays future work.
+- Tests: 6 logging (JSON shape, request-id echo/mint, stderr routing), 6 metrics (aggregation, error counting, interceptor success/error/self-skip, controller delegation), 4 alert (silent-on-healthy, deduped emit, re-alert after recovery, log-only without emitter).
+
+---
+
+## 17. Summary Matrix
 
 | Area | Before | After |
 | :--- | :--- | :--- |
@@ -286,11 +302,14 @@ The codebase was refactored to resolve architectural issues, security vulnerabil
 | **Health Probes** | None | Terminus `/health` (DB, memory heap, RSS) |
 | **Response Format** | Inconsistent JSON formats | Standard envelope `{ statusCode, timestamp, data }` |
 | **DevOps** | None | `docker-compose.yml` + GitHub Actions CI |
-| **Unit Tests** | Broken boilerplate specs | 25 suites / 154 passing unit tests |
+| **Unit Tests** | Broken boilerplate specs | 31 suites / 170 passing unit tests |
 | **E2E Tests** | None | 8 suites / 33 passing Supertest E2E tests |
 | **Order Lookup** | List-only (`GET /orders`) | Owner-scoped `GET /orders/number/:orderNumber` (derived match) |
 | **Cancel / Return** | Cron-only expiry; terminal `Delivered` | `POST /orders/cancel` (Pending), `POST /orders/return` (Delivered + atomic restock + `order.returned`) |
 | **Dependencies** | 23 prod audit findings (15 high) | 2 moderate remaining (js-yaml, swagger-12-only fix deferred) |
+| **Logging** | Unstructured console text, no correlation | JSON lines + `x-request-id` correlation via ALS context |
+| **Metrics** | None | Public `GET /metrics` (latency histograms, 5xx counters, event-loop lag) |
+| **Health Alerts** | Silent probe failures | Minutely poller: structured error + `health.degraded` event |
 | **Unused Imports** | 30+ unused imports/locals | 0 warnings (`tsc --noUnusedLocals`) |
 | **Payment Flow** | Client-supplied `status` (spoofable) | Server-side gateway verification + payment sessions + signed webhook |
 | **Payment History** | None | `payments` table, idempotent by `paymentId`, push + pull paths |

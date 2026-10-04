@@ -47,9 +47,17 @@ tracked in [REFACTOR.md](./REFACTOR.md); current test status in
   rotation.
 
 ### 4. Observability & Operations
-- Structured JSON logging with request IDs (pino) and correlation headers.
-- Prometheus `/metrics` endpoint (HTTP latency histograms, event-loop lag).
-- Alerting hooks for the `/health` probes (Slack/email on failure).
+- [x] Structured JSON logging with request IDs (built-in `JsonLogger`, no new
+  dependency) and correlation headers (`x-request-id` echo/generate via
+  `RequestIdMiddleware` + `AsyncLocalStorage` context).
+- [x] Prometheus `/metrics` endpoint (public, handler-level latency
+  histograms, 5xx counters, event-loop lag, uptime — hand-rolled exposition,
+  no `prom-client`).
+- [x] Alerting hooks for the `/health` probes (minutely `HealthAlertService`
+  poller: structured error log + `health.degraded` event on failure; deduped
+  until recovery).
+- [ ] Actual Slack/email delivery on `health.degraded` (subscriber not yet
+  implemented).
 
 ### 5. Developer Experience
 - Split CI into parallel jobs (lint/typecheck, unit, E2E) to cut pipeline time.
