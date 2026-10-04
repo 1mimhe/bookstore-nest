@@ -8,10 +8,10 @@ Test results and code coverage metrics for the Bookstore NestJS API.
 
 | Test Suite | Framework | Total Suites | Total Tests | Status |
 | :--- | :--- | :---: | :---: | :---: |
-| **Unit Tests** | Jest | 25 | 154 | **100% PASSED** |
+| **Unit Tests** | Jest | 31 | 170 | **100% PASSED** |
 | **End-to-End (E2E) Tests** | Supertest + Jest | 8 | 33 | **100% PASSED** |
 | **Static Analysis** | TypeScript Compiler | 1 | Full Codebase | **0 Errors / 0 Warnings** |
-| **Total Test Execution** | — | **33 Suites** | **187 Tests** | **100% PASS** |
+| **Total Test Execution** | — | **39 Suites** | **203 Tests** | **100% PASS** |
 
 ---
 
@@ -20,8 +20,8 @@ Test results and code coverage metrics for the Bookstore NestJS API.
 Executed via `npm run test:cov`:
 
 ```text
-Test Suites: 25 passed, 25 total
-Tests:       154 passed, 154 total
+Test Suites: 31 passed, 31 total
+Tests:       170 passed, 170 total
 Snapshots:   0 total
 ```
 
@@ -34,6 +34,8 @@ Snapshots:   0 total
 | `common/interceptors` | `SerializeInterceptor` | 3 | PASS |
 | `common/interceptors` | `TransformInterceptor` | 3 | PASS |
 | `common/services` | `CookieService` | 6 | PASS |
+| `common/logging` | `JsonLogger` | 4 | PASS |
+| `common/middlewares` | `RequestIdMiddleware` | 2 | PASS |
 | `auth` | `AuthService` | 8 | PASS |
 | `authors` | `AuthorsService` | 7 | PASS |
 | `blogs` | `BlogsService` | 5 | PASS |
@@ -42,6 +44,10 @@ Snapshots:   0 total
 | `collections` | `CollectionsService` | 6 | PASS |
 | `discount-codes` | `DiscountCodesService` | 8 | PASS |
 | `languages` | `LanguagesService` | 4 | PASS |
+| `health` | `HealthAlertService` | 4 | PASS |
+| `metrics` | `MetricsService` | 2 | PASS |
+| `metrics` | `MetricsInterceptor` | 3 | PASS |
+| `metrics` | `MetricsController` | 1 | PASS |
 | `orders` | `OrdersService` | 19 | PASS |
 | `payments` | `MockPaymentGateway` | 6 | PASS |
 | `payments` | `PaymentsService` | 3 | PASS |

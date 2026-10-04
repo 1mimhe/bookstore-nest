@@ -17,6 +17,9 @@ export enum EventNames {
   PaymentSucceeded = 'payment.succeeded',
   PaymentFailed = 'payment.failed',
 
+  // Health Events (log-only alert hooks)
+  HealthDegraded = 'health.degraded',
+
   // User / Auth Events
   UserRegistered = 'user.registered',
   UserLoggedIn = 'user.logged_in',

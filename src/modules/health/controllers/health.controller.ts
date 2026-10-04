@@ -18,7 +18,7 @@ export class HealthController {
   ) {}
 
   @ApiOperation({
-    summary: 'Check system health and readiness (Database, Memory, Event Loop)',
+    summary: 'Check system health and readiness (Database, Memory)',
   })
   @Get()
   @HealthCheck()
