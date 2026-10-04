@@ -25,6 +25,7 @@ import { OrdersModule } from '../orders/orders.module';
 import { DiscountCodesModule } from '../discount-codes/discount-codes.module';
 import { TicketsModule } from '../tickets/tickets.module';
 import { HealthModule } from '../health/health.module';
+import { MetricsModule } from '../metrics/metrics.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { CommonModule } from 'src/common/common.module';
@@ -126,6 +127,7 @@ const envValidationSchema = Joi.object({
     DiscountCodesModule,
     TicketsModule,
     HealthModule,
+    MetricsModule,
   ],
   providers: [
     {

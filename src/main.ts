@@ -8,6 +8,8 @@ import helmet from 'helmet';
 import { Reflector } from '@nestjs/core';
 import { TypeOrmExceptionFilter } from './common/filters/typeorm-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { MetricsInterceptor } from './modules/metrics/metrics.interceptor';
+import { MetricsService } from './modules/metrics/metrics.service';
 import { JsonLogger } from './common/logging/json.logger';
 
 async function bootstrap() {
@@ -25,8 +27,11 @@ async function bootstrap() {
   // Global Exception Filters
   app.useGlobalFilters(new TypeOrmExceptionFilter());
 
-  // Global Response Envelope Interceptor
-  app.useGlobalInterceptors(new TransformInterceptor(reflector));
+  // Global Response Envelope Interceptor (outermost: records latency first)
+  app.useGlobalInterceptors(
+    new MetricsInterceptor(app.get(MetricsService)),
+    new TransformInterceptor(reflector),
+  );
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Bookstore App')
